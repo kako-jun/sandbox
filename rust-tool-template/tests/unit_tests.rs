@@ -1,4 +1,9 @@
-use rust_tool_template::core::{AppData, AppLogic};
+//! Unit tests for the Rust tool template.
+//! 
+//! These tests verify the functionality of individual components
+//! in isolation.
+
+use rust_tool_template::core::AppLogic;
 
 #[test]
 fn test_app_logic_creation() {

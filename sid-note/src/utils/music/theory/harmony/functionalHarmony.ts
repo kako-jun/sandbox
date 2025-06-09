@@ -1,29 +1,220 @@
-import { getInterval } from "@/utils/music/theory/core/intervals";
-import { getScaleDiatonicChords } from "@/utils/music/theory/core/scales";
+/**
+ * 機能和声ユーティリティ
+ * 
+ * このモジュールは、機能和声に関する機能を提供します。
+ * 機能和声の分析、機能和声の進行、機能和声の変換など、
+ * 機能和声の基本的な操作に対応します。
+ * 
+ * @module functionalHarmony
+ */
 
-// 機能和声・カデンツ関連ユーティリティ
 
 /**
- * スケール内での和音の機能（度数）を取得します。
- * ダイアトニックコード（スケール内の和音）の場合は1-7の数値を返し、
- * スケール外の和音の場合は0を返します。
- *
- * 例：
- * ```typescript
- * getFunctionalHarmony("C", "C")   => 1  // Ⅰ（トニック）
- * getFunctionalHarmony("C", "Dm")  => 2  // Ⅱ（スーパートニック）
- * getFunctionalHarmony("C", "G")   => 5  // Ⅴ（ドミナント）
- * getFunctionalHarmony("C", "F＃") => 0  // スケール外
+ * 機能和声・カデンツ関連ユーティリティ
+ */
+
+/**
+ * 機能和声の度数（1-7）
+ */
+export type FunctionalHarmonyDegree = 1 | 2 | 3 | 4 | 5 | 6 | 7;
+
+/**
+ * カデンツの種類
+ */
+export type CadenceType =
+  | "Perfect Cadence" // V-I
+  | "Plagal Cadence" // IV-I
+  | "Deceptive Cadence" // V-VI
+  | "Half Cadence" // *-V
+  | "Phrygian Cadence" // *-VII
+  | "";
+
+/**
+ * 和声機能の定義
+ */
+export type HarmonicFunction = "T" | "S" | "D" | "Tp" | "Sp" | "Dp";
+
+/**
+ * 和声機能の進行の定義
+ */
+export interface FunctionalProgression {
+  /** 和声機能の配列 */
+  functions: HarmonicFunction[];
+  /** キー */
+  key: string;
+  /** 進行のタイプ */
+  type: "major" | "minor";
+}
+
+/**
+ * 主要な機能和声進行パターン
+ */
+const FUNCTIONAL_PATTERNS: Record<string, HarmonicFunction[]> = {
+  "T-S-D-T": ["T", "S", "D", "T"],
+  "T-D-T": ["T", "D", "T"],
+  "T-S-T": ["T", "S", "T"],
+  "T-S-D-S-T": ["T", "S", "D", "S", "T"],
+  "T-D-S-T": ["T", "D", "S", "T"],
+};
+
+/**
+ * 機能和声進行を生成します
+ * 
+ * @param key - キー
+ * @param pattern - 進行パターン
+ * @returns 機能和声進行
+ * @throws {Error} 無効なキーまたはパターンが指定された場合
+ * 
+ * @example
+ * ```ts
+ * generateFunctionalProgression("C", "T-S-D-T")     // => { functions: ["T", "S", "D", "T"], key: "C", type: "major" }
+ * generateFunctionalProgression("Am", "T-D-S-T")    // => { functions: ["T", "D", "S", "T"], key: "Am", type: "minor" }
  * ```
  */
-export const getFunctionalHarmony = (scale: string, chord: string) => {
-  const chords = getScaleDiatonicChords(scale);
-  const index = chords.indexOf(chord);
-  if (index >= 0) {
-    return index + 1;
+export function generateFunctionalProgression(key: string, pattern: string): FunctionalProgression {
+  if (!key || typeof key !== "string") {
+    throw new Error("キーは文字列である必要があります");
   }
-  return 0;
+
+  if (!pattern || typeof pattern !== "string") {
+    throw new Error("進行パターンは文字列である必要があります");
+  }
+
+  const progression = FUNCTIONAL_PATTERNS[pattern];
+  if (!progression) {
+    throw new Error(`無効な進行パターンです: ${pattern}`);
+  }
+
+  const isMinor = key.toLowerCase().endsWith("m");
+  return {
+    functions: progression,
+    key,
+    type: isMinor ? "minor" : "major",
+  };
+}
+
+/**
+ * 和声機能からコードを取得します
+ * 
+ * @param function_ - 和声機能
+ * @param key - キー
+ * @returns コード
+ * @throws {Error} 無効な和声機能またはキーが指定された場合
+ * 
+ * @example
+ * ```ts
+ * getChordFromFunction("T", "C")  // => "C"
+ * getChordFromFunction("D", "C")  // => "G7"
+ * ```
+ */
+export function getChordFromFunction(function_: HarmonicFunction, key: string): string {
+  if (!function_ || typeof function_ !== "string") {
+    throw new Error("和声機能は文字列である必要があります");
+  }
+
+  if (!key || typeof key !== "string") {
+    throw new Error("キーは文字列である必要があります");
+  }
+
+  const isMinor = key.toLowerCase().endsWith("m");
+  const rootNote = isMinor ? key.slice(0, -1) : key;
+  const functionMap = isMinor ? MINOR_FUNCTION_MAP : MAJOR_FUNCTION_MAP;
+  const chord = functionMap[function_];
+
+  if (!chord) {
+    throw new Error(`無効な和声機能です: ${function_}`);
+  }
+
+  return rootNote + chord;
+}
+
+/**
+ * メジャーキーの機能和声マップ
+ */
+const MAJOR_FUNCTION_MAP: Record<HarmonicFunction, string> = {
+  T: "",
+  S: "sus4",
+  D: "7",
+  Tp: "m",
+  Sp: "m",
+  Dp: "m7",
 };
+
+/**
+ * マイナーキーの機能和声マップ
+ */
+const MINOR_FUNCTION_MAP: Record<HarmonicFunction, string> = {
+  T: "m",
+  S: "m",
+  D: "7",
+  Tp: "",
+  Sp: "sus4",
+  Dp: "m7",
+};
+
+/**
+ * コードの和声機能を取得します
+ * 
+ * @param chord - コード名
+ * @param key - キー
+ * @returns 和声機能（T, S, D）
+ * @throws {Error} 無効なコード名やキーが指定された場合
+ * 
+ * @example
+ * ```ts
+ * getFunctionalHarmony("C", "C")  // => "T"
+ * getFunctionalHarmony("F", "C")  // => "S"
+ * getFunctionalHarmony("G", "C")  // => "D"
+ * ```
+ */
+export function getFunctionalHarmony(chord: string, key: string): string {
+  if (!chord || typeof chord !== "string") {
+    throw new Error("コード名は文字列である必要があります");
+  }
+
+  if (!key || typeof key !== "string") {
+    throw new Error("キーは文字列である必要があります");
+  }
+
+  const diatonicChords = getScaleDiatonicChords(key);
+  const index = diatonicChords.indexOf(chord);
+
+  if (index === -1) {
+    throw new Error(`無効なコード名です: ${chord}`);
+  }
+
+  const romanNumeral = getRomanNumeral(index + 1);
+  for (const [function_, numerals] of Object.entries(FUNCTIONAL_HARMONY)) {
+    if (numerals.includes(romanNumeral)) {
+      return function_;
+    }
+  }
+
+  throw new Error(`和声機能が見つかりません: ${chord}`);
+}
+
+/**
+ * 数字をローマ数字に変換します
+ * 
+ * @param num - 数字（1-7）
+ * @returns ローマ数字（I-VII）
+ * @throws {Error} 無効な数字が指定された場合
+ * 
+ * @example
+ * ```ts
+ * getRomanNumeral(1)  // => "I"
+ * getRomanNumeral(2)  // => "II"
+ * getRomanNumeral(3)  // => "III"
+ * ```
+ */
+function getRomanNumeral(num: number): string {
+  if (num < 1 || num > 7) {
+    throw new Error(`無効な数字です: ${num}`);
+  }
+
+  const romanNumerals = ["I", "II", "III", "IV", "V", "VI", "VII"];
+  return romanNumerals[num - 1];
+}
 
 /**
  * 和音の度数をローマ数字と機能名で表現します。
@@ -76,7 +267,7 @@ export const isSecondaryDominant = (chord: string, nextChord: string): boolean =
   const chordRoot = chord.slice(0, -1);
   const nextChordRoot = nextChord.slice(0, -1);
   const interval = getInterval(chordRoot, nextChordRoot);
-  return interval === "5" || interval === "4";
+  return interval.degree === 5 || interval.degree === 4;
 };
 
 /**

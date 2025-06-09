@@ -1,65 +1,178 @@
-import { getNoteFrequency } from "@/utils/music/audio/player";
+/**
+ * 和声ユーティリティ
+ * 
+ * このモジュールは、和声に関する機能を提供します。
+ * 和声の進行、和声の分析、和声の変換など、
+ * 和声の基本的な操作に対応します。
+ * 
+ * @module harmony
+ */
+
 
 /**
- * 機能和声における度数を示す型
+ * 和声の進行の定義
  */
-export type FunctionalHarmonyDegree = 1 | 2 | 3 | 4 | 5 | 6 | 7;
-
-/**
- * コードのルート音とスケールのルート音から機能和声における度数を判定します。
- * 例: Cスケールにおける Dm は 2度の和音となります。
- */
-export function getFunctionalHarmony(scaleRoot: string, chord: string): FunctionalHarmonyDegree | null {
-  if (!scaleRoot || !chord) return null;
-
-  // TODO: scaleRootとchordの関係から度数を計算
-  // 実際の実装では:
-  // 1. コードのルート音を取得
-  // 2. スケールの音名配列を取得
-  // 3. ルート音がスケールの何番目にあるかを判定
-
-  return null;
+export interface ChordProgression {
+  /** コードの配列 */
+  chords: string[];
+  /** キー */
+  key: string;
+  /** 進行のタイプ */
+  type: "major" | "minor";
 }
 
 /**
- * カデンツの種類を示す型
+ * 主要な和声進行パターン
  */
-export type CadenceType =
-  | "Perfect Cadence" // V-I
-  | "Plagal Cadence" // IV-I
-  | "Deceptive Cadence" // V-VI
-  | "Half Cadence" // *-V
-  | "Phrygian Cadence" // *-VII
-  | "";
+const PROGRESSION_PATTERNS: Record<string, string[]> = {
+  "I-IV-V": ["", "sus4", "7"],
+  "I-V-vi-IV": ["", "7", "m", "sus4"],
+  "ii-V-I": ["m", "7", ""],
+  "I-vi-IV-V": ["", "m", "sus4", "7"],
+  "vi-IV-I-V": ["m", "sus4", "", "7"],
+};
 
 /**
- * 2つの和声度数からカデンツの種類を判定します。
+ * 和声進行を生成します
+ * 
+ * @param key - キー
+ * @param pattern - 進行パターン
+ * @returns 和声進行
+ * @throws {Error} 無効なキーまたはパターンが指定された場合
+ * 
+ * @example
+ * ```ts
+ * generateProgression("C", "I-IV-V")     // => { chords: ["C", "F", "G7"], key: "C", type: "major" }
+ * generateProgression("Am", "vi-IV-I-V") // => { chords: ["Am", "F", "C", "G7"], key: "Am", type: "minor" }
+ * ```
  */
-export function cadenceText(from: FunctionalHarmonyDegree, to: FunctionalHarmonyDegree): CadenceType {
-  // 無効な度数の場合は空文字を返す
-  if (from < 1 || from > 7 || to < 1 || to > 7) return "";
+export function generateProgression(key: string, pattern: string): ChordProgression {
+  if (!key || typeof key !== "string") {
+    throw new Error("キーは文字列である必要があります");
+  }
 
-  // カデンツの判定
-  if (from === 5 && to === 1) return "Perfect Cadence";
-  if (from === 4 && to === 1) return "Plagal Cadence";
-  if (from === 5 && to === 6) return "Deceptive Cadence";
-  if (to === 5) return "Half Cadence";
-  if (to === 7) return "Phrygian Cadence";
+  if (!pattern || typeof pattern !== "string") {
+    throw new Error("進行パターンは文字列である必要があります");
+  }
 
-  return "";
+  const progression = PROGRESSION_PATTERNS[pattern];
+  if (!progression) {
+    throw new Error(`無効な進行パターンです: ${pattern}`);
+  }
+
+  const isMinor = key.toLowerCase().endsWith("m");
+  const rootNote = isMinor ? key.slice(0, -1) : key;
+  const chords = progression.map((type, index) => {
+    const degree = getDegreeFromIndex(index, isMinor);
+    const note = getNoteFromDegree(rootNote, degree);
+    return note + type;
+  });
+
+  return {
+    chords,
+    key,
+    type: isMinor ? "minor" : "major",
+  };
 }
 
 /**
- * コードトーンのラベルを返します。
+ * インデックスから音度を取得します
+ * 
+ * @param index - インデックス
+ * @param isMinor - マイナーキーかどうか
+ * @returns 音度（1-7）
  */
-export function getChordToneLabel(scaleRoot: string, chord: string, pitch: string): string {
-  const freq = getNoteFrequency(pitch);
-  if (!freq) return "";
-
-  // TODO: 実際のコードトーン判定ロジックを実装
-  // 1. スケールのルート音からの相対位置を計算
-  // 2. コードの種類に応じて、その音がコードトーンかどうかを判定
-  // 3. コードトーンの場合、適切なラベル（Root, 3rd, 5th など）を返す
-
-  return "";
+function getDegreeFromIndex(index: number, isMinor: boolean): number {
+  const majorDegrees = [1, 4, 5, 6, 4, 1, 5];
+  const minorDegrees = [6, 4, 1, 5, 4, 6, 5];
+  return isMinor ? minorDegrees[index] : majorDegrees[index];
 }
+
+/**
+ * 音度から音名を取得します
+ * 
+ * @param rootNote - ルート音
+ * @param degree - 音度（1-7）
+ * @returns 音名
+ */
+function getNoteFromDegree(rootNote: string, degree: number): string {
+  const notes = ["C", "D", "E", "F", "G", "A", "B"];
+  const rootIndex = notes.indexOf(rootNote);
+  const noteIndex = (rootIndex + degree - 1) % 7;
+  return notes[noteIndex];
+}
+
+/**
+ * ダイアトニックコードの定義
+ */
+const DIATONIC_CHORDS: Record<string, string[]> = {
+  "C": ["C", "Dm", "Em", "F", "G", "Am", "Bdim"],
+  "G": ["G", "Am", "Bm", "C", "D", "Em", "F#dim"],
+  "D": ["D", "Em", "F#m", "G", "A", "Bm", "C#dim"],
+  "A": ["A", "Bm", "C#m", "D", "E", "F#m", "G#dim"],
+  "E": ["E", "F#m", "G#m", "A", "B", "C#m", "D#dim"],
+  "B": ["B", "C#m", "D#m", "E", "F#", "G#m", "A#dim"],
+  "F#": ["F#", "G#m", "A#m", "B", "C#", "D#m", "E#dim"],
+  "C#": ["C#", "D#m", "E#m", "F#", "G#", "A#m", "B#dim"],
+  "F": ["F", "Gm", "Am", "Bb", "C", "Dm", "Edim"],
+  "Bb": ["Bb", "Cm", "Dm", "Eb", "F", "Gm", "Adim"],
+  "Eb": ["Eb", "Fm", "Gm", "Ab", "Bb", "Cm", "Ddim"],
+  "Ab": ["Ab", "Bbm", "Cm", "Db", "Eb", "Fm", "Gdim"],
+  "Db": ["Db", "Ebm", "Fm", "Gb", "Ab", "Bbm", "Cdim"],
+  "Gb": ["Gb", "Abm", "Bbm", "Cb", "Db", "Ebm", "Fdim"],
+  "Cb": ["Cb", "Dbm", "Ebm", "Fb", "Gb", "Abm", "Bbdim"],
+};
+
+/**
+ * キーからダイアトニックコードを取得します
+ * 
+ * @param key - キー（例: "C", "G", "D"）
+ * @returns ダイアトニックコードの配列
+ * @throws {Error} 無効なキーが指定された場合
+ * 
+ * @example
+ * ```ts
+ * getDiatonicChords("C")  // => ["C", "Dm", "Em", "F", "G", "Am", "Bdim"]
+ * getDiatonicChords("G")  // => ["G", "Am", "Bm", "C", "D", "Em", "F#dim"]
+ * ```
+ */
+export function getDiatonicChords(key: string): string[] {
+  if (!key || typeof key !== "string") {
+    throw new Error("キーは文字列である必要があります");
+  }
+
+  const chords = DIATONIC_CHORDS[key];
+  if (!chords) {
+    throw new Error(`無効なキーです: ${key}`);
+  }
+
+  return chords;
+}
+
+/**
+ * コードが指定されたキーのダイアトニックコードかどうかを判定します
+ * 
+ * @param chord - コード名
+ * @param key - キー
+ * @returns ダイアトニックコードかどうか
+ * @throws {Error} 無効なコード名やキーが指定された場合
+ * 
+ * @example
+ * ```ts
+ * isDiatonicChord("C", "C")  // => true
+ * isDiatonicChord("Dm", "C") // => true
+ * isDiatonicChord("F#", "C") // => false
+ * ```
+ */
+export function isDiatonicChord(chord: string, key: string): boolean {
+  if (!chord || typeof chord !== "string") {
+    throw new Error("コード名は文字列である必要があります");
+  }
+
+  if (!key || typeof key !== "string") {
+    throw new Error("キーは文字列である必要があります");
+  }
+
+  const diatonicChords = getDiatonicChords(key);
+  return diatonicChords.includes(chord);
+} 

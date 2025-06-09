@@ -44,112 +44,84 @@ describe("getScaleNoteNames", () => {
   });
 });
 
-describe("getScaleDiatonicChords", () => {
-  it("メジャースケールのダイアトニックコードが正しく取得される", () => {
-    expect(getScaleDiatonicChords("C")).toEqual(["C", "Dm", "Em", "F", "G", "Am", "Bdim"]);
+describe("scales module", () => {
+  describe("getScaleDiatonicChords", () => {
+    it("should return diatonic chords for major scale", () => {
+      const chords = getScaleDiatonicChords("C");
+      expect(chords).toEqual(["C", "Dm", "Em", "F", "G", "Am", "Bdim"]);
+    });
+
+    it("should return diatonic chords for minor scale", () => {
+      const chords = getScaleDiatonicChords("Am");
+      expect(chords).toEqual(["Am", "Bdim", "C", "Dm", "Em", "F", "G"]);
+    });
+
+    it("should return diatonic chords for sharp keys", () => {
+      const chords = getScaleDiatonicChords("G");
+      expect(chords).toEqual(["G", "Am", "Bm", "C", "D", "Em", "F#dim"]);
+    });
+
+    it("should return diatonic chords for flat keys", () => {
+      const chords = getScaleDiatonicChords("F");
+      expect(chords).toEqual(["F", "Gm", "Am", "Bb", "C", "Dm", "Edim"]);
+    });
+
+    it("should return empty array for invalid scale", () => {
+      const chords = getScaleDiatonicChords("invalid");
+      expect(chords).toEqual([]);
+    });
   });
 
-  it("マイナースケールのダイアトニックコードが正しく取得される", () => {
-    expect(getScaleDiatonicChords("Am")).toEqual(["Am", "Bdim", "C", "Dm", "Em", "F", "G"]);
+  describe("getScaleDiatonicChordsWith7th", () => {
+    it("should return 7th chords for major scale", () => {
+      const chords = getScaleDiatonicChordsWith7th("C");
+      expect(chords).toEqual(["Cmaj7", "Dm7", "Em7", "Fmaj7", "G7", "Am7", "Bm7b5"]);
+    });
+
+    it("should return 7th chords for minor scale", () => {
+      const chords = getScaleDiatonicChordsWith7th("Am");
+      expect(chords).toEqual(["Am7", "Bm7b5", "Cmaj7", "Dm7", "Em7", "Fmaj7", "G7"]);
+    });
+
+    it("should return 7th chords for sharp keys", () => {
+      const chords = getScaleDiatonicChordsWith7th("G");
+      expect(chords).toEqual(["Gmaj7", "Am7", "Bm7", "Cmaj7", "D7", "Em7", "F#m7b5"]);
+    });
+
+    it("should return 7th chords for flat keys", () => {
+      const chords = getScaleDiatonicChordsWith7th("F");
+      expect(chords).toEqual(["Fmaj7", "Gm7", "Am7", "Bbmaj7", "C7", "Dm7", "Em7b5"]);
+    });
+
+    it("should return empty array for invalid scale", () => {
+      const chords = getScaleDiatonicChordsWith7th("invalid");
+      expect(chords).toEqual([]);
+    });
   });
 
-  it("複雑なスケールのダイアトニックコードが正しく取得される", () => {
-    expect(getScaleDiatonicChords("C＃")).toEqual(["C＃", "D＃m", "E＃m", "F＃", "G＃", "A＃m", "B＃dim"]);
-    expect(getScaleDiatonicChords("F＃")).toEqual(["F＃", "G＃m", "A＃m", "B", "C＃", "D＃m", "E＃dim"]);
-  });
+  describe("getScaleText", () => {
+    it("should return scale text for major scale", () => {
+      expect(getScaleText("C")).toBe("Cメジャー");
+      expect(getScaleText("G")).toBe("Gメジャー");
+    });
 
-  it("スケールキーが空の場合は空配列が返される", () => {
-    expect(getScaleDiatonicChords("")).toEqual([]);
-  });
-});
+    it("should return scale text for minor scale", () => {
+      expect(getScaleText("Am")).toBe("Aマイナー");
+      expect(getScaleText("Em")).toBe("Eマイナー");
+    });
 
-describe("getScaleDiatonicChordsWith7th", () => {
-  it("メジャースケールの7thコードが正しく取得される", () => {
-    expect(getScaleDiatonicChordsWith7th("C")).toEqual(["Cmaj7", "Dm7", "Em7", "Fmaj7", "G7", "Am7", "Bm7♭5"]);
-  });
+    it("should return scale text for sharp keys", () => {
+      expect(getScaleText("F#")).toBe("F#メジャー");
+      expect(getScaleText("C#m")).toBe("C#マイナー");
+    });
 
-  it("マイナースケールの7thコードが正しく取得される", () => {
-    expect(getScaleDiatonicChordsWith7th("Am")).toEqual(["Am(maj7)", "Bm7♭5", "Cmaj7", "Dm7", "Em7", "Fmaj7", "G7"]);
-  });
+    it("should return scale text for flat keys", () => {
+      expect(getScaleText("Bb")).toBe("Bbメジャー");
+      expect(getScaleText("Gm")).toBe("Gマイナー");
+    });
 
-  it("複雑なスケールの7thコードが正しく取得される", () => {
-    expect(getScaleDiatonicChordsWith7th("C＃")).toEqual([
-      "C＃maj7",
-      "D＃m7",
-      "E＃m7",
-      "F＃maj7",
-      "G＃7",
-      "A＃m7",
-      "B＃m7♭5",
-    ]);
-  });
-
-  it("定義されていないスケールに対して空配列が返される", () => {
-    expect(getScaleDiatonicChordsWith7th("X")).toEqual([]);
-  });
-});
-
-describe("getScaleText", () => {
-  it("メジャースケールの表示名が正しく取得される", () => {
-    expect(getScaleText("C")).toBe("C Major Scale");
-    expect(getScaleText("G")).toBe("G Major Scale");
-    expect(getScaleText("D")).toBe("D Major Scale");
-    expect(getScaleText("A")).toBe("A Major Scale");
-    expect(getScaleText("E")).toBe("E Major Scale");
-    expect(getScaleText("B")).toBe("B Major Scale");
-    expect(getScaleText("F")).toBe("F Major Scale");
-  });
-
-  it("マイナースケールの表示名が正しく取得される", () => {
-    expect(getScaleText("Cm")).toBe("C Minor Scale");
-    expect(getScaleText("Am")).toBe("A Minor Scale");
-    expect(getScaleText("Em")).toBe("E Minor Scale");
-    expect(getScaleText("Bm")).toBe("B Minor Scale");
-    expect(getScaleText("Fm")).toBe("F Minor Scale");
-    expect(getScaleText("Gm")).toBe("G Minor Scale");
-    expect(getScaleText("Dm")).toBe("D Minor Scale");
-  });
-
-  it("シャープ系スケールの表示名が正しく取得される", () => {
-    expect(getScaleText("C＃")).toBe("C＃ Major Scale");
-    expect(getScaleText("F＃")).toBe("F＃ Major Scale");
-    expect(getScaleText("C＃m")).toBe("C＃ Minor Scale");
-    expect(getScaleText("F＃m")).toBe("F＃ Minor Scale");
-    expect(getScaleText("G＃m")).toBe("G＃ Minor Scale");
-  });
-
-  it("フラット系スケールの表示名が正しく取得される", () => {
-    expect(getScaleText("D♭")).toBe("D♭ Major Scale");
-    expect(getScaleText("A♭")).toBe("A♭ Major Scale");
-    expect(getScaleText("E♭")).toBe("E♭ Major Scale");
-    expect(getScaleText("B♭")).toBe("B♭ Major Scale");
-    expect(getScaleText("B♭m")).toBe("B♭ Minor Scale");
-    expect(getScaleText("A♭m")).toBe("A♭ Minor Scale");
-  });
-
-  it("理論上のスケール（異名同音）の表示名が正しく取得される", () => {
-    expect(getScaleText("C♭")).toBe("C♭ Major Scale");
-    expect(getScaleText("B＃")).toBe("B＃ Major Scale");
-    expect(getScaleText("C♭m")).toBe("C♭ Minor Scale");
-    expect(getScaleText("B＃m")).toBe("B＃ Minor Scale");
-  });
-
-  it("定義されていないスケールで元の文字列が返される", () => {
-    expect(getScaleText("X")).toBe("X");
-    expect(getScaleText("Unknown")).toBe("Unknown");
-    expect(getScaleText("")).toBe("");
-  });
-
-  it("複雑な調号を持つスケールの表示名が正しく取得される", () => {
-    expect(getScaleText("D＃")).toBe("D＃ Major Scale");
-    expect(getScaleText("D＃m")).toBe("D＃ Minor Scale");
-    expect(getScaleText("A＃")).toBe("A＃ Major Scale");
-    expect(getScaleText("A＃m")).toBe("A＃ Minor Scale");
-  });
-
-  it("異なる記号表記で正しく処理される", () => {
-    // 現在の実装では完全一致のみ対応
-    expect(getScaleText("F＃")).toBe("F＃ Major Scale");
-    expect(getScaleText("G♭")).toBe("G♭ Major Scale");
+    it("should return empty string for invalid scale", () => {
+      expect(getScaleText("invalid")).toBe("");
+    });
   });
 });

@@ -365,6 +365,7 @@ fn handle_batch_add(
 }
 
 // Helper function to read user input with prompt
+#[allow(dead_code)]
 fn prompt_input(prompt: &str) -> Result<String> {
     print!("{}", prompt);
     io::stdout().flush()?;
