@@ -3,9 +3,14 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from .routes import game
 from pydantic import BaseModel
-from typing import Tuple
+from typing import Tuple, Dict, List, Optional
+import logging
+from datetime import datetime
 
 from src.game.core import Game, Direction, GameState
+
+# ロガーの設定
+logger = logging.getLogger(__name__)
 
 # Create FastAPI app
 app = FastAPI(
@@ -30,6 +35,8 @@ app.include_router(game.router, prefix="/api/v1")
 
 game = Game()
 
+# メモリ内のゲーム状態
+game_state: Dict[str, GameState] = {}
 
 class MoveRequest(BaseModel):
     direction: str
@@ -43,7 +50,14 @@ class GameStateResponse(BaseModel):
 
 
 @app.get("/")
-def read_root():
+async def read_root() -> Dict[str, str]:
+    """
+    ルートエンドポイントのハンドラー
+    
+    Returns:
+        Dict[str, str]: ウェルカムメッセージを含む辞書
+    """
+    logger.info("Root endpoint accessed")
     return {
         "message": "Welcome to the Python Snake Game API!",
         "version": "0.1.0",
@@ -53,7 +67,14 @@ def read_root():
 
 
 @app.get("/health")
-def health_check():
+async def health_check() -> Dict[str, str]:
+    """
+    ヘルスチェックエンドポイントのハンドラー
+    
+    Returns:
+        Dict[str, str]: ステータスメッセージを含む辞書
+    """
+    logger.info("Health check endpoint accessed")
     return {"status": "healthy", "service": "python-snake-game-api", "version": "0.1.0"}
 
 

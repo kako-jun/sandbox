@@ -1,3 +1,4 @@
+//! API handlers for the Rust tool template.
 use crate::core::AppLogic;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;

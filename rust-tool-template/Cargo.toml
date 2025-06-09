@@ -41,6 +41,7 @@ ratatui = { version = "0.26", optional = true }
 crossterm = { version = "0.27", features = ["event-stream"], optional = true }
 # プラットフォーム検出
 target-lexicon = "0.12"
+axum = "0.8.4"
 
 [dev-dependencies]
 # テスト用の基本的な依存関係

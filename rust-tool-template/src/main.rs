@@ -1,11 +1,14 @@
+//! Rust Tool Template
+//! 
+//! A command-line tool template with CLI, TUI, and API server capabilities.
+//! This is the main entry point for the application.
+
 use rust_tool_template::{api, cli, utils};
 use std::process;
-use std::sync::{Arc, Mutex};
-use tokio::signal;
-use tracing::{error, info, warn};
+use tracing::{info, warn, error};
 
 #[tokio::main]
-async fn main() {
+async fn main() -> anyhow::Result<()> {
     // Initialize enhanced logging with rotation
     if let Err(e) = utils::setup_logging(None) {
         eprintln!("Failed to initialize logging: {}", e);
@@ -42,6 +45,8 @@ async fn main() {
         info!("Shutting down embedded API server");
         handle.abort();
     }
+
+    Ok(())
 }
 
 async fn start_embedded_api_server() -> Option<tokio::task::JoinHandle<()>> {

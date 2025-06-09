@@ -95,9 +95,8 @@ Available options:
 # Development (using VS Code dev container)
 # The services will start automatically when you open the project in the dev container
 
-# Production
-cd deploy
-docker-compose up
+# Local development
+python -m src.web.app
 ```
 
 2. Access the web interface at `http://localhost:5000`
@@ -117,10 +116,7 @@ python-game-template/
 ├── logs/             # Log files
 ├── .devcontainer/    # VS Code dev container config
 │   ├── Dockerfile    # Development container image
-│   └── docker-compose.yaml
-├── deploy/           # Production deployment
-│   ├── Dockerfile    # Production container image
-│   └── docker-compose.yaml
+│   └── compose.yaml  # Development services
 └── pyproject.toml    # Python package config
 ```
 

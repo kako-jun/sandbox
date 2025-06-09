@@ -1,225 +1,142 @@
 /**
- * コード理論のコアモジュール
+ * コードユーティリティ
+ * 
+ * このモジュールは、コードに関する機能を提供します。
+ * コードの解析、コードの正規化、コードの構成音の取得など、
+ * コードの基本的な操作に対応します。
+ * 
+ * @module chords
  */
 
-import { chromaticNotesFlat, chromaticNotesSharp, isValidNoteName } from "./notes";
 
 /**
- * コード構造の基本定義
- */
-export interface ChordStructure {
-  root: string; // ルート音（1度）
-  third: string; // 3度音
-  fifth: string; // 5度音
-  seventh: string | null; // 7度音
-  extensions: Set<string>; // その他の拡張音
-}
-
-/**
- * コードフラグの型定義
- */
-export interface ChordFlags {
-  isMinor: boolean;
-  isDiminished: boolean;
-  isAugmented: boolean;
-  isSus2: boolean;
-  isSus4: boolean;
-  has7: boolean;
-  hasMaj7: boolean;
-  has9: boolean;
-  hasAdd9: boolean;
-  has11: boolean;
-  hasAdd11: boolean;
-  has13: boolean;
-  hasAdd13: boolean;
-  hasFlat9: boolean;
-  hasSharp9: boolean;
-  hasSharp11: boolean;
-  // chordStructure.ts で使用されている追加プロパティ
-  isDim: boolean;
-  isAug: boolean;
-  has6: boolean;
-  hasFlat5: boolean;
-  hasSharp5: boolean;
-}
-
-/**
- * コードの構成音を表す型
+ * コードの構成音の定義
  */
 export interface ChordTone {
-  pitch: string; // 音名（例："E1", "G1"）
-  interval: string; // 音程（例："1", "♭3", "5"）
-  string: number; // 弦番号（1: G弦, 2: D弦, 3: A弦, 4: E弦）
-  fret: number; // フレット位置（0=開放弦, 3=3フレット等）
+  /** 音名 */
+  pitch: string;
+  /** 音程 */
+  interval: string;
+  /** 弦番号（1-6） */
+  string: number;
+  /** フレット番号（0-24） */
+  fret: number;
 }
 
 /**
- * コード構成要素の型定義
+ * コード構造の定義
  */
-export interface ChordComponents {
-  rootNote: string;
-  chordType: string;
-  slashBass?: string;
+export interface ChordStructure {
+  /** ルート音の音程 */
+  root: string;
+  /** 3度の音程 */
+  third: string;
+  /** 5度の音程 */
+  fifth: string;
+  /** 7度の音程（オプション） */
+  seventh?: string;
+  /** 拡張音の音程（オプション） */
+  extensions: string[];
 }
 
 /**
- * コード表記からルート音を抽出します
+ * コード構造の定義マップ
+ */
+const CHORD_STRUCTURES: Record<string, ChordStructure> = {
+  "": { root: "1", third: "3", fifth: "5", extensions: [] },
+  "maj7": { root: "1", third: "3", fifth: "5", seventh: "7", extensions: [] },
+  "m7": { root: "1", third: "♭3", fifth: "5", seventh: "♭7", extensions: [] },
+  "7": { root: "1", third: "3", fifth: "5", seventh: "♭7", extensions: [] },
+  "m": { root: "1", third: "♭3", fifth: "5", extensions: [] },
+  "dim": { root: "1", third: "♭3", fifth: "♭5", extensions: [] },
+  "aug": { root: "1", third: "3", fifth: "♯5", extensions: [] },
+  "sus4": { root: "1", third: "4", fifth: "5", extensions: [] },
+  "add9": { root: "1", third: "3", fifth: "5", extensions: ["9"] },
+  "6": { root: "1", third: "3", fifth: "5", extensions: ["6"] },
+  "9": { root: "1", third: "3", fifth: "5", seventh: "♭7", extensions: ["9"] },
+  "m_maj7": { root: "1", third: "♭3", fifth: "5", seventh: "7", extensions: [] },
+  "m6": { root: "1", third: "♭3", fifth: "5", extensions: ["6"] },
+  "m9": { root: "1", third: "♭3", fifth: "5", seventh: "♭7", extensions: ["9"] },
+  "M9": { root: "1", third: "3", fifth: "5", seventh: "7", extensions: ["9"] },
+  "m_maj9": { root: "1", third: "♭3", fifth: "5", seventh: "7", extensions: ["9"] },
+  "sus2": { root: "1", third: "2", fifth: "5", extensions: [] },
+  "5": { root: "1", third: "1", fifth: "5", extensions: [] },
+  "8": { root: "1", third: "1", fifth: "1", extensions: ["8"] },
+};
+
+/**
+ * コード名からルート音を抽出します
+ * 
+ * @param chordName - コード名
+ * @returns ルート音
+ * @throws {Error} 無効なコード名が指定された場合
+ * 
+ * @example
+ * ```ts
+ * extractRootNote("C")     // => "C"
+ * extractRootNote("Cm7")   // => "C"
+ * extractRootNote("F#maj7") // => "F#"
+ * ```
  */
 export function extractRootNote(chordName: string): string {
   if (!chordName || typeof chordName !== "string") {
-    return "";
+    throw new Error("コード名は文字列である必要があります");
   }
 
-  // 特殊なケースを直接処理
-  if (chordName.startsWith("C♭") || chordName.startsWith("Cb")) return "C♭";
-  if (chordName.startsWith("E♯") || chordName.startsWith("E#")) return "E♯";
-  if (chordName.startsWith("F♭") || chordName.startsWith("Fb")) return "F♭";
-  if (chordName.startsWith("B♯") || chordName.startsWith("B#")) return "B♯";
-
-  // スラッシュベースを含む場合は、スラッシュより前の部分のみを処理
-  const mainChord = chordName.split("/")[0];
-
-  // 基本音名と半音階の音名を組み合わせて全音符配列を作成
-  // 理論的音名も追加（C♭、E♯、F♭、B♯）と代替表記
-  const theoreticalNotes = ["C♭", "Cb", "E♯", "E#", "F♭", "Fb", "B♯", "B#"];
-  const allNotes = [...chromaticNotesSharp, ...chromaticNotesFlat, ...theoreticalNotes];
-
-  // 長い音名から順に確認（F#を先にチェックしてFと混同を避ける）
-  const sortedNotes = allNotes.sort((a, b) => b.length - a.length);
-
-  for (const note of sortedNotes) {
-    if (mainChord.startsWith(note) && isValidNoteName(note)) {
-      return note;
-    }
+  // コード名の先頭から音名を抽出
+  const match = chordName.match(/^[A-G][#♯♭b]?/);
+  if (!match) {
+    throw new Error(`無効なコード名です: ${chordName}`);
   }
 
-  return "";
+  return match[0];
 }
 
 /**
- * コード表記からコードタイプ（装飾部分）を抽出します
+ * コード名からコードタイプを抽出します
+ * 
+ * @param chordName - コード名
+ * @returns コードタイプ
+ * @throws {Error} 無効なコード名が指定された場合
+ * 
+ * @example
+ * ```ts
+ * extractChordType("C")     // => ""
+ * extractChordType("Cm7")   // => "m7"
+ * extractChordType("F#maj7") // => "maj7"
+ * ```
  */
 export function extractChordType(chordName: string): string {
   if (!chordName || typeof chordName !== "string") {
-    return "";
+    throw new Error("コード名は文字列である必要があります");
   }
 
-  // スラッシュを含む場合はスラッシュより前のみを処理
-  const mainPart = chordName.split("/")[0];
-
-  // まずルート音を取得
-  const rootNote = extractRootNote(mainPart);
-  if (!rootNote) {
-    return "";
-  }
-
-  // ルート音以降の部分を抽出
-  return mainPart.slice(rootNote.length);
-}
-
-/**
- * コード表記からスラッシュベース部分を抽出します
- */
-export function extractSlashBass(chordName: string): string | undefined {
-  if (!chordName || typeof chordName !== "string" || chordName === "/") {
-    return undefined;
-  }
-
-  const slashIndex = chordName.indexOf("/");
-  if (slashIndex === -1 || slashIndex === chordName.length - 1) {
-    return undefined;
-  }
-
-  const bass = chordName.slice(slashIndex + 1);
-  return isValidNoteName(bass) ? bass : undefined;
-}
-
-/**
- * コード表記を構成要素に分解します
- */
-export function parseChord(chordName: string): ChordComponents | null {
-  if (!chordName || typeof chordName !== "string") {
-    return null;
-  }
-
+  // ルート音を除いた部分をコードタイプとして抽出
   const rootNote = extractRootNote(chordName);
-  if (!rootNote) {
-    return null;
-  }
-
-  return {
-    rootNote,
-    chordType: extractChordType(chordName),
-    slashBass: extractSlashBass(chordName),
-  };
+  return chordName.slice(rootNote.length);
 }
 
 /**
- * コードの構造を解析します
+ * コード構造を取得します
+ * 
+ * @param chordType - コードタイプ
+ * @returns コード構造
+ * @throws {Error} 無効なコードタイプが指定された場合
+ * 
+ * @example
+ * ```ts
+ * getChordStructure("")     // => { root: "1", third: "3", fifth: "5", extensions: [] }
+ * getChordStructure("m7")   // => { root: "1", third: "♭3", fifth: "5", seventh: "♭7", extensions: [] }
+ * ```
  */
-export function createChordStructure(flags: ChordFlags): ChordStructure {
-  const structure: ChordStructure = {
-    root: "1",
-    third: "3",
-    fifth: "5",
-    seventh: null,
-    extensions: new Set<string>(),
-  };
-
-  // 3度音の設定
-  if (flags.isSus2) {
-    structure.third = "2";
-  } else if (flags.isSus4) {
-    structure.third = "4";
-  } else if (flags.isMinor || flags.isDiminished) {
-    structure.third = "♭3";
-  } else {
-    structure.third = "3";
+export function getChordStructure(chordType: string): ChordStructure {
+  if (!chordType || typeof chordType !== "string") {
+    throw new Error("コードタイプは文字列である必要があります");
   }
 
-  // 5度音の設定
-  if (flags.isDiminished) {
-    structure.fifth = "♭5";
-  } else if (flags.isAugmented) {
-    structure.fifth = "＃5";
-  } else {
-    structure.fifth = "5";
-  }
-
-  // 7度音の設定
-  if (flags.hasMaj7) {
-    structure.seventh = "7";
-  } else if (flags.has7) {
-    structure.seventh = "♭7";
-  } else if (flags.isDiminished) {
-    structure.seventh = "♭♭7";
-  }
-
-  // 拡張音の設定
-  if (flags.has9 || flags.hasAdd9) {
-    structure.extensions.add("9");
-  }
-  if (flags.has11 || flags.hasAdd11) {
-    structure.extensions.add("11");
-  }
-  if (flags.has13 || flags.hasAdd13) {
-    structure.extensions.add("13");
-  }
-
-  // 変化拡張音の設定
-  if (flags.hasFlat9) {
-    structure.extensions.add("♭9");
-  }
-  if (flags.hasSharp9) {
-    structure.extensions.add("♯9");
-  }
-  if (flags.hasSharp11) {
-    structure.extensions.add("♯11");
-  }
-
-  // 暗黙のルール適用
-  if ((flags.has9 || flags.has11 || flags.has13) && !structure.seventh) {
-    structure.seventh = "♭7";
+  const structure = CHORD_STRUCTURES[chordType];
+  if (!structure) {
+    throw new Error(`無効なコードタイプです: ${chordType}`);
   }
 
   return structure;

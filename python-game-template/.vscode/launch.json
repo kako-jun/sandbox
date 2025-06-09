@@ -6,21 +6,47 @@
             "type": "python",
             "request": "launch",
             "module": "src.api.main",
-            "justMyCode": true
+            "justMyCode": true,
+            "python": "${command:python.interpreterPath}",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            },
+            "console": "integratedTerminal"
         },
         {
             "name": "Python: CLI",
             "type": "python",
             "request": "launch",
             "module": "src.cli.main",
-            "justMyCode": true
+            "justMyCode": true,
+            "python": "${command:python.interpreterPath}",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            },
+            "console": "integratedTerminal"
         },
         {
             "name": "Python: Web",
             "type": "python",
             "request": "launch",
             "module": "src.web.app",
-            "justMyCode": true
+            "justMyCode": true,
+            "python": "${command:python.interpreterPath}",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            },
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "JavaScript: Debug Web App",
+            "type": "chrome",
+            "request": "launch",
+            "url": "http://localhost:5000",
+            "webRoot": "${workspaceFolder}/src/web/static",
+            "preLaunchTask": "start-flask",
+            "sourceMapPathOverrides": {
+                "webpack:///src/*": "${webRoot}/*"
+            }
         }
     ]
 }

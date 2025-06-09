@@ -22,6 +22,12 @@ pub struct PlatformInfo {
 }
 
 impl PlatformInfo {
+    /// Creates a new PlatformInfo instance with information about the current platform
+    /// 
+    /// # Returns
+    /// 
+    /// Returns a new PlatformInfo instance containing information about the current
+    /// operating system, architecture, and platform-specific features.
     pub fn new() -> Self {
         Self {
             os: env::consts::OS.to_string(),
@@ -147,41 +153,25 @@ impl Default for PlatformInfo {
 
 /// ターゲットトリプルを取得（コンパイル時に決定）
 fn get_target_triple() -> String {
-    // コンパイル時のターゲット情報
-    #[cfg(target_os = "windows")]
-    #[cfg(target_arch = "x86_64")]
-    return "x86_64-pc-windows-msvc".to_string();
-
-    #[cfg(target_os = "windows")]
-    #[cfg(target_arch = "x86")]
-    return "i686-pc-windows-msvc".to_string();
-
-    #[cfg(target_os = "windows")]
-    #[cfg(target_arch = "aarch64")]
-    return "aarch64-pc-windows-msvc".to_string();
-
-    #[cfg(target_os = "macos")]
-    #[cfg(target_arch = "x86_64")]
-    return "x86_64-apple-darwin".to_string();
-
-    #[cfg(target_os = "macos")]
-    #[cfg(target_arch = "aarch64")]
-    return "aarch64-apple-darwin".to_string();
-
-    #[cfg(target_os = "linux")]
-    #[cfg(target_arch = "x86_64")]
-    return "x86_64-unknown-linux-gnu".to_string();
-
-    #[cfg(target_os = "linux")]
-    #[cfg(target_arch = "aarch64")]
-    return "aarch64-unknown-linux-gnu".to_string();
-
-    #[cfg(target_os = "linux")]
-    #[cfg(target_arch = "arm")]
-    return "arm-unknown-linux-gnueabihf".to_string();
-
-    // その他のプラットフォーム
-    format!("{}-unknown-{}", env::consts::ARCH, env::consts::OS)
+    if cfg!(all(target_os = "windows", target_arch = "x86_64")) {
+        "x86_64-pc-windows-msvc".to_string()
+    } else if cfg!(all(target_os = "windows", target_arch = "x86")) {
+        "i686-pc-windows-msvc".to_string()
+    } else if cfg!(all(target_os = "windows", target_arch = "aarch64")) {
+        "aarch64-pc-windows-msvc".to_string()
+    } else if cfg!(all(target_os = "macos", target_arch = "x86_64")) {
+        "x86_64-apple-darwin".to_string()
+    } else if cfg!(all(target_os = "macos", target_arch = "aarch64")) {
+        "aarch64-apple-darwin".to_string()
+    } else if cfg!(all(target_os = "linux", target_arch = "x86_64")) {
+        "x86_64-unknown-linux-gnu".to_string()
+    } else if cfg!(all(target_os = "linux", target_arch = "aarch64")) {
+        "aarch64-unknown-linux-gnu".to_string()
+    } else if cfg!(all(target_os = "linux", target_arch = "arm")) {
+        "arm-unknown-linux-gnueabihf".to_string()
+    } else {
+        format!("{}-unknown-{}", env::consts::ARCH, env::consts::OS)
+    }
 }
 
 /// プラットフォーム情報を取得する関数

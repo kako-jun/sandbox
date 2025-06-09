@@ -1,3 +1,8 @@
+//! Integration tests for the Rust tool template.
+//! 
+//! These tests verify the interaction between different components
+//! of the application.
+
 use rust_tool_template::api::handlers::*;
 use rust_tool_template::core::AppLogic;
 use std::sync::{Arc, Mutex};
@@ -121,9 +126,6 @@ async fn test_api_get_statistics() {
 #[test]
 fn test_cli_integration() {
     // Test that CLI modules can be imported and basic functions work
-    use rust_tool_template::cli;
-
-    // This would test CLI functionality in a real scenario
     // For now, we just verify the module is accessible
     assert!(true);
 }

@@ -1,25 +1,29 @@
 {
     "name": "Python Game Development",
-    "dockerFile": "../docker/development/Dockerfile",
+    "dockerFile": "./Dockerfile",
     "forwardPorts": [5000, 8000],
-    "settings": {
-        "terminal.integrated.shell.linux": "/bin/bash",
-        "python.defaultInterpreterPath": "/usr/local/bin/python",
-        "python.linting.enabled": true,
-        "python.linting.pylintEnabled": true,
-        "python.formatting.provider": "black",
-        "editor.formatOnSave": true,
-        "editor.codeActionsOnSave": {
-            "source.organizeImports": true
+    "customizations": {
+        "vscode": {
+            "settings": {
+                "terminal.integrated.defaultProfile.linux": "bash",
+                "python.defaultInterpreterPath": "/usr/local/bin/python",
+                "python.linting.enabled": true,
+                "python.linting.pylintEnabled": true,
+                "python.formatting.provider": "black",
+                "editor.formatOnSave": true,
+                "editor.codeActionsOnSave": {
+                    "source.organizeImports": true
+                }
+            },
+            "extensions": [
+                "ms-python.python",
+                "ms-python.vscode-pylance",
+                "ms-azuretools.vscode-docker",
+                "ms-python.black-formatter",
+                "ms-python.isort"
+            ]
         }
     },
-    "extensions": [
-        "ms-python.python",
-        "ms-python.vscode-pylance",
-        "ms-azuretools.vscode-docker",
-        "ms-python.black-formatter",
-        "ms-python.isort"
-    ],
-    "postCreateCommand": "pip install -e .",
+    "postCreateCommand": "pip install poetry && poetry config virtualenvs.in-project true && poetry install",
     "remoteUser": "vscode"
 }

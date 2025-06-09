@@ -21,9 +21,21 @@ RUN groupadd --gid $USER_GID $USERNAME \
 # Set up the working directory
 WORKDIR /workspace
 
-# Install Python dependencies
+# Install Poetry
+RUN curl -sSL https://install.python-poetry.org | python3 -
+
+# Add Poetry to PATH
+ENV PATH="${PATH}:/root/.local/bin"
+
+# Copy poetry configuration files
 COPY pyproject.toml .
-RUN pip install --no-cache-dir -e .
+COPY poetry.lock* ./
+
+# Configure Poetry
+RUN poetry config virtualenvs.in-project true
+
+# Install dependencies
+RUN poetry install --no-interaction --no-ansi
 
 # Set environment variables
 ENV PYTHONPATH=/workspace
