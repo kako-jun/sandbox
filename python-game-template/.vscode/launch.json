@@ -1,0 +1,26 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: API",
+            "type": "python",
+            "request": "launch",
+            "module": "src.api.main",
+            "justMyCode": true
+        },
+        {
+            "name": "Python: CLI",
+            "type": "python",
+            "request": "launch",
+            "module": "src.cli.main",
+            "justMyCode": true
+        },
+        {
+            "name": "Python: Web",
+            "type": "python",
+            "request": "launch",
+            "module": "src.web.app",
+            "justMyCode": true
+        }
+    ]
+}

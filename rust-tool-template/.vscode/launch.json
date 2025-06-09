@@ -1,0 +1,39 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Rust CLI",
+            "type": "rust",
+            "request": "launch",
+            "program": "${workspaceFolder}/target/debug/rust-tool-template",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "stopAtEntry": false,
+            "env": {},
+            "preLaunchTask": "cargo build"
+        },
+        {
+            "name": "Tauri",
+            "type": "rust",
+            "request": "launch",
+            "program": "${workspaceFolder}/src-tauri/target/debug/rust-tool-template-tauri",
+            "args": [],
+            "cwd": "${workspaceFolder}/src-tauri",
+            "stopAtEntry": false,
+            "env": {},
+            "preLaunchTask": "cargo build"
+        },
+        {
+            "name": "Flask Web",
+            "type": "python",
+            "request": "launch",
+            "module": "flask",
+            "env": {
+                "FLASK_APP": "web/src/app.py",
+                "FLASK_ENV": "development"
+            },
+            "args": [],
+            "jinja": true
+        }
+    ]
+}

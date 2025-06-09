@@ -1,0 +1,36 @@
+[tool.poetry]
+name = "python-game-template"
+version = "0.1.0"
+description = "A template for a Python game project with CLI and web interfaces."
+authors = ["kako-jun <kako-jun@example.com>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.scripts]
+game-cli = "src.cli.main:main"
+game-api = "src.api.main:main"
+game-web = "src.web.app:main"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+fastapi = "^0.104.0"
+flask = "^3.0.0"
+uvicorn = {extras = ["standard"], version = "^0.24.0"}
+httpx = "^0.25.0"
+rich = "^13.0.0"
+click = "^8.1.0"
+pydantic = "^2.4.0"
+colorama = "^0.4.6"
+keyboard = "^0.13.5"
+pygame = "^2.5.0"
+requests = "^2.31.0"
+
+[tool.poetry.dev-dependencies]
+black = "^21.0"
+isort = "^5.0"
+mypy = "^0.910"
+pytest-cov = "^2.12.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
