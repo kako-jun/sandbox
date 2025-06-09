@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: .devcontainer/Dockerfile
+    command: poetry run uvicorn src.api.main:app --host 0.0.0.0 --port 8000
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/home/vscode
+      - ./logs:/home/vscode/logs
+    environment:
+      - PYTHONUNBUFFERED=1
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  web:
+    build:
+      context: .
+      dockerfile: .devcontainer/Dockerfile
+    command: poetry run flask run --host 0.0.0.0 --port 5000
+    ports:
+      - "5000:5000"
+    volumes:
+      - .:/home/vscode
+      - ./logs:/home/vscode/logs
+    environment:
+      - PYTHONUNBUFFERED=1
+      - FLASK_APP=src.web.app
+      - FLASK_ENV=development
+    depends_on:
+      - api
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5" 

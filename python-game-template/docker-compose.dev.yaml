@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: docker/development/Dockerfile
+    command: uvicorn src.api.main:app --host 0.0.0.0 --port 8000 --reload
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/workspace
+      - ./logs:/workspace/logs
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONPATH=/workspace
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  web:
+    build:
+      context: .
+      dockerfile: docker/development/Dockerfile
+    command: python -m src.web.app
+    ports:
+      - "5000:5000"
+    volumes:
+      - .:/workspace
+      - ./logs:/workspace/logs
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONPATH=/workspace
+    depends_on:
+      - api
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5" 

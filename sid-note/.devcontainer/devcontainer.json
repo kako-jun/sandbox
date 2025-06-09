@@ -1,0 +1,29 @@
+{
+  "name": "sid-note",
+  "image": "mcr.microsoft.com/devcontainers/typescript-node:1-20-bullseye",
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "terminal.integrated.shell.linux": "/bin/bash",
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+          "source.fixAll.eslint": "explicit"
+        }
+      },
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "bradlc.vscode-tailwindcss",
+        "ms-azuretools.vscode-docker"
+      ]
+    }
+  },
+  "postCreateCommand": "npm config set strict-ssl false && npm ci",
+  "postStartCommand": "npm config set strict-ssl false",
+  "forwardPorts": [3000],
+  "features": {
+    "ghcr.io/devcontainers/features/git:1": {}
+  },
+  "mounts": ["source=${localEnv:HOME}/.npm,target=/home/node/.npm,type=bind,consistency=cached"],
+  "remoteUser": "node"
+}

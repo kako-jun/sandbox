@@ -1,0 +1,185 @@
+title: Diatonic Chord
+artist: Practice
+album: ""
+year: 0
+cover: track_3.webp
+key: C
+time_signature: 4/4
+bpm: 60
+remarks:
+sections:
+  - name: Ⅰ C
+    chord_segments:
+      - chord: C
+        remarks:
+        notes:
+          - pitch: C2
+            value: quarter
+            remarks:
+            lefts:
+              - finger: 3
+                string: 4
+                fret: 8
+                type: press
+            right:
+              string: 4
+              stroke: down
+              mute_strings: [1, 2, 3]
+          - pitch: E2
+            value: quarter
+            remarks:
+            lefts:
+              - finger: 2
+                string: 3
+                fret: 7
+                type: press
+              - finger: 3
+                string: 4
+                fret: 8
+                type: mute
+            right:
+              string: 3
+              stroke: up
+              mute_strings: [1, 2]
+          - pitch: G2
+            value: quarter
+            remarks:
+            lefts:
+              - finger: 3
+                string: 4
+                fret: 8
+                type: mute
+              - finger: 4
+                string: 3
+                fret: 10
+                type: press
+            right:
+              string: 3
+              stroke: down
+              mute_strings: [1, 2]
+  - name: Ⅱ Dm
+    chord_segments:
+      - chord: Dm
+        remarks:
+        notes:
+          - pitch: D2
+            value: quarter
+            remarks:
+            lefts:
+              - finger: 3
+                string: 4
+                fret: 10
+                type: press
+            right:
+              string: 4
+              stroke: down
+              mute_strings: [1, 2, 3]
+          - pitch: F2
+            value: quarter
+            remarks:
+            lefts:
+              - finger: 2
+                string: 3
+                fret: 8
+                type: press
+              - finger: 3
+                string: 4
+                fret: 10
+                type: mute
+            right:
+              string: 3
+              stroke: up
+              mute_strings: [1, 2]
+          - pitch: A2
+            value: quarter
+            remarks:
+            lefts:
+              - finger: 3
+                string: 4
+                fret: 10
+                type: mute
+              - finger: 4
+                string: 3
+                fret: 12
+                type: press
+            right:
+              string: 3
+              stroke: down
+              mute_strings: [1, 2]
+  - name: Ⅲ Em
+    chord_segments:
+      - chord: Em
+        remarks:
+        notes:
+          - pitch: E2
+            value: quarter
+            remarks:
+            lefts:
+              - finger: 2
+                string: 4
+                fret: 5
+                type: mute
+              - finger: 3
+                string: 3
+                fret: 7
+                type: press
+            right:
+              string: 3
+              stroke: down
+              mute_strings: [1, 2]
+          - pitch: G2
+            value: quarter
+            remarks:
+            lefts:
+              - finger: 2
+                string: 2
+                fret: 5
+                type: press
+              - finger: 3
+                string: 4
+                fret: 7
+                type: mute
+            right:
+              string: 2
+              stroke: up
+              mute_strings: [1]
+          - pitch: B2
+            value: quarter
+            remarks:
+            lefts:
+              - finger: 2
+                string: 3
+                fret: 5
+                type: mute
+              - finger: 3
+                string: 4
+                fret: 7
+                type: mute
+              - finger: 4
+                string: 2
+                fret: 9
+                type: press
+            right:
+              string: 2
+              stroke: down
+              mute_strings: [1]
+  - name: Ⅳ F
+    chord_segments:
+      - chord: F
+        remarks:
+        notes: []
+  - name: Ⅴ G
+    chord_segments:
+      - chord: G
+        remarks:
+        notes: []
+  - name: Ⅵ Am
+    chord_segments:
+      - chord: Am
+        remarks:
+        notes: []
+  - name: Ⅶ Bdim
+    chord_segments:
+      - chord: Bdim
+        remarks:
+        notes: []

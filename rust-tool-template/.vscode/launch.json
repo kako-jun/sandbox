@@ -22,18 +22,6 @@
             "stopAtEntry": false,
             "env": {},
             "preLaunchTask": "cargo build"
-        },
-        {
-            "name": "Flask Web",
-            "type": "python",
-            "request": "launch",
-            "module": "flask",
-            "env": {
-                "FLASK_APP": "web/src/app.py",
-                "FLASK_ENV": "development"
-            },
-            "args": [],
-            "jinja": true
         }
     ]
 }

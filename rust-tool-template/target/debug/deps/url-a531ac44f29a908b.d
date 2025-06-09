@@ -1,0 +1,13 @@
+/home/wsl/repos_wsl/sandbox/rust-tool-template/target/debug/deps/liburl-a531ac44f29a908b.rmeta: /home/wsl/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/url-2.5.4/src/lib.rs /home/wsl/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/url-2.5.4/src/host.rs /home/wsl/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/url-2.5.4/src/origin.rs /home/wsl/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/url-2.5.4/src/parser.rs /home/wsl/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/url-2.5.4/src/path_segments.rs /home/wsl/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/url-2.5.4/src/slicing.rs /home/wsl/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/url-2.5.4/src/quirks.rs
+
+/home/wsl/repos_wsl/sandbox/rust-tool-template/target/debug/deps/liburl-a531ac44f29a908b.rlib: /home/wsl/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/url-2.5.4/src/lib.rs /home/wsl/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/url-2.5.4/src/host.rs /home/wsl/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/url-2.5.4/src/origin.rs /home/wsl/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/url-2.5.4/src/parser.rs /home/wsl/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/url-2.5.4/src/path_segments.rs /home/wsl/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/url-2.5.4/src/slicing.rs /home/wsl/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/url-2.5.4/src/quirks.rs
+
+/home/wsl/repos_wsl/sandbox/rust-tool-template/target/debug/deps/url-a531ac44f29a908b.d: /home/wsl/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/url-2.5.4/src/lib.rs /home/wsl/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/url-2.5.4/src/host.rs /home/wsl/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/url-2.5.4/src/origin.rs /home/wsl/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/url-2.5.4/src/parser.rs /home/wsl/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/url-2.5.4/src/path_segments.rs /home/wsl/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/url-2.5.4/src/slicing.rs /home/wsl/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/url-2.5.4/src/quirks.rs
+
+/home/wsl/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/url-2.5.4/src/lib.rs:
+/home/wsl/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/url-2.5.4/src/host.rs:
+/home/wsl/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/url-2.5.4/src/origin.rs:
+/home/wsl/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/url-2.5.4/src/parser.rs:
+/home/wsl/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/url-2.5.4/src/path_segments.rs:
+/home/wsl/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/url-2.5.4/src/slicing.rs:
+/home/wsl/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/url-2.5.4/src/quirks.rs:

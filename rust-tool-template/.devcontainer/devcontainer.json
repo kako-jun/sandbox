@@ -1,16 +1,14 @@
 {
   "name": "Rust Tool Template",
   "build": {
-    "dockerfile": "Dockerfile",
+    "dockerfile": "../Dockerfile",
     "context": ".."
   },
   "settings": {
     "rust-analyzer.cargo.runBuildScripts": true
   },
   "extensions": [
-    "rust-lang.rust-analyzer",
-    "ms-python.python"
+    "rust-lang.rust-analyzer"
   ],
-  "postCreateCommand": "pip install -r web/requirements.txt",
   "remoteUser": "vscode"
 }

@@ -1,21 +1,49 @@
-from src.web.app import app
 import pytest
+from src.web.app import app
 
 @pytest.fixture
 def client():
+    app.config["TESTING"] = True
     with app.test_client() as client:
         yield client
 
-def test_index(client):
-    response = client.get('/')
+def test_index_page(client):
+    response = client.get("/")
     assert response.status_code == 200
-    assert b'Welcome to the Game' in response.data  # Assuming the index.html contains this text
+    assert b"Python Game" in response.data
 
-def test_game_endpoint(client):
-    response = client.get('/api/game')
+def test_get_game_state(client):
+    response = client.get("/api/game/state")
     assert response.status_code == 200
-    # Add more assertions based on the expected response structure
+    data = response.json()
+    assert "player_position" in data
+    assert "score" in data
+    assert "is_game_over" in data
+    assert "board_size" in data
 
-def test_invalid_route(client):
-    response = client.get('/invalid-route')
-    assert response.status_code == 404
+def test_move_valid_direction(client):
+    response = client.post("/api/game/move", json={"direction": "right"})
+    assert response.status_code == 200
+    data = response.json()
+    assert "player_position" in data
+    assert "score" in data
+    assert "is_game_over" in data
+    assert "board_size" in data
+
+def test_move_invalid_direction(client):
+    response = client.post("/api/game/move", json={"direction": "invalid"})
+    assert response.status_code == 400
+
+def test_reset_game(client):
+    # Make some moves first
+    client.post("/api/game/move", json={"direction": "right"})
+    client.post("/api/game/move", json={"direction": "down"})
+    
+    # Reset the game
+    response = client.post("/api/game/reset")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["score"] == 0
+    assert not data["is_game_over"]
+    assert data["player_position"]["x"] == data["board_size"][0] // 2
+    assert data["player_position"]["y"] == data["board_size"][1] // 2

@@ -1,0 +1,10 @@
+/home/wsl/repos_wsl/sandbox/rust-tool-template/target/debug/deps/libfluent_langneg-135b0571968e5cb8.rmeta: /home/wsl/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/fluent-langneg-0.13.0/src/lib.rs /home/wsl/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/fluent-langneg-0.13.0/src/accepted_languages.rs /home/wsl/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/fluent-langneg-0.13.0/src/negotiate/mod.rs /home/wsl/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/fluent-langneg-0.13.0/src/negotiate/likely_subtags.rs
+
+/home/wsl/repos_wsl/sandbox/rust-tool-template/target/debug/deps/libfluent_langneg-135b0571968e5cb8.rlib: /home/wsl/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/fluent-langneg-0.13.0/src/lib.rs /home/wsl/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/fluent-langneg-0.13.0/src/accepted_languages.rs /home/wsl/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/fluent-langneg-0.13.0/src/negotiate/mod.rs /home/wsl/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/fluent-langneg-0.13.0/src/negotiate/likely_subtags.rs
+
+/home/wsl/repos_wsl/sandbox/rust-tool-template/target/debug/deps/fluent_langneg-135b0571968e5cb8.d: /home/wsl/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/fluent-langneg-0.13.0/src/lib.rs /home/wsl/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/fluent-langneg-0.13.0/src/accepted_languages.rs /home/wsl/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/fluent-langneg-0.13.0/src/negotiate/mod.rs /home/wsl/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/fluent-langneg-0.13.0/src/negotiate/likely_subtags.rs
+
+/home/wsl/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/fluent-langneg-0.13.0/src/lib.rs:
+/home/wsl/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/fluent-langneg-0.13.0/src/accepted_languages.rs:
+/home/wsl/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/fluent-langneg-0.13.0/src/negotiate/mod.rs:
+/home/wsl/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/fluent-langneg-0.13.0/src/negotiate/likely_subtags.rs:

@@ -3,17 +3,21 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use tracing::{debug, info, warn};
 
-/// Sample data structure for the application
+/// アプリケーションのデータ構造体
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct AppData {
+    /// データID
     pub id: u32,
+    /// データ名
     pub name: String,
+    /// データの値
     pub value: i32,
+    /// メタデータ
     pub metadata: HashMap<String, String>,
 }
 
 impl AppData {
-    /// Create a new AppData instance
+    /// 新しいAppDataを生成
     pub fn new(id: u32, name: String, value: i32) -> Self {
         Self {
             id,
@@ -23,18 +27,18 @@ impl AppData {
         }
     }
 
-    /// Add metadata to the data entry
+    /// メタデータを追加
     pub fn add_metadata(&mut self, key: String, value: String) {
         self.metadata.insert(key, value);
     }
 
-    /// Get metadata value by key
+    /// メタデータを取得
     pub fn get_metadata(&self, key: &str) -> Option<&String> {
         self.metadata.get(key)
     }
 }
 
-/// Core application logic
+/// アプリケーションのコアロジック
 pub struct AppLogic {
     data: Vec<AppData>,
     next_id: u32,
@@ -47,7 +51,7 @@ impl Default for AppLogic {
 }
 
 impl AppLogic {
-    /// Create a new instance of AppLogic
+    /// 新しいAppLogicを生成
     pub fn new() -> Self {
         Self {
             data: Vec::new(),
@@ -55,7 +59,7 @@ impl AppLogic {
         }
     }
 
-    /// Add new data entry
+    /// データを追加
     pub fn add_data(&mut self, name: String, value: i32) -> u32 {
         let id = self.next_id;
         self.next_id += 1;
@@ -75,17 +79,17 @@ impl AppLogic {
         id
     }
 
-    /// Get all data entries
+    /// すべてのデータを取得
     pub fn get_all_data(&self) -> &[AppData] {
         &self.data
     }
 
-    /// Get data by ID
+    /// IDでデータを取得
     pub fn get_data_by_id(&self, id: u32) -> Option<&AppData> {
         self.data.iter().find(|d| d.id == id)
     }
 
-    /// Update data entry
+    /// データを更新
     pub fn update_data(&mut self, id: u32, name: Option<String>, value: Option<i32>) -> bool {
         if let Some(data) = self.data.iter_mut().find(|d| d.id == id) {
             let old_name = data.name.clone();
@@ -109,7 +113,7 @@ impl AppLogic {
         }
     }
 
-    /// Delete data entry
+    /// データを削除
     pub fn delete_data(&mut self, id: u32) -> bool {
         if let Some(pos) = self.data.iter().position(|d| d.id == id) {
             let removed_data = self.data.remove(pos);
@@ -124,15 +128,14 @@ impl AppLogic {
         }
     }
 
-    /// Get statistics
+    /// 統計情報を取得
     pub fn get_statistics(&self) -> HashMap<String, serde_json::Value> {
         use serde_json::{Number, Value};
 
         let total_count = self.data.len();
-        let mut stats = HashMap::from([(
-            "total_count".to_string(),
-            Value::Number(Number::from(total_count)),
-        )]);
+        let mut stats = HashMap::from([
+            ("total_count".to_string(), Value::Number(Number::from(total_count))),
+        ]);
 
         if !self.data.is_empty() {
             let sum: i64 = self.data.iter().map(|d| d.value as i64).sum();
@@ -167,7 +170,7 @@ impl AppLogic {
         stats
     }
 
-    /// Sample processing function - using anyhow::Result for better error handling
+    /// データを処理（サンプル）
     pub fn process_data(&mut self) -> Result<String> {
         let entry_count = self.data.len();
         info!("Starting data processing for {} entries", entry_count);

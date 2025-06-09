@@ -1,15 +1,23 @@
 use std::env;
 
-/// プラットフォーム情報を取得する構造体
+/// プラットフォーム情報を表す構造体
 #[derive(Debug, Clone)]
 pub struct PlatformInfo {
+    /// OS名
     pub os: String,
+    /// アーキテクチャ
     pub arch: String,
+    /// ファミリー
     pub family: String,
+    /// ターゲットトリプル
     pub target_triple: String,
+    /// Windowsかどうか
     pub is_windows: bool,
+    /// Unix系かどうか
     pub is_unix: bool,
+    /// macOSかどうか
     pub is_macos: bool,
+    /// Linuxかどうか
     pub is_linux: bool,
 }
 

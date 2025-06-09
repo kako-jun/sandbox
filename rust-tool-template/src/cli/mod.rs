@@ -1,3 +1,4 @@
+/// CLIモジュール（TUI/コマンドライン両対応）
 pub mod tui;
 
 use crate::core::AppLogic;
@@ -11,6 +12,7 @@ use std::io::{self, Write};
 use std::sync::{Arc, Mutex};
 use tracing::{error, info, warn};
 
+/// CLIエントリーポイント関数
 pub async fn run() -> Result<()> {
     // Initialize internationalization
     let mut i18n = I18n::new();
@@ -347,7 +349,7 @@ fn handle_batch_add(
         let name = format!("{}-{}", base_name, i);
         let value = base_value * i;
         let id = logic.add_data(name.clone(), value);
-        added_ids.push((id, name, value));
+        added_ids.push((id, name.clone(), value));
         info!(
             "Batch add entry {}: name={}, value={}, id={}",
             i, name, value, id

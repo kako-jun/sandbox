@@ -1,22 +1,36 @@
-FROM python:3.11-slim
+FROM python:3.12-slim
 
-# Set the working directory
-WORKDIR /app
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    curl \
+    git \
+    sudo \
+    && rm -rf /var/lib/apt/lists/*
 
-# Copy the pyproject.toml and poetry.lock files
-COPY pyproject.toml poetry.lock ./
+# Create a non-root user
+ARG USERNAME=vscode
+ARG USER_UID=1000
+ARG USER_GID=$USER_UID
 
-# Install Poetry
-RUN pip install poetry
+RUN groupadd --gid $USER_GID $USERNAME \
+    && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME \
+    && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
+    && chmod 0440 /etc/sudoers.d/$USERNAME
 
-# Install dependencies
-RUN poetry install --no-root --no-dev
+# Set up the working directory
+WORKDIR /workspace
 
-# Copy the rest of the application code
-COPY . .
+# Install Python dependencies
+COPY pyproject.toml .
+RUN pip install --no-cache-dir -e .
 
-# Expose the necessary ports (adjust as needed)
-EXPOSE 8000
+# Set environment variables
+ENV PYTHONPATH=/workspace
+ENV PYTHONUNBUFFERED=1
 
-# Command to run the application (adjust as needed)
-CMD ["poetry", "run", "uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Switch to non-root user
+USER $USERNAME
+
+# Default command
+CMD ["python", "-m", "src.cli.main"]

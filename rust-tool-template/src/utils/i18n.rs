@@ -3,12 +3,16 @@ use fluent_bundle::FluentArgs;
 use std::collections::HashMap;
 use unic_langid::{langid, LanguageIdentifier};
 
+/// 多言語対応（i18n）を管理する構造体
 pub struct I18n {
+    /// 言語ごとのFluentバンドル
     bundles: HashMap<String, FluentBundle<FluentResource>>,
+    /// 現在の言語
     current_lang: String,
 }
 
 impl I18n {
+    /// 新しいI18nインスタンスを生成
     pub fn new() -> Self {
         let mut i18n = Self {
             bundles: HashMap::new(),
@@ -41,17 +45,20 @@ impl I18n {
         }
     }
 
+    /// 言語をセット
     pub fn set_language(&mut self, lang: &str) {
         if self.bundles.contains_key(lang) {
             self.current_lang = lang.to_string();
         }
     }
 
+    /// キーに対応する翻訳文字列を取得
     pub fn get(&self, key: &str) -> String {
         self.get_with_args(key, None)
     }
 
-    pub fn get_with_args(&self, key: &str, args: Option<&FluentArgs>) -> String {
+    /// 引数付きで翻訳文字列を取得
+    pub fn get_with_args(&self, key: &str, args: Option<&FluentArgs<'_>>) -> String {
         if let Some(bundle) = self.bundles.get(&self.current_lang) {
             if let Some(msg) = bundle.get_message(key) {
                 if let Some(pattern) = msg.value() {
@@ -79,6 +86,7 @@ impl I18n {
         key.to_string()
     }
 
+    /// 現在の言語を取得
     pub fn current_language(&self) -> &str {
         &self.current_lang
     }

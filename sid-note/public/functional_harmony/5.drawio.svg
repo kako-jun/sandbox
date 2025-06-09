@@ -1,0 +1,23 @@
+<svg host="65bd71144e" xmlns="http://www.w3.org/2000/svg" style="background: transparent; background-color: transparent;" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="120px" height="120px" viewBox="-0.5 -0.5 120 120" content="&lt;mxfile&gt;&lt;diagram id=&quot;NbYsLP1aahT-Vv3tsGlU&quot; name=&quot;ページ1&quot;&gt;zZa7boMwFEC/hjEV4EBghabJ0ilDZxcMWDVcZJxC+vU1xbxKUBKVRGVA9vH16/gaoSE/rXYc58krhIRpph5WGnrWTNOyHPmuwakBxkZXJOY0VKwHB/pFFNQVPdKQFKNAAcAEzccwgCwjgRgxzDmU47AI2HjWHMdkAg4BZlP6RkORNNQxNz3fExon7cyG7TYtKW6D1U6KBIdQDhDaasjnAKIppZVPWC2v9dL0e5lp7RbGSSau6oBUl0/Mjmp3amXi1G63TKgghxwHdb2UR6ohLxEpkzVDFnGRN5IjWhE5rhdRxnxgwCXLIJO9vEJw+Ohk6R35FTZdfrs8wgWpBkhtZ0cgJYKfZIhqXSuzKrdWhtG6Lvuj6lgyPKYWYpUecTd4b1AWlMQZoWvrslCeQPp+lLN4F9QOTWom0n+eO8qzJ/LamzmQ55xx5zgLqLPQZXWCU5zFde2SOw4CCwqZrK7QrLQ5wzPmzvj9m0z7nMwl8tBa30nm7S4jRvO9GmgBrxv3yR09E83uAzVfcd2v13zTfR8meP3tuk/S6u4jk9b+FzbthWQ6D5Qpq/1vw0/b4OcLbb8B&lt;/diagram&gt;&lt;/mxfile&gt;">
+    <defs/>
+    <g>
+        <g>
+            <rect x="0" y="0" width="120" height="120" fill="none" stroke="none" pointer-events="all"/>
+        </g>
+        <g>
+            <path d="M 60 12 L 100 56 L 60 100 L 20 56 Z" fill="#000000" stroke="none" pointer-events="all" style="fill: light-dark(rgb(0, 0, 0), rgb(237, 237, 237));"/>
+        </g>
+        <g>
+            <path d="M 20 12 L 80 52 L 20 92 Z" fill="#000000" stroke="none" transform="rotate(-30,50,52)" pointer-events="all" style="fill: light-dark(rgb(0, 0, 0), rgb(237, 237, 237));"/>
+        </g>
+        <g>
+            <path d="M 40 11 L 100 51 L 40 91 Z" fill="#000000" stroke="none" transform="translate(70,0)scale(-1,1)translate(-70,0)rotate(-30,70,51)" pointer-events="all" style="fill: light-dark(rgb(0, 0, 0), rgb(237, 237, 237));"/>
+        </g>
+        <g>
+            <path d="M 20 22 L 80 62 L 20 102 Z" fill="#000000" stroke="none" transform="rotate(-120,50,62)" pointer-events="all" style="fill: light-dark(rgb(0, 0, 0), rgb(237, 237, 237));"/>
+        </g>
+        <g>
+            <path d="M 40 22 L 100 62 L 40 102 Z" fill="#000000" stroke="none" transform="rotate(-60,70,62)" pointer-events="all" style="fill: light-dark(rgb(0, 0, 0), rgb(237, 237, 237));"/>
+        </g>
+    </g>
+</svg>

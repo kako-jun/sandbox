@@ -1,7 +1,50 @@
 import random
 import time
-from typing import Optional, Callable, Dict, Any
+from typing import Optional, Callable, Dict, Any, List, Tuple
 from .models import GameState, GameConfig, Player, Position, Direction, CellType, GameBoard, GameAction
+from dataclasses import dataclass
+from enum import Enum
+
+
+class Direction(Enum):
+    UP = "up"
+    DOWN = "down"
+    LEFT = "left"
+    RIGHT = "right"
+
+
+@dataclass
+class Position:
+    x: int
+    y: int
+
+    def move(self, direction: Direction) -> "Position":
+        if direction == Direction.UP:
+            return Position(self.x, self.y - 1)
+        elif direction == Direction.DOWN:
+            return Position(self.x, self.y + 1)
+        elif direction == Direction.LEFT:
+            return Position(self.x - 1, self.y)
+        elif direction == Direction.RIGHT:
+            return Position(self.x + 1, self.y)
+        return self
+
+
+@dataclass
+class GameState:
+    player_position: Position
+    score: int
+    is_game_over: bool
+    board_size: Tuple[int, int]
+
+    @classmethod
+    def create_new(cls, board_size: Tuple[int, int] = (10, 10)) -> "GameState":
+        return cls(
+            player_position=Position(board_size[0] // 2, board_size[1] // 2),
+            score=0,
+            is_game_over=False,
+            board_size=board_size,
+        )
 
 
 class SnakeGame:
@@ -25,11 +68,10 @@ class SnakeGame:
 
         # Create game state
         self.state = GameState(
-            players=[player],
-            current_player_id=0,
-            board_width=self.config.board_width,
-            board_height=self.config.board_height,
-            food_position=self._generate_food_position(initial_snake),
+            player_position=initial_snake[0],
+            score=0,
+            is_game_over=False,
+            board_size=(self.config.board_width, self.config.board_height),
         )
 
         # Create board
@@ -54,10 +96,9 @@ class SnakeGame:
                 self.board.cells[y][x] = CellType.EMPTY
 
         # Place snake
-        player = self.state.players[0]
-        for i, pos in enumerate(player.snake_body):
-            if 0 <= pos.x < self.board.width and 0 <= pos.y < self.board.height:
-                self.board.cells[pos.y][pos.x] = CellType.SNAKE
+        player = self.state.player_position
+        if 0 <= player.x < self.board.width and 0 <= player.y < self.board.height:
+            self.board.cells[player.y][player.x] = CellType.SNAKE
 
         # Place food
         if self.state.food_position:
@@ -92,59 +133,39 @@ class SnakeGame:
         if not self.state:
             return False
 
-        player = self.state.players[0]
-
-        # Prevent moving in opposite direction
-        opposite_dirs = {
-            Direction.UP: Direction.DOWN,
-            Direction.DOWN: Direction.UP,
-            Direction.LEFT: Direction.RIGHT,
-            Direction.RIGHT: Direction.LEFT,
-        }
-
-        if direction == opposite_dirs.get(player.direction) and len(player.snake_body) > 1:
-            direction = player.direction
-
-        player.direction = direction
-
-        # Calculate new head position
-        head = player.snake_body[0]
-        new_head = Position(x=head.x, y=head.y)
-
-        if direction == Direction.UP:
-            new_head.y -= 1
-        elif direction == Direction.DOWN:
-            new_head.y += 1
-        elif direction == Direction.LEFT:
-            new_head.x -= 1
-        elif direction == Direction.RIGHT:
-            new_head.x += 1
+        new_position = self.state.player_position.move(direction)
+        
+        # Check boundaries
+        if (0 <= new_position.x < self.config.board_width and
+            0 <= new_position.y < self.config.board_height):
+            self.state.player_position = new_position
+            self.state.score += 1
 
         # Check collision with walls
         if (
-            new_head.x < 0
-            or new_head.x >= self.config.board_width
-            or new_head.y < 0
-            or new_head.y >= self.config.board_height
+            new_position.x < 0
+            or new_position.x >= self.config.board_width
+            or new_position.y < 0
+            or new_position.y >= self.config.board_height
         ):
-            self.state.game_over = True
+            self.state.is_game_over = True
             return False
 
         # Check collision with self
-        if new_head in player.snake_body:
-            self.state.game_over = True
+        if new_position in self.state.snake_body:
+            self.state.is_game_over = True
             return False
 
         # Add new head
-        player.snake_body.insert(0, new_head)
+        self.state.snake_body.insert(0, new_position)
 
         # Check if food was eaten
-        if new_head == self.state.food_position:
-            player.score += 10
-            self.state.food_position = self._generate_food_position(player.snake_body)
+        if new_position == self.state.food_position:
+            self.state.score += 10
+            self.state.food_position = self._generate_food_position(self.state.snake_body)
         else:
             # Remove tail if no food eaten
-            player.snake_body.pop()
+            self.state.snake_body.pop()
 
         self.state.tick_count += 1
         self._update_board()
@@ -160,7 +181,7 @@ class SnakeGame:
 
     def is_game_over(self) -> bool:
         """Check if game is over"""
-        return self.state.game_over if self.state else True
+        return self.state.is_game_over if self.state else True
 
     def set_render_callback(self, callback: Callable[[GameState, GameBoard], None]):
         """Set callback function for rendering"""
@@ -192,7 +213,7 @@ class Game(SnakeGame):
             time.sleep(self.config.tick_speed)
             # Auto-move snake forward
             if self.state:
-                player = self.state.players[0]
+                player = self.state.player_position
                 action = GameAction(player_id=0, action_type="move", direction=player.direction)
                 if not self.process_action(action):
                     break
