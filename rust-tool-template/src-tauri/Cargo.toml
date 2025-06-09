@@ -1,0 +1,10 @@
+[package]
+name = "rust-tool-template"
+version = "0.1.0"
+edition = "2021"
+authors = ["kako-jun"]
+td{ version = "1.0", features = ["api"] }
+"build-"api"
+"api"-build[build-dependencies]
+tbuila-duri-build = "1.0"taui-builserde_json = "1.0"
+tauri-build = "1.0"taui-builsede = { verson", features = ["derive] }

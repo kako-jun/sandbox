@@ -1,0 +1,92 @@
+[package]
+name = "rust-tool-template"
+version = "0.1.0"
+edition = "2021"
+authors = ["kako-jun"]
+description = "A comprehensive CLI tool template with multi-platform support"
+license = "MIT OR Apache-2.0"
+readme = "README.md"
+repository = "https://github.com/kako-jun/rust-tool-template"
+homepage = "https://github.com/kako-jun/rust-tool-template"
+categories = ["command-line-utilities", "template"]
+keywords = ["cli", "template", "multi-platform", "internationalization"]
+
+[dependencies]
+# 基本的な依存関係
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+# CLI用
+clap = { version = "4.5", features = ["derive", "env", "unicode", "wrap_help"] }
+# エラーハンドリング
+anyhow = "1.0"
+# 非同期処理
+tokio = { version = "1.0", features = ["full"] }
+# WebAPI用
+warp = "0.3"
+# ログ出力
+log = "0.4"
+env_logger = "0.11"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+tracing-appender = "0.2"
+# 多言語対応
+fluent = "0.16"
+fluent-bundle = "0.15"
+unic-langid = "0.9"
+# 設定ファイル
+config = "0.14"
+dirs = "5.0"
+# TUI用 (クロスプラットフォーム対応)
+ratatui = "0.26"
+crossterm = { version = "0.27", features = ["event-stream"] }
+# プラットフォーム検出
+target-lexicon = "0.12"
+
+[dev-dependencies]
+# テスト用の基本的な依存関係
+tokio-test = "0.4"
+tempfile = "3.8"
+
+# プラットフォーム固有の依存関係
+[target.'cfg(windows)'.dependencies]
+winapi = { version = "0.3", features = ["winuser", "wincon"] }
+
+[target.'cfg(unix)'.dependencies]
+nix = { version = "0.27", features = ["signal"] }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+cocoa = "0.25"
+objc = "0.2"
+
+# ビルド設定
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
+
+[profile.dev]
+opt-level = 0
+debug = true
+overflow-checks = true
+
+# プラットフォーム固有のフィーチャー
+[features]
+default = ["tui"]
+tui = ["ratatui", "crossterm"]
+gui = []
+web = ["warp"]
+
+[lib]
+name = "rust_tool_template"
+crate-type = ["cdylib", "rlib"]
+
+[[bin]]
+name = "rust-tool-template"
+path = "src/main.rs"
+
+# Cargoメタデータ
+[package.metadata.docs.rs]
+all-features = true
+targets = ["x86_64-unknown-linux-gnu", "x86_64-pc-windows-msvc", "x86_64-apple-darwin"]

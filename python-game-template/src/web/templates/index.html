@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <title>Python Game Template</title>
+</head>
+<body>
+    <header>
+        <h1>Python Game Template</h1>
+    </header>
+    <main>
+        <section id="game-container">
+            <h2>ゲームを開始する</h2>
+            <button id="start-game">ゲームスタート</button>
+        </section>
+    </main>
+    <footer>
+        <p>&copy; 2023 Python Game Template</p>
+    </footer>
+    <script src="{{ url_for('static', filename='js/game.js') }}"></script>
+</body>
+</html>
