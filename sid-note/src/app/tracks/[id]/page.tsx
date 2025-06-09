@@ -4,22 +4,78 @@ import TitleHeader from "@/components/ssr/layout/TitleHeader";
 import Track from "@/components/ssr/track/Track";
 import { loadTrackFromYamlUrl } from "@/utils/loader/trackLoader";
 import { processTrackData } from "@/utils/track/trackProcessor";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import type { ReactNode } from "react";
 
-export default async function TrackPage({ params }: { params: Promise<{ id: string }> }) {
-  // idはstring型で受け取る
-  const id = (await params).id;
-  // public配下のyamlをサーバーで読み込む
-  const track = await loadTrackFromYamlUrl(`/track/track_${id}.yaml`);
+/**
+ * トラックページのメタデータを生成するためのパラメータ
+ */
+interface GenerateMetadataParams {
+  /** ルートパラメータ */
+  params: {
+    /** トラックID */
+    id: string;
+  };
+}
+
+/**
+ * トラックページのメタデータを生成
+ * SEO対策やブラウザの表示設定に使用されます
+ *
+ * @param {GenerateMetadataParams} props - コンポーネントのプロパティ
+ * @returns {Promise<Metadata>} メタデータ
+ */
+export async function generateMetadata({ params }: GenerateMetadataParams): Promise<Metadata> {
+  const track = await loadTrackFromYamlUrl(`/track/track_${params.id}.yaml`);
+  if (!track) {
+    return {
+      title: "トラックが見つかりません | Sid Note",
+      description: "指定されたトラックが見つかりませんでした。",
+    };
+  }
+
+  return {
+    title: `${track.title} | Sid Note`,
+    description: `${track.title}のコード進行、スケール、フレーズなどを確認できます。`,
+    openGraph: {
+      title: `${track.title} | Sid Note`,
+      description: `${track.title}のコード進行、スケール、フレーズなどを確認できます。`,
+      type: "article",
+    },
+  };
+}
+
+/**
+ * トラックページのメインコンポーネントのプロパティ
+ */
+interface TrackPageProps {
+  /** ルートパラメータ */
+  params: {
+    /** トラックID */
+    id: string;
+  };
+}
+
+/**
+ * トラックページのメインコンポーネント
+ * 特定のトラックの詳細情報を表示します
+ *
+ * @param {TrackPageProps} props - コンポーネントのプロパティ
+ * @returns {Promise<ReactNode>} トラックページのコンポーネント
+ */
+export default async function TrackPage({ params }: TrackPageProps): Promise<ReactNode> {
+  const track = await loadTrackFromYamlUrl(`/track/track_${params.id}.yaml`);
   if (!track) return notFound();
 
-  // トラックデータの処理
   const processedTrack = processTrackData(track);
 
   return (
     <CenteredPage>
       <TitleHeader />
-      <Track track={processedTrack} />
+      <main className="w-full max-w-4xl mx-auto px-4 py-8" role="main">
+        <Track track={processedTrack} />
+      </main>
       <Footer />
     </CenteredPage>
   );

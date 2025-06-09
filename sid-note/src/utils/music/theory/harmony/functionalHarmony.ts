@@ -1,13 +1,14 @@
 /**
  * 機能和声ユーティリティ
- * 
+ *
  * このモジュールは、機能和声に関する機能を提供します。
  * 機能和声の分析、機能和声の進行、機能和声の変換など、
  * 機能和声の基本的な操作に対応します。
- * 
+ *
  * @module functionalHarmony
  */
 
+import { Scale, generateScaleFromKey } from "@/utils/music/theory/core/scales";
 
 /**
  * 機能和声・カデンツ関連ユーティリティ
@@ -59,12 +60,12 @@ const FUNCTIONAL_PATTERNS: Record<string, HarmonicFunction[]> = {
 
 /**
  * 機能和声進行を生成します
- * 
+ *
  * @param key - キー
  * @param pattern - 進行パターン
  * @returns 機能和声進行
  * @throws {Error} 無効なキーまたはパターンが指定された場合
- * 
+ *
  * @example
  * ```ts
  * generateFunctionalProgression("C", "T-S-D-T")     // => { functions: ["T", "S", "D", "T"], key: "C", type: "major" }
@@ -95,12 +96,12 @@ export function generateFunctionalProgression(key: string, pattern: string): Fun
 
 /**
  * 和声機能からコードを取得します
- * 
+ *
  * @param function_ - 和声機能
  * @param key - キー
  * @returns コード
  * @throws {Error} 無効な和声機能またはキーが指定された場合
- * 
+ *
  * @example
  * ```ts
  * getChordFromFunction("T", "C")  // => "C"
@@ -154,12 +155,12 @@ const MINOR_FUNCTION_MAP: Record<HarmonicFunction, string> = {
 
 /**
  * コードの和声機能を取得します
- * 
+ *
  * @param chord - コード名
  * @param key - キー
  * @returns 和声機能（T, S, D）
  * @throws {Error} 無効なコード名やキーが指定された場合
- * 
+ *
  * @example
  * ```ts
  * getFunctionalHarmony("C", "C")  // => "T"
@@ -195,11 +196,11 @@ export function getFunctionalHarmony(chord: string, key: string): string {
 
 /**
  * 数字をローマ数字に変換します
- * 
+ *
  * @param num - 数字（1-7）
  * @returns ローマ数字（I-VII）
  * @throws {Error} 無効な数字が指定された場合
- * 
+ *
  * @example
  * ```ts
  * getRomanNumeral(1)  // => "I"
@@ -541,3 +542,46 @@ export const romanNumeralHarmonyInfo = (degree: number): { roman: string; desc: 
 export const romanNumeral7thHarmonyInfo = (degree: number): { roman: string; desc: string } => {
   return getFunctionalHarmonyInfo(degree, true);
 };
+
+/**
+ * 機能和声の情報を取得します
+ *
+ * @param scale - スケールまたはスケールキー
+ * @param degree - 和声の度数（1-7）
+ * @returns 機能和声の情報
+ */
+export function getFunctionalHarmonyInfo(scale: Scale | string, degree: number) {
+  const scaleObj = typeof scale === "string" ? generateScaleFromKey(scale) : scale;
+  const isMinor = scaleObj.type === "minor";
+  const roman = romanNumeralHarmonyInfo(degree).roman;
+  const desc = romanNumeralHarmonyInfo(degree).desc;
+  return { roman, desc, isMinor };
+}
+
+/**
+ * ローマ数字の和声情報を取得します
+ *
+ * @param degree - 和声の度数（1-7）
+ * @returns ローマ数字の和声情報
+ */
+export function romanNumeralHarmonyInfo(degree: number) {
+  const romanNumerals = ["I", "II", "III", "IV", "V", "VI", "VII"];
+  const descriptions = [
+    "トニック",
+    "サブドミナント",
+    "トニック",
+    "サブドミナント",
+    "ドミナント",
+    "トニック",
+    "ドミナント",
+  ];
+
+  if (degree < 1 || degree > 7) {
+    throw new Error("度数は1から7の間である必要があります");
+  }
+
+  return {
+    roman: romanNumerals[degree - 1],
+    desc: descriptions[degree - 1],
+  };
+}

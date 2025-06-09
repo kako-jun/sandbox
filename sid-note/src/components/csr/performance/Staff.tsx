@@ -2,9 +2,15 @@
 
 import { NoteType } from "@/schemas/trackSchema";
 import { getLine } from "@/utils/music/theory/core/notation";
-import React from "react";
+import type { ReactNode } from "react";
+import { useEffect, useRef } from "react";
 
-const drawLines = (context: CanvasRenderingContext2D) => {
+/**
+ * 五線譜の背景線を描画します
+ *
+ * @param {CanvasRenderingContext2D} context - キャンバスの2Dコンテキスト
+ */
+const drawLines = (context: CanvasRenderingContext2D): void => {
   context.strokeStyle = "#999999";
 
   const isWindows = navigator.userAgent.includes("Windows");
@@ -75,7 +81,14 @@ const drawLines = (context: CanvasRenderingContext2D) => {
   }
 };
 
-const drawNote = (context: CanvasRenderingContext2D, note: NoteType, next: boolean = false) => {
+/**
+ * ノートを描画します
+ *
+ * @param {CanvasRenderingContext2D} context - キャンバスの2Dコンテキスト
+ * @param {NoteType} note - 描画するノート
+ * @param {boolean} [next=false] - 次のノートかどうか
+ */
+const drawNote = (context: CanvasRenderingContext2D, note: NoteType, next: boolean = false): void => {
   if (!note.pitch) {
     return;
   }
@@ -141,17 +154,29 @@ const drawNote = (context: CanvasRenderingContext2D, note: NoteType, next: boole
   }
 };
 
-type StaffProps = {
+/**
+ * 五線譜コンポーネントのプロパティ
+ */
+interface StaffProps {
+  /** 現在のノート */
   note: NoteType;
+  /** 次のノート（オプション） */
   nextNote?: NoteType | null;
-};
+}
 
-const Staff: React.FC<StaffProps> = ({ note, nextNote = null }) => {
-  const bgCanvasRef = React.useRef<HTMLCanvasElement>(null);
-  const fgCanvasRef = React.useRef<HTMLCanvasElement>(null);
+/**
+ * 五線譜コンポーネント
+ * 五線譜を表示し、現在のノートと次のノートをハイライトします
+ *
+ * @param {StaffProps} props - コンポーネントのプロパティ
+ * @returns {ReactNode} 五線譜コンポーネント
+ */
+export default function Staff({ note, nextNote = null }: StaffProps): ReactNode {
+  const bgCanvasRef = useRef<HTMLCanvasElement>(null);
+  const fgCanvasRef = useRef<HTMLCanvasElement>(null);
 
   // 背景は初回のみ描画
-  React.useEffect(() => {
+  useEffect(() => {
     if (!bgCanvasRef.current) {
       return;
     }
@@ -166,7 +191,7 @@ const Staff: React.FC<StaffProps> = ({ note, nextNote = null }) => {
   }, []);
 
   // ノートはnote/nextNote変更時のみ描画
-  React.useEffect(() => {
+  useEffect(() => {
     if (!fgCanvasRef.current) {
       return;
     }
@@ -182,6 +207,7 @@ const Staff: React.FC<StaffProps> = ({ note, nextNote = null }) => {
     }
     drawNote(context, note);
   }, [note, nextNote]);
+
   return (
     <div
       style={{
@@ -190,6 +216,8 @@ const Staff: React.FC<StaffProps> = ({ note, nextNote = null }) => {
         aspectRatio: "270 / 300",
         maxWidth: "100%",
       }}
+      role="img"
+      aria-label="五線譜"
     >
       <canvas
         ref={bgCanvasRef}
@@ -203,6 +231,7 @@ const Staff: React.FC<StaffProps> = ({ note, nextNote = null }) => {
           height: "100%",
           zIndex: 1,
         }}
+        aria-hidden="true"
       />
       <canvas
         ref={fgCanvasRef}
@@ -217,9 +246,8 @@ const Staff: React.FC<StaffProps> = ({ note, nextNote = null }) => {
           zIndex: 2,
           pointerEvents: "none",
         }}
+        aria-hidden="true"
       />
     </div>
   );
-};
-
-export default Staff;
+}

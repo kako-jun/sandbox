@@ -2,9 +2,15 @@
 
 import { NoteType } from "@/schemas/trackSchema";
 import { getLine } from "@/utils/music/theory/core/notation";
-import React from "react";
+import type { ReactNode } from "react";
+import { useEffect, useRef } from "react";
 
-const drawLines = (context: CanvasRenderingContext2D) => {
+/**
+ * キーボードの背景線を描画します
+ *
+ * @param {CanvasRenderingContext2D} context - キャンバスの2Dコンテキスト
+ */
+const drawLines = (context: CanvasRenderingContext2D): void => {
   context.strokeStyle = "#999999";
 
   const isWindows = navigator.userAgent.includes("Windows");
@@ -75,7 +81,14 @@ const drawLines = (context: CanvasRenderingContext2D) => {
   }
 };
 
-const drawNote = (context: CanvasRenderingContext2D, note: NoteType, next: boolean = false) => {
+/**
+ * ノートを描画します
+ *
+ * @param {CanvasRenderingContext2D} context - キャンバスの2Dコンテキスト
+ * @param {NoteType} note - 描画するノート
+ * @param {boolean} [next=false] - 次のノートかどうか
+ */
+const drawNote = (context: CanvasRenderingContext2D, note: NoteType, next: boolean = false): void => {
   if (!note.pitch) {
     return;
   }
@@ -112,17 +125,29 @@ const drawNote = (context: CanvasRenderingContext2D, note: NoteType, next: boole
   }
 };
 
-type KeyboardProps = {
+/**
+ * キーボードコンポーネントのプロパティ
+ */
+interface KeyboardProps {
+  /** 現在のノート */
   note: NoteType;
+  /** 次のノート（オプション） */
   nextNote?: NoteType | null;
-};
+}
 
-const Keyboard: React.FC<KeyboardProps> = ({ note, nextNote = null }) => {
-  const bgCanvasRef = React.useRef<HTMLCanvasElement>(null);
-  const fgCanvasRef = React.useRef<HTMLCanvasElement>(null);
+/**
+ * キーボードコンポーネント
+ * ピアノキーボードを表示し、現在のノートと次のノートをハイライトします
+ *
+ * @param {KeyboardProps} props - コンポーネントのプロパティ
+ * @returns {ReactNode} キーボードコンポーネント
+ */
+export default function Keyboard({ note, nextNote = null }: KeyboardProps): ReactNode {
+  const bgCanvasRef = useRef<HTMLCanvasElement>(null);
+  const fgCanvasRef = useRef<HTMLCanvasElement>(null);
 
   // 背景は初回のみ描画
-  React.useEffect(() => {
+  useEffect(() => {
     if (!bgCanvasRef.current) {
       return;
     }
@@ -137,7 +162,7 @@ const Keyboard: React.FC<KeyboardProps> = ({ note, nextNote = null }) => {
   }, []);
 
   // ノートはnote/nextNote変更時のみ描画
-  React.useEffect(() => {
+  useEffect(() => {
     if (!fgCanvasRef.current) {
       return;
     }
@@ -153,6 +178,7 @@ const Keyboard: React.FC<KeyboardProps> = ({ note, nextNote = null }) => {
     }
     drawNote(context, note);
   }, [note, nextNote]);
+
   return (
     <div
       style={{
@@ -161,6 +187,8 @@ const Keyboard: React.FC<KeyboardProps> = ({ note, nextNote = null }) => {
         aspectRatio: "500 / 230",
         maxWidth: "100%",
       }}
+      role="img"
+      aria-label="ピアノキーボード"
     >
       <canvas
         ref={bgCanvasRef}
@@ -174,6 +202,7 @@ const Keyboard: React.FC<KeyboardProps> = ({ note, nextNote = null }) => {
           height: "100%",
           zIndex: 1,
         }}
+        aria-hidden="true"
       />
       <canvas
         ref={fgCanvasRef}
@@ -188,9 +217,8 @@ const Keyboard: React.FC<KeyboardProps> = ({ note, nextNote = null }) => {
           zIndex: 2,
           pointerEvents: "none",
         }}
+        aria-hidden="true"
       />
     </div>
   );
-};
-
-export default Keyboard;
+}

@@ -4,32 +4,49 @@ import DiatonicChordTable from "@/components/csr/track/DiatonicChordTable";
 import NoteNameTable from "@/components/csr/track/NoteNameTable";
 import TrackSections from "@/components/csr/track/TrackSections";
 import CornerBox from "@/components/ssr/common/CornerBox";
-import { RemarkList } from "@/components/ssr/common/RemarkList";
+import RemarkList from "@/components/ssr/common/RemarkList";
 import TrackSectionItem from "@/components/ssr/track/TrackSectionItem";
 import { TrackType } from "@/schemas/trackSchema";
 import { getScaleText } from "@/utils/music/theory/core/scales";
 import Image from "next/image";
-import React from "react";
+import type { ReactNode } from "react";
 
-// TrackPropsをtrack: TrackTypeに変更
-export type TrackProps = {
+/**
+ * トラックコンポーネントのプロパティ
+ */
+interface TrackProps {
+  /** トラック情報 */
   track: TrackType;
-};
+}
 
-const Track: React.FC<TrackProps> = ({ track }) => {
+/**
+ * トラックコンポーネント
+ * トラックの詳細情報を表示します
+ *
+ * @param {TrackProps} props - コンポーネントのプロパティ
+ * @returns {ReactNode} トラックコンポーネント
+ */
+export default function Track({ track }: TrackProps): ReactNode {
   if (!track || track.title === "") {
-    return <section className="text-center p-4">Loading ...</section>;
+    return (
+      <section className="text-center p-4" role="status" aria-label="読み込み中">
+        Loading ...
+      </section>
+    );
   }
+
   return (
     <section className="space-y-4">
-      {/* Title */}
-      <p className="text-xl italic">{track.title}</p> {/* Cover Image */}{" "}
-      <div className="mt-2 mb-4 flex justify-center items-center">
-        {track.cover && (
+      {/* タイトル */}
+      <h1 className="text-xl italic">{track.title}</h1>
+
+      {/* カバー画像 */}
+      {track.cover && (
+        <div className="mt-2 mb-4 flex justify-center items-center">
           <div className="relative inline-block w-80 h-25">
             <Image
               src={`/track/${track.cover}`}
-              alt="cover"
+              alt={`${track.title}のカバー画像`}
               width={320}
               height={100}
               priority
@@ -37,7 +54,7 @@ const Track: React.FC<TrackProps> = ({ track }) => {
             />
             <Image
               src="/grunge_1.webp"
-              alt="grunge texture"
+              alt=""
               width={320}
               height={100}
               priority
@@ -46,17 +63,20 @@ const Track: React.FC<TrackProps> = ({ track }) => {
                 mixBlendMode: "multiply",
                 opacity: 0.3,
               }}
+              aria-hidden="true"
             />
           </div>
-        )}
-      </div>
-      {/* Metadata: Artist, Album, Year */}
+        </div>
+      )}
+
+      {/* メタデータ: アーティスト、アルバム、年 */}
       <div className="mx-[10%] flex justify-between items-start gap-2 text-sm">
         <p className="flex-1 text-left leading-none">{track.artist}</p>
         <p className="flex-1 text-center leading-none">{track.album}</p>
         <p className="flex-1 text-right leading-none">{track.year || ""}</p>
       </div>
-      {/* Details: Time Signature, BPM */}
+
+      {/* 詳細: 拍子、BPM */}
       <div className="mt-4 mx-[10%] flex justify-between items-start gap-2">
         <p className="flex-1 text-left leading-none">
           {track.timeSignature} <span className="text-gray-500">time</span>
@@ -65,7 +85,8 @@ const Track: React.FC<TrackProps> = ({ track }) => {
           {track.bpm} <span className="text-gray-500">BPM</span>
         </p>
       </div>
-      {/* Music Theory Section */}
+
+      {/* 音楽理論セクション */}
       {track.key && (
         <div className="space-y-4">
           <div className="flex justify-center">
@@ -79,11 +100,13 @@ const Track: React.FC<TrackProps> = ({ track }) => {
           </div>
         </div>
       )}
-      {/* Remarks */}
+
+      {/* 備考 */}
       <div className="text-left">
         <RemarkList remarks={track.remarks ?? []} showBullet={false} />
-      </div>{" "}
-      {/* Track Sections */}
+      </div>
+
+      {/* トラックセクション */}
       <CornerBox className="flex flex-col gap-2">
         <ul>
           {track.sections?.map((section, index) => (
@@ -91,10 +114,9 @@ const Track: React.FC<TrackProps> = ({ track }) => {
           ))}
         </ul>
       </CornerBox>
-      {/* Interactive Sections */}
+
+      {/* インタラクティブセクション */}
       <TrackSections sections={track.sections} scale={track.key} />
     </section>
   );
-};
-
-export default Track;
+}

@@ -66,11 +66,11 @@ export const NOTE_VALUE_DEFINITIONS: Record<NoteValue, NoteValueDefinition> = {
 
 /**
  * 五線譜上の位置を計算します
- * 
+ *
  * @param pitch - ピッチ（例：C4, F#3）
  * @returns 五線譜上の位置（0が中央のC4）
  * @throws {Error} 無効なピッチが指定された場合
- * 
+ *
  * @example
  * ```ts
  * calculateLinePosition("C4")  // => 0
@@ -103,21 +103,35 @@ export function calculateLinePosition(pitch: string): number {
 
 /**
  * 五線譜上の線の位置を取得します
- * 
- * @param position - 五線譜上の位置
- * @returns 線の位置（0-4、-1は線の上、5は線の下）
- * @throws {Error} 無効な位置が指定された場合
- * 
+ *
+ * @param pitch - ピッチ（例：C4, F#3）または五線譜上の位置
+ * @returns 線の位置（0-4、-1は線の上、5は線の下）、無効なピッチの場合はnull
+ *
  * @example
  * ```ts
- * getLine(0)   // => 2
- * getLine(2)   // => 3
- * getLine(-2)  // => 1
+ * getLine("C4")  // => 2
+ * getLine("E4")  // => 3
+ * getLine("G3")  // => 1
+ * getLine(0)     // => 2
+ * getLine(2)     // => 3
+ * getLine(-2)    // => 1
  * ```
  */
-export function getLine(position: number): number {
-  if (typeof position !== "number") {
-    throw new Error("位置は数値である必要があります");
+export function getLine(pitch: string | number): number | null {
+  let position: number;
+
+  if (typeof pitch === "string") {
+    try {
+      position = calculateLinePosition(pitch);
+    } catch (error) {
+      console.error(`無効なピッチです: ${pitch}`, error);
+      return null;
+    }
+  } else if (typeof pitch === "number") {
+    position = pitch;
+  } else {
+    console.error(`無効な引数です: ${pitch}`);
+    return null;
   }
 
   // 位置を0-4の範囲に正規化
@@ -127,11 +141,11 @@ export function getLine(position: number): number {
 
 /**
  * 音符の表示テキストを取得します
- * 
+ *
  * @param noteValue - 音符の種類
  * @returns 音符の表示テキスト
  * @throws {Error} 無効な音符の種類が指定された場合
- * 
+ *
  * @example
  * ```ts
  * getValueText("quarter")  // => "4分音符"

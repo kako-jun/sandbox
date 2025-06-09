@@ -5,12 +5,22 @@ import { playNoteSound } from "@/utils/music/audio/player";
 import { getScaleNoteNames } from "@/utils/music/theory/core/scales";
 import { getFunctionalHarmonyInfo } from "@/utils/music/theory/harmony/functionalHarmony";
 import Image from "next/image";
-import React from "react";
+import type { ReactNode } from "react";
 
-export type NoteNameTableProps = {
+/**
+ * 音名テーブルコンポーネントのプロパティ
+ */
+interface NoteNameTableProps {
+  /** スケール（調） */
   scaleKey: string;
-};
+}
 
+/**
+ * 機能和声の色フィルターを取得します
+ *
+ * @param {number} harmony - 機能和声の度
+ * @returns {string} CSSフィルター
+ */
 const getFunctionalHarmonyFilter = (harmony: number): string => {
   const baseFilter = "invert(50%) sepia(100%) saturate(200%)";
 
@@ -34,28 +44,35 @@ const getFunctionalHarmonyFilter = (harmony: number): string => {
   }
 };
 
-const NoteNameTable: React.FC<NoteNameTableProps> = ({ scaleKey }) => {
+/**
+ * 音名テーブルコンポーネント
+ * スケールの音名と機能和声を表示します
+ *
+ * @param {NoteNameTableProps} props - コンポーネントのプロパティ
+ * @returns {ReactNode} 音名テーブルコンポーネント
+ */
+export default function NoteNameTable({ scaleKey }: NoteNameTableProps): ReactNode {
   return (
-    <table className="w-full border-collapse my-4">
+    <table className="w-full border-collapse my-4" role="grid">
       <thead>
         <tr>
-          <td className="w-[100px]"></td>
+          <td className="w-[100px]" aria-hidden="true"></td>
           {[1, 2, 3, 4, 5, 6, 7].map((degree) => {
-            const functionalHarmony = degree;
+            const harmonyInfo = getFunctionalHarmonyInfo(scaleKey, degree);
             return (
               <td key={degree} className="p-2 border border-gray-300 text-center">
                 <PopupOnClick
-                  trigger={<span>{getFunctionalHarmonyInfo(degree).roman}</span>}
+                  trigger={<span>{harmonyInfo.roman}</span>}
                   popup={
                     <>
                       <Image
-                        src={`/functional_harmony/${functionalHarmony}.drawio.svg`}
-                        alt={`${functionalHarmony}`}
+                        src={`/functional_harmony/${degree}.drawio.svg`}
+                        alt={`機能和声${degree}`}
                         width={16}
                         height={16}
-                        style={{ filter: getFunctionalHarmonyFilter(functionalHarmony) }}
+                        style={{ filter: getFunctionalHarmonyFilter(degree) }}
                       />
-                      <span className="-ml-1">{getFunctionalHarmonyInfo(degree).desc}</span>
+                      <span className="-ml-1">{harmonyInfo.desc}</span>
                     </>
                   }
                 />
@@ -70,7 +87,7 @@ const NoteNameTable: React.FC<NoteNameTableProps> = ({ scaleKey }) => {
           {(() => {
             const noteNames = getScaleNoteNames(scaleKey);
             let octave = 2;
-            return noteNames.map((note, i) => {
+            return noteNames.map((note: string, i: number) => {
               if (note.startsWith("C")) {
                 octave = 3;
               }
@@ -80,6 +97,7 @@ const NoteNameTable: React.FC<NoteNameTableProps> = ({ scaleKey }) => {
                   <button
                     className="bg-transparent border-none text-inherit font-inherit cursor-pointer px-2 py-1 rounded text-sm hover:bg-gray-200 transition-colors"
                     onClick={() => playNoteSound(noteWithOctave, 1.5)}
+                    aria-label={`${note}の音を再生`}
                   >
                     {note}
                   </button>
@@ -91,6 +109,4 @@ const NoteNameTable: React.FC<NoteNameTableProps> = ({ scaleKey }) => {
       </tbody>
     </table>
   );
-};
-
-export default NoteNameTable;
+}

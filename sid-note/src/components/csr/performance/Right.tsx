@@ -1,9 +1,18 @@
 "use client";
 
 import { NoteType } from "@/schemas/trackSchema";
-import React from "react";
+import type { ReactNode } from "react";
+import { useEffect, useRef } from "react";
 
-const drawArrow = (context: CanvasRenderingContext2D, x: number, y: number, direction: "down" | "up") => {
+/**
+ * 矢印を描画します
+ *
+ * @param {CanvasRenderingContext2D} context - キャンバスの2Dコンテキスト
+ * @param {number} x - X座標
+ * @param {number} y - Y座標
+ * @param {"down" | "up"} direction - 矢印の方向
+ */
+const drawArrow = (context: CanvasRenderingContext2D, x: number, y: number, direction: "down" | "up"): void => {
   context.beginPath();
   if (direction === "down") {
     context.moveTo(x - 4, y + 5);
@@ -24,7 +33,12 @@ const drawArrow = (context: CanvasRenderingContext2D, x: number, y: number, dire
   context.stroke();
 };
 
-const drawLines = (context: CanvasRenderingContext2D) => {
+/**
+ * 弦の背景線を描画します
+ *
+ * @param {CanvasRenderingContext2D} context - キャンバスの2Dコンテキスト
+ */
+const drawLines = (context: CanvasRenderingContext2D): void => {
   context.strokeStyle = "#999999";
   context.lineWidth = 1;
   for (let i = 0; i < 4; i++) {
@@ -36,7 +50,13 @@ const drawLines = (context: CanvasRenderingContext2D) => {
   }
 };
 
-const drawLine = (context: CanvasRenderingContext2D, note: NoteType) => {
+/**
+ * 弦の線を描画します
+ *
+ * @param {CanvasRenderingContext2D} context - キャンバスの2Dコンテキスト
+ * @param {NoteType} note - 描画するノート
+ */
+const drawLine = (context: CanvasRenderingContext2D, note: NoteType): void => {
   // string
   context.strokeStyle = "#999999";
   context.lineWidth = 3;
@@ -47,7 +67,14 @@ const drawLine = (context: CanvasRenderingContext2D, note: NoteType) => {
   context.stroke();
 };
 
-const drawNote = (context: CanvasRenderingContext2D, note: NoteType, next: boolean = false) => {
+/**
+ * ノートを描画します
+ *
+ * @param {CanvasRenderingContext2D} context - キャンバスの2Dコンテキスト
+ * @param {NoteType} note - 描画するノート
+ * @param {boolean} [next=false] - 次のノートかどうか
+ */
+const drawNote = (context: CanvasRenderingContext2D, note: NoteType, next: boolean = false): void => {
   if (!note.right) {
     return;
   }
@@ -103,17 +130,29 @@ const drawNote = (context: CanvasRenderingContext2D, note: NoteType, next: boole
   }
 };
 
-type RightProps = {
+/**
+ * 右手ストロークコンポーネントのプロパティ
+ */
+interface RightProps {
+  /** 現在のノート */
   note: NoteType;
+  /** 次のノート（オプション） */
   nextNote?: NoteType | null;
-};
+}
 
-const Right: React.FC<RightProps> = ({ note, nextNote = null }) => {
-  const bgCanvasRef = React.useRef<HTMLCanvasElement>(null);
-  const fgCanvasRef = React.useRef<HTMLCanvasElement>(null);
+/**
+ * 右手ストロークコンポーネント
+ * ギターのストロークを表示し、現在のノートと次のノートをハイライトします
+ *
+ * @param {RightProps} props - コンポーネントのプロパティ
+ * @returns {ReactNode} 右手ストロークコンポーネント
+ */
+export default function Right({ note, nextNote = null }: RightProps): ReactNode {
+  const bgCanvasRef = useRef<HTMLCanvasElement>(null);
+  const fgCanvasRef = useRef<HTMLCanvasElement>(null);
 
-  // 背景（弦の線など）は初回のみ描画
-  React.useEffect(() => {
+  // 背景は初回のみ描画
+  useEffect(() => {
     if (!bgCanvasRef.current) {
       return;
     }
@@ -127,8 +166,8 @@ const Right: React.FC<RightProps> = ({ note, nextNote = null }) => {
     drawLines(context);
   }, []);
 
-  // 前景（ノートや矢印など）はnote/nextNote変更時に描画
-  React.useEffect(() => {
+  // ノートはnote/nextNote変更時のみ描画
+  useEffect(() => {
     if (!fgCanvasRef.current) {
       return;
     }
@@ -154,6 +193,8 @@ const Right: React.FC<RightProps> = ({ note, nextNote = null }) => {
         maxWidth: "100%",
         position: "relative",
       }}
+      role="img"
+      aria-label="ギターストローク"
     >
       <canvas
         ref={bgCanvasRef}
@@ -167,6 +208,7 @@ const Right: React.FC<RightProps> = ({ note, nextNote = null }) => {
           height: "100%",
           zIndex: 1,
         }}
+        aria-hidden="true"
       />
       <canvas
         ref={fgCanvasRef}
@@ -181,9 +223,8 @@ const Right: React.FC<RightProps> = ({ note, nextNote = null }) => {
           zIndex: 2,
           pointerEvents: "none",
         }}
+        aria-hidden="true"
       />
     </div>
   );
-};
-
-export default Right;
+}
