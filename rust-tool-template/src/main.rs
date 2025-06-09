@@ -3,52 +3,45 @@
 //! A command-line tool template with CLI, TUI, and API server capabilities.
 //! This is the main entry point for the application.
 
-use rust_tool_template::{api, cli, utils};
-use std::process;
+use rust_tool_template::api;
 use tracing::{info, warn, error};
+use rust_tool_template::cli::run_cli;
+use rust_tool_template::config::Config;
+use rust_tool_template::core::App;
+use rust_tool_template::logging::Logger;
+use std::path::PathBuf;
 
-#[tokio::main]
-async fn main() -> anyhow::Result<()> {
-    // Initialize enhanced logging with rotation
-    if let Err(e) = utils::setup_logging(None) {
-        eprintln!("Failed to initialize logging: {}", e);
-        process::exit(1);
+/// アプリケーションのエントリーポイント
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // ロガーを初期化
+    let log_file = PathBuf::from("app.log");
+    Logger::init(log_file, log::LevelFilter::Info)?;
+
+    // 設定を読み込む
+    let config = Config::default();
+
+    // アプリケーションを作成
+    let app = App::new(config);
+
+    // アプリケーションを初期化
+    app.init()?;
+
+    // コマンドラインインターフェースを実行
+    if let Err(e) = run_cli() {
+        eprintln!("エラー: {}", e);
+        std::process::exit(1);
     }
 
-    info!("Starting rust-tool-template application");
+    // アプリケーションを実行
+    app.run()?;
 
-    // Start embedded API server in background
-    let api_server_handle = start_embedded_api_server().await;
-
-    // Run the CLI with enhanced error handling
-    match cli::run().await {
-        Ok(_) => {
-            info!("Application finished successfully");
-        }
-        Err(e) => {
-            error!("Application error: {}", e);
-
-            // Log the full error chain for debugging
-            let mut source = e.source();
-            while let Some(err) = source {
-                error!("Caused by: {}", err);
-                source = err.source();
-            }
-
-            eprintln!("Error: {}", e);
-            process::exit(1);
-        }
-    }
-
-    // Gracefully shutdown API server
-    if let Some(handle) = api_server_handle {
-        info!("Shutting down embedded API server");
-        handle.abort();
-    }
+    // アプリケーションを終了
+    app.shutdown()?;
 
     Ok(())
 }
 
+#[allow(dead_code)]
 async fn start_embedded_api_server() -> Option<tokio::task::JoinHandle<()>> {
     // Try to start API server on available port
     let ports = [3030, 3031, 3032, 3033, 3034];
@@ -69,6 +62,7 @@ async fn start_embedded_api_server() -> Option<tokio::task::JoinHandle<()>> {
     None
 }
 
+#[allow(dead_code)]
 async fn try_start_api_server(
     port: u16,
 ) -> Result<tokio::task::JoinHandle<()>, Box<dyn std::error::Error + Send + Sync>> {

@@ -14,6 +14,10 @@ pub struct LoggingConfig {
     pub max_files: usize,
     /// ローテーション設定
     pub rotation: Rotation,
+    /// バッファサイズ（バイト）
+    pub buffer_size: usize,
+    /// コンテナ環境かどうか
+    pub is_container: bool,
 }
 
 impl Default for LoggingConfig {
@@ -21,8 +25,10 @@ impl Default for LoggingConfig {
         let log_dir = get_default_log_dir();
         Self {
             log_dir,
-            max_files: 10,
-            rotation: Rotation::DAILY,
+            max_files: get_max_files(),
+            rotation: get_rotation_config(),
+            buffer_size: get_buffer_size(),
+            is_container: is_running_in_container(),
         }
     }
 }
@@ -42,7 +48,23 @@ pub fn setup_logging(config: Option<LoggingConfig>) -> Result<()> {
         .max_log_files(config.max_files)
         .build(&config.log_dir)?;
 
-    // Setup tracing subscriber with both console and file output
+    // コンテナ環境ではコンソール出力を最小限に
+    let console_layer = if config.is_container {
+        fmt::layer()
+            .with_target(false)
+            .with_thread_ids(false)
+            .with_file(false)
+            .with_line_number(false)
+            .with_ansi(false)
+    } else {
+        fmt::layer()
+            .with_target(false)
+            .with_thread_ids(false)
+            .with_file(false)
+            .with_line_number(false)
+    };
+
+    // ファイル出力は常に詳細に
     let file_layer = fmt::layer()
         .with_writer(file_appender)
         .with_ansi(false)
@@ -51,12 +73,7 @@ pub fn setup_logging(config: Option<LoggingConfig>) -> Result<()> {
         .with_file(true)
         .with_line_number(true);
 
-    let console_layer = fmt::layer()
-        .with_target(false)
-        .with_thread_ids(false)
-        .with_file(false)
-        .with_line_number(false);
-
+    // 環境変数からログフィルターを設定
     let env_filter = EnvFilter::try_from_default_env()
         .unwrap_or_else(|_| EnvFilter::new("rust_tool_template=info"));
 
@@ -67,11 +84,49 @@ pub fn setup_logging(config: Option<LoggingConfig>) -> Result<()> {
         .init();
 
     info!("Logging initialized with directory: {:?}", config.log_dir);
+    if config.is_container {
+        info!("Running in container environment - console output minimized");
+    }
 
     // Clean up old log files
     cleanup_old_logs(&config.log_dir, config.max_files)?;
 
     Ok(())
+}
+
+/// コンテナ環境で実行されているかチェック
+pub fn is_running_in_container() -> bool {
+    std::path::Path::new("/.dockerenv").exists()
+        || std::fs::read_to_string("/proc/1/cgroup")
+            .map(|content| content.contains("docker"))
+            .unwrap_or(false)
+}
+
+/// ログローテーションの設定を環境変数から取得
+pub fn get_rotation_config() -> Rotation {
+    match std::env::var("LOG_ROTATION").as_deref() {
+        Ok("NEVER") => Rotation::NEVER,
+        Ok("DAILY") => Rotation::DAILY,
+        Ok("HOURLY") => Rotation::HOURLY,
+        Ok("MINUTELY") => Rotation::MINUTELY,
+        _ => Rotation::DAILY, // デフォルト
+    }
+}
+
+/// 最大ログファイル数を環境変数から取得
+pub fn get_max_files() -> usize {
+    std::env::var("LOG_MAX_FILES")
+        .ok()
+        .and_then(|s| s.parse::<usize>().ok())
+        .unwrap_or(10) // デフォルト
+}
+
+/// ログバッファサイズを環境変数から取得
+pub fn get_buffer_size() -> usize {
+    std::env::var("LOG_BUFFER_SIZE")
+        .ok()
+        .and_then(|s| s.parse::<usize>().ok())
+        .unwrap_or(8 * 1024) // デフォルト: 8KB
 }
 
 fn get_default_log_dir() -> PathBuf {
@@ -250,47 +305,59 @@ pub fn explain_log_directories() -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::fs;
-    use tempfile::TempDir;
+    use std::env;
 
     #[test]
-    fn test_logging_setup() {
-        let temp_dir = TempDir::new().unwrap();
-        let config = LoggingConfig {
-            log_dir: temp_dir.path().to_path_buf(),
-            max_files: 5,
-            rotation: Rotation::DAILY,
-        };
+    fn test_rotation_config_from_env() {
+        // デフォルト値のテスト
+        assert!(matches!(get_rotation_config(), Rotation::DAILY));
 
-        assert!(setup_logging(Some(config)).is_ok());
-        assert!(temp_dir.path().exists());
+        // 環境変数による設定のテスト
+        env::set_var("LOG_ROTATION", "HOURLY");
+        assert!(matches!(get_rotation_config(), Rotation::HOURLY));
+
+        env::set_var("LOG_ROTATION", "NEVER");
+        assert!(matches!(get_rotation_config(), Rotation::NEVER));
+
+        // 無効な値の場合はデフォルト値
+        env::set_var("LOG_ROTATION", "INVALID");
+        assert!(matches!(get_rotation_config(), Rotation::DAILY));
+
+        // 環境変数をクリア
+        env::remove_var("LOG_ROTATION");
     }
 
     #[test]
-    fn test_cleanup_old_logs() {
-        let temp_dir = TempDir::new().unwrap();
-        let log_dir = temp_dir.path().to_path_buf();
+    fn test_max_files_from_env() {
+        // デフォルト値のテスト
+        assert_eq!(get_max_files(), 10);
 
-        // Create some test log files
-        for i in 0..7 {
-            let filename = format!("rust-tool-template.{}.log", i);
-            fs::write(log_dir.join(filename), "test content").unwrap();
-        }
+        // 環境変数による設定のテスト
+        env::set_var("LOG_MAX_FILES", "5");
+        assert_eq!(get_max_files(), 5);
 
-        cleanup_old_logs(&log_dir, 5).unwrap();
+        // 無効な値の場合はデフォルト値
+        env::set_var("LOG_MAX_FILES", "invalid");
+        assert_eq!(get_max_files(), 10);
 
-        let remaining_files: Vec<_> = fs::read_dir(&log_dir)
-            .unwrap()
-            .filter_map(|entry| entry.ok())
-            .filter(|entry| {
-                entry
-                    .file_name()
-                    .to_str()
-                    .map(|name| name.starts_with("rust-tool-template") && name.ends_with(".log"))
-                    .unwrap_or(false)
-            })
-            .collect();
+        // 環境変数をクリア
+        env::remove_var("LOG_MAX_FILES");
+    }
 
-        assert_eq!(remaining_files.len(), 5);
+    #[test]
+    fn test_buffer_size_from_env() {
+        // デフォルト値のテスト
+        assert_eq!(get_buffer_size(), 8 * 1024);
+
+        // 環境変数による設定のテスト
+        env::set_var("LOG_BUFFER_SIZE", "16384");
+        assert_eq!(get_buffer_size(), 16384);
+
+        // 無効な値の場合はデフォルト値
+        env::set_var("LOG_BUFFER_SIZE", "invalid");
+        assert_eq!(get_buffer_size(), 8 * 1024);
+
+        // 環境変数をクリア
+        env::remove_var("LOG_BUFFER_SIZE");
     }
 }

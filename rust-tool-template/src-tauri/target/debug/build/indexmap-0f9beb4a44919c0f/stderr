@@ -1,0 +1,30 @@
+error: missing documentation for the crate
+  |
+  = note: `-D missing-docs` implied by `-D warnings`
+  = help: to override `-D warnings` add `#[allow(missing_docs)]`
+
+error: aborting due to 1 previous error
+
+error: missing documentation for the crate
+ --> <anon>:1:1
+  |
+1 | #![no_std]
+  | ^^^^^^^^^^
+  |
+  = note: `-D missing-docs` implied by `-D warnings`
+  = help: to override `-D warnings` add `#[allow(missing_docs)]`
+
+error: aborting due to 1 previous error
+
+warning: autocfg could not probe for `std`
+error: missing documentation for the crate
+ --> <anon>:1:1
+  |
+1 | extern crate std as probe;
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: `-D missing-docs` implied by `-D warnings`
+  = help: to override `-D warnings` add `#[allow(missing_docs)]`
+
+error: aborting due to 1 previous error
+

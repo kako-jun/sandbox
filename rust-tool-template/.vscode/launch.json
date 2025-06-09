@@ -3,25 +3,52 @@
     "configurations": [
         {
             "name": "Rust CLI",
-            "type": "rust",
+            "type": "lldb",
             "request": "launch",
             "program": "${workspaceFolder}/target/debug/rust-tool-template",
             "args": [],
             "cwd": "${workspaceFolder}",
-            "stopAtEntry": false,
-            "env": {},
-            "preLaunchTask": "cargo build"
+            "sourceLanguages": ["rust"],
+            "preLaunchTask": "cargo build --features web",
+            "env": {
+                "RUST_LOG": "debug",
+                "RUST_BACKTRACE": "1"
+            }
         },
         {
-            "name": "Tauri",
-            "type": "rust",
+            "name": "Tauri Dev",
+            "type": "lldb",
             "request": "launch",
-            "program": "${workspaceFolder}/src-tauri/target/debug/rust-tool-template-tauri",
+            "program": "${workspaceFolder}/src-tauri/target/debug/rust-tool-template",
             "args": [],
             "cwd": "${workspaceFolder}/src-tauri",
-            "stopAtEntry": false,
-            "env": {},
-            "preLaunchTask": "cargo build"
+            "sourceLanguages": ["rust"],
+            "preLaunchTask": "cargo build -p rust-tool-template --features web",
+            "env": {
+                "RUST_LOG": "debug",
+                "RUST_BACKTRACE": "1"
+            }
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug Rust Tool Template",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=rust-tool-template",
+                    "--package=rust-tool-template"
+                ],
+                "filter": {
+                    "name": "rust-tool-template",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "RUST_BACKTRACE": "1"
+            }
         }
     ]
 }

@@ -1,9 +1,14 @@
+import os
 import sys
 import time
-import argparse
-from typing import Optional, Dict, Any
-import getpass
+import json
+import logging
+from typing import Optional, Dict, Any, List, Tuple, Union
 from pathlib import Path
+import argparse
+import getpass
+import subprocess
+import requests
 
 import curses
 from rich.console import Console
@@ -12,28 +17,43 @@ from rich.text import Text
 from rich.prompt import Prompt, Confirm
 
 from src.game.core import Game, Direction, GameState
-from src.utils.logging import app_logger
+from src.game.models import GameConfig, Player, Position, GameAction, Difficulty, GameMode
+from src.utils.logging import app_logger, setup_logger
 from src.utils.i18n import get_text
+from .ui import start_game, GameUI
 
+# APIサーバーのURLとポート番号を定数として定義
+API_URL = "http://localhost:10400"
+
+# ロガーの設定
+logger = setup_logger(__name__)
+
+# 国際化の設定
+i18n = get_text
 
 def get_user_inputs() -> Dict[str, Any]:
     """
     対話形式でユーザーから入力を受け取る
     
     Returns:
-        Dict[str, Any]: ユーザー入力の辞書
+        Dict[str, Any]: 以下のキーを持つ辞書
+            - player_name: プレイヤー名
+            - difficulty: 難易度（easy/normal/hard）
+            - game_mode: ゲームモード（classic/time_attack/puzzle）
+            - board_size: ボードサイズ（width, height）のタプル（オプション）
+            - time_limit: 制限時間（秒）（オプション）
     """
     inputs = {}
     
     # プレイヤー名の入力
     inputs['player_name'] = Prompt.ask(
-        get_text("enter_player_name", "en"),
+        i18n("enter_player_name", "en"),
         default="Player"
     )
     
     # 難易度の選択
     difficulty = Prompt.ask(
-        get_text("select_difficulty", "en"),
+        i18n("select_difficulty", "en"),
         choices=["easy", "normal", "hard"],
         default="normal"
     )
@@ -41,20 +61,20 @@ def get_user_inputs() -> Dict[str, Any]:
     
     # ゲームモードの選択
     mode = Prompt.ask(
-        get_text("select_game_mode", "en"),
+        i18n("select_game_mode", "en"),
         choices=["classic", "time_attack", "puzzle"],
         default="classic"
     )
     inputs['game_mode'] = mode
     
     # カスタム設定の確認
-    if Confirm.ask(get_text("custom_settings", "en")):
+    if Confirm.ask(i18n("custom_settings", "en")):
         inputs['board_size'] = (
-            int(Prompt.ask(get_text("board_width", "en"), default="10")),
-            int(Prompt.ask(get_text("board_height", "en"), default="10"))
+            int(Prompt.ask(i18n("board_width", "en"), default="10")),
+            int(Prompt.ask(i18n("board_height", "en"), default="10"))
         )
         inputs['time_limit'] = int(Prompt.ask(
-            get_text("time_limit", "en"),
+            i18n("time_limit", "en"),
             default="300"
         ))
     
@@ -68,175 +88,378 @@ class GameDisplay:
         
         Args:
             game (Game): ゲームインスタンス
-            lang (str): 言語設定
+            lang (str): 言語設定（デフォルト: "en"）
             config (Optional[Dict[str, Any]]): ゲーム設定
+                以下のキーを持つ辞書:
+                - player_name: プレイヤー名
+                - difficulty: 難易度
+                - game_mode: ゲームモード
+                - board_size: ボードサイズ
+                - time_limit: 制限時間
         """
         self.game = game
         self.console = Console()
         self.lang = lang
         self.config = config or {}
 
-    def draw(self):
+    def draw(self) -> None:
         """
         ゲーム画面の描画
+        
+        以下の要素を描画:
+        - ゲームボード（蛇と食べ物）
+        - スコア
+        - ゲームオーバー状態
+        - プレイヤー情報
+        - 難易度情報
         """
         try:
             state = self.game.state
-            width, height = state.board_size
+            if not state:
+                self.console.print("ゲーム状態が初期化されていません")
+                return
 
-            # Create empty board
-            board = [[" " for _ in range(width)] for _ in range(height)]
+            # 現在のプレイヤーを取得
+            current_player = state.players[state.current_player_id]
 
-            # Place player
-            player = state.player_position
-            board[player.y][player.x] = "●"
+            # 空のボードを作成
+            board = [[" " for _ in range(state.board_width)] for _ in range(state.board_height)]
 
-            # Convert board to string
+            # 蛇の体を配置
+            for pos in current_player.snake_body:
+                if 0 <= pos.x < state.board_width and 0 <= pos.y < state.board_height:
+                    board[pos.y][pos.x] = "●"
+
+            # 食べ物を配置
+            if state.food_position:
+                food = state.food_position
+                if 0 <= food.x < state.board_width and 0 <= food.y < state.board_height:
+                    board[food.y][food.x] = "★"
+
+            # ボードを文字列に変換
             board_str = "\n".join("".join(row) for row in board)
 
-            # Create game info
-            info = get_text("score", self.lang, score=state.score)
-            if state.is_game_over:
-                info += f"\n{get_text('game_over', self.lang)}"
+            # ゲーム情報を作成
+            info = i18n("score", self.lang, score=current_player.score)
+            if state.game_over:
+                info += f"\n{i18n('game_over', self.lang)}"
 
-            # Add player name and difficulty if available
+            # プレイヤー名と難易度を追加（設定されている場合）
             if self.config.get('player_name'):
-                info = f"{get_text('player', self.lang)}: {self.config['player_name']}\n" + info
+                info = f"{i18n('player', self.lang)}: {self.config['player_name']}\n" + info
             if self.config.get('difficulty'):
-                info += f"\n{get_text('difficulty', self.lang)}: {self.config['difficulty']}"
+                info += f"\n{i18n('difficulty', self.lang)}: {self.config['difficulty']}"
 
-            # Create panel
+            # パネルを作成
             panel = Panel(
                 Text(board_str, style="bold green"),
-                title=get_text("welcome", self.lang),
+                title=i18n("welcome", self.lang),
                 subtitle=info,
                 border_style="blue"
             )
 
-            # Clear screen and draw
+            # 画面をクリアして描画
             self.console.clear()
             self.console.print(panel)
+            
         except Exception as e:
-            app_logger.error(f"Error in draw: {str(e)}")
-            raise
+            self.console.print(f"[red]描画中にエラーが発生しました: {str(e)}[/red]")
 
+def parse_args():
+    """コマンドライン引数を解析"""
+    parser = argparse.ArgumentParser(
+        description="Snake Game CLI",
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    parser.add_argument(
+        "--version",
+        action="version",
+        version="Snake Game 1.0.0"
+    )
+
+    subparsers = parser.add_subparsers(dest="command", help="Commands")
+
+    # startコマンド
+    start_parser = subparsers.add_parser("start", help="Start a new game")
+    start_parser.add_argument(
+        "--width",
+        type=int,
+        default=20,
+        help="Board width (default: 20)"
+    )
+    start_parser.add_argument(
+        "--height",
+        type=int,
+        default=20,
+        help="Board height (default: 20)"
+    )
+    start_parser.add_argument(
+        "--speed",
+        type=float,
+        default=1.0,
+        help="Initial speed (default: 1.0)"
+    )
+    start_parser.add_argument(
+        "--food-value",
+        type=int,
+        default=10,
+        help="Points per food (default: 10)"
+    )
+    start_parser.add_argument(
+        "--time-limit",
+        type=int,
+        default=300,
+        help="Time limit in seconds (default: 300)"
+    )
+
+    return parser.parse_args()
+
+def validate_config(args):
+    """設定値の検証"""
+    if args.width <= 0:
+        print("Error: Width must be positive", file=sys.stderr)
+        sys.exit(1)
+    if args.height <= 0:
+        print("Error: Height must be positive", file=sys.stderr)
+        sys.exit(1)
+    if args.speed <= 0:
+        print("Error: Speed must be positive", file=sys.stderr)
+        sys.exit(1)
+    if args.food_value <= 0:
+        print("Error: Food value must be positive", file=sys.stderr)
+        sys.exit(1)
+    if args.time_limit <= 0:
+        print("Error: Time limit must be positive", file=sys.stderr)
+        sys.exit(1)
+
+def load_config(config_path: str) -> Dict[str, Any]:
+    """
+    設定ファイルを読み込む
+    
+    Args:
+        config_path (str): 設定ファイルのパス
+        
+    Returns:
+        Dict[str, Any]: 設定内容
+        
+    Raises:
+        FileNotFoundError: 設定ファイルが見つからない場合
+        json.JSONDecodeError: 設定ファイルの形式が不正な場合
+    """
+    try:
+        with open(config_path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except FileNotFoundError:
+        logger.error(f"設定ファイルが見つかりません: {config_path}")
+        raise
+    except json.JSONDecodeError:
+        logger.error(f"設定ファイルの形式が不正です: {config_path}")
+        raise
+
+def create_game_config(args: argparse.Namespace, config: Optional[Dict[str, Any]] = None) -> GameConfig:
+    """
+    ゲーム設定を作成する
+    
+    Args:
+        args (argparse.Namespace): コマンドライン引数
+        config (Optional[Dict[str, Any]]): 設定ファイルの内容
+        
+    Returns:
+        GameConfig: ゲーム設定
+    """
+    def safe_int(val, default):
+        try:
+            if val is not None:
+                return int(val)
+        except (ValueError, TypeError):
+            pass
+        return default
+
+    # board_width
+    board_width = safe_int(getattr(args, 'width', None), None)
+    if board_width is None:
+        board_width = safe_int(config.get("width") if config else None, 20)
+    # board_height
+    board_height = safe_int(getattr(args, 'height', None), None)
+    if board_height is None:
+        board_height = safe_int(config.get("height") if config else None, 20)
+    # difficulty
+    difficulty = getattr(args, 'difficulty', None) or (config.get("difficulty") if config else None) or "normal"
+    # game_mode
+    game_mode = getattr(args, 'game_mode', None) or (config.get("game_mode") if config else None) or "classic"
+    # time_limit
+    time_limit = safe_int(getattr(args, 'time_limit', None), None)
+    if time_limit is None:
+        time_limit = safe_int(config.get("time_limit") if config else None, 300)
+
+    return GameConfig(
+        board_width=board_width,
+        board_height=board_height,
+        difficulty=Difficulty(str(difficulty)),
+        game_mode=GameMode(str(game_mode)),
+        time_limit=time_limit
+    )
+
+def get_api_game_state(api_url: str) -> Optional[GameState]:
+    """
+    APIからゲーム状態を取得する
+    
+    Args:
+        api_url (str): APIサーバーのURL
+        
+    Returns:
+        Optional[GameState]: ゲーム状態、取得に失敗した場合はNone
+    """
+    try:
+        response = requests.get(f"{api_url}/game/state")
+        response.raise_for_status()
+        data = response.json()
+        
+        # ゲーム状態を作成
+        player = Player(
+            id=0,
+            name="API Player",
+            score=data["score"],
+            snake_body=[Position(x=pos["x"], y=pos["y"]) for pos in data["snake_body"]],
+            direction=Direction.RIGHT
+        )
+        
+        return GameState(
+            players={0: player},
+            current_player_id=0,
+            game_over=data["is_game_over"],
+            board_width=data["board_size"]["width"],
+            board_height=data["board_size"]["height"],
+            food_position=Position(x=data["food_position"]["x"], y=data["food_position"]["y"]) if data["food_position"] else None,
+            tick_count=data["tick_count"]
+        )
+    except requests.RequestException as e:
+        logger.error(f"APIからのゲーム状態の取得に失敗しました: {e}")
+        return None
+
+def move_api_snake(api_url: str, direction: Direction) -> bool:
+    """
+    APIを通じて蛇を移動させる
+    
+    Args:
+        api_url (str): APIサーバーのURL
+        direction (Direction): 移動方向
+        
+    Returns:
+        bool: 移動に成功した場合はTrue、失敗した場合はFalse
+    """
+    try:
+        response = requests.post(
+            f"{api_url}/game/move",
+            json={"direction": direction.value}
+        )
+        response.raise_for_status()
+        return True
+    except requests.RequestException as e:
+        logger.error(f"蛇の移動に失敗しました: {e}")
+        return False
+
+def reset_api_game(api_url: str) -> bool:
+    """
+    APIを通じてゲームをリセットする
+    
+    Args:
+        api_url (str): APIサーバーのURL
+        
+    Returns:
+        bool: リセットに成功した場合はTrue、失敗した場合はFalse
+    """
+    try:
+        response = requests.post(f"{api_url}/game/reset")
+        response.raise_for_status()
+        return True
+    except requests.RequestException as e:
+        logger.error(f"ゲームのリセットに失敗しました: {e}")
+        return False
+
+def play_api_game(api_url: str) -> None:
+    """API経由でゲームをプレイする"""
+    while True:
+        state = get_api_game_state(api_url)
+        if not state:
+            logger.error("ゲーム状態の取得に失敗しました")
+            break
+
+        # ゲーム状態を表示
+        print("\033[2J\033[H")  # 画面をクリア
+        print(f"スコア: {state.players[state.current_player_id].score}")
+        print(f"蛇の長さ: {len(state.players[state.current_player_id].snake_body)}")
+        print(f"ボードサイズ: {state.board_width}x{state.board_height}")
+        print(f"ゲームオーバー: {state.game_over}")
+
+        # ユーザー入力を待機
+        key = input("方向を入力してください（w/a/s/d、qで終了）: ").lower()
+        if key == 'q':
+            break
+        
+        # 方向を設定
+        direction = None
+        if key == 'w':
+            direction = Direction.UP
+        elif key == 's':
+            direction = Direction.DOWN
+        elif key == 'a':
+            direction = Direction.LEFT
+        elif key == 'd':
+            direction = Direction.RIGHT
+        
+        if direction:
+            if not move_api_snake(api_url, direction):
+                logger.error("蛇の移動に失敗しました")
+                break
+        
+        time.sleep(0.1)  # 少し待機
+
+def configure_game(args: argparse.Namespace) -> Optional[GameConfig]:
+    """
+    ゲームの設定を行う
+    
+    Args:
+        args (argparse.Namespace): コマンドライン引数
+        
+    Returns:
+        Optional[GameConfig]: ゲーム設定
+    """
+    try:
+        return GameConfig.model_validate({
+            "width": args.width,
+            "height": args.height,
+            "difficulty": Difficulty(args.difficulty),
+            "game_mode": GameMode(args.game_mode),
+            "time_limit": args.time_limit
+        })
+    except Exception as e:
+        logger.error(f"ゲームの設定に失敗しました: {str(e)}")
+        return None
 
 def main():
-    """
-    メイン関数
-    コマンドライン引数と対話式入力の両方をサポート
-    """
-    parser = argparse.ArgumentParser(description=get_text("usage", "en"))
-    parser.add_argument("--lang", choices=["en", "ja"], default="en",
-                      help="Set language (en/ja)")
-    parser.add_argument("--player-name", help="Player name")
-    parser.add_argument("--difficulty", choices=["easy", "normal", "hard"],
-                      help="Game difficulty")
-    parser.add_argument("--mode", choices=["classic", "time_attack", "puzzle"],
-                      help="Game mode")
-    parser.add_argument("--width", type=int, help="Board width")
-    parser.add_argument("--height", type=int, help="Board height")
-    parser.add_argument("--time-limit", type=int, help="Time limit in seconds")
-    parser.add_argument("--no-interactive", action="store_true",
-                      help="Disable interactive mode")
-    args = parser.parse_args()
+    """メイン関数"""
+    args = parse_args()
 
-    # 設定の初期化
-    config = {}
-    
-    # コマンドライン引数から設定を取得
-    if args.player_name:
-        config['player_name'] = args.player_name
-    if args.difficulty:
-        config['difficulty'] = args.difficulty
-    if args.mode:
-        config['game_mode'] = args.mode
-    if args.width and args.height:
-        config['board_size'] = (args.width, args.height)
-    if args.time_limit:
-        config['time_limit'] = args.time_limit
-
-    # 対話モードが有効な場合、不足している設定を対話で取得
-    if not args.no_interactive:
-        interactive_inputs = get_user_inputs()
-        # コマンドライン引数で指定されていない設定のみ対話入力で上書き
-        for key, value in interactive_inputs.items():
-            if key not in config:
-                config[key] = value
-
-    # Initialize curses
-    stdscr = curses.initscr()
-    curses.start_color()
-    curses.use_default_colors()
-    curses.curs_set(0)  # Hide cursor
-    stdscr.keypad(1)  # Enable keypad mode
-    stdscr.timeout(100)  # Set input timeout
-
-    try:
-        game = Game()
-        display = GameDisplay(game, args.lang, config)
-
-        # Show help message
-        print(get_text("help", args.lang))
-        time.sleep(2)
-
-        while True:
-            try:
-                # Draw game state
-                display.draw()
-
-                # Get input
-                key = stdscr.getch()
-                if key == -1:
-                    continue
-
-                # Process input
-                if key == ord('q'):
-                    break
-                elif key == curses.KEY_UP:
-                    game.move(Direction.UP)
-                elif key == curses.KEY_DOWN:
-                    game.move(Direction.DOWN)
-                elif key == curses.KEY_LEFT:
-                    game.move(Direction.LEFT)
-                elif key == curses.KEY_RIGHT:
-                    game.move(Direction.RIGHT)
-                elif key == ord('r'):
-                    game.reset()
-
-                # Check game over
-                if game.state.is_game_over:
-                    display.draw()
-                    time.sleep(2)
-                    game.reset()
-
-            except Exception as e:
-                app_logger.error(f"Game error: {str(e)}")
-                print(get_text("error", args.lang, error=str(e)))
-                time.sleep(2)
-                game.reset()
-
-    except Exception as e:
-        app_logger.error(f"Fatal error: {str(e)}")
-        print(get_text("error", args.lang, error=str(e)))
-        return 1
-    finally:
-        # Clean up curses
-        curses.endwin()
-
-    return 0
-
-
-def test_api_connection(api_url):
-    try:
-        response = requests.get(f"{api_url}/health", timeout=5)
-        if response.status_code == 200:
-            print("✅ API server is running")
-        else:
-            print(f"❌ API server error: {response.status_code}")
-    except Exception as e:
-        print(f"❌ Cannot connect to API: {e}")
-
+    if args.command == "start":
+        validate_config(args)
+        config = GameConfig(
+            width=args.width,
+            height=args.height,
+            initial_speed=args.speed,
+            speed_increase=0.1,
+            food_value=args.food_value,
+            time_limit=args.time_limit
+        )
+        game = Game(config)
+        state = game.initialize_game("player1")
+        if not state:
+            print("Error: Failed to initialize game", file=sys.stderr)
+            sys.exit(1)
+        print("Game started successfully")
+    else:
+        print("Error: No command specified", file=sys.stderr)
+        sys.exit(1)
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()

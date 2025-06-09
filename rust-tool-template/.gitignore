@@ -1,1 +1,39 @@
- 
+# ビルド成果物
+/target/
+**/*.rs.bk
+Cargo.lock
+
+# IDE設定
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# ログファイル
+*.log
+logs/
+
+# 設定ファイル
+config.json
+.env
+.env.local
+
+# 一時ファイル
+*.tmp
+*.temp
+.DS_Store
+Thumbs.db
+
+# テストカバレッジ
+coverage/
+*.profraw
+
+# 依存関係
+node_modules/
+vendor/
+
+# その他
+*.bak
+*.backup
+*.orig 

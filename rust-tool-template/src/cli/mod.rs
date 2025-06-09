@@ -6,11 +6,12 @@ use crate::utils::{
     explain_log_directories, get_log_directory, get_log_directory_info, get_platform_info, I18n,
 };
 use anyhow::Result;
-use clap::{Arg, Command};
+use clap::{Arg, Command, Parser, Subcommand};
 use fluent_bundle::FluentArgs;
 use std::io::{self, Write};
 use std::sync::{Arc, Mutex};
 use tracing::{error, info, warn};
+use crate::error::AppError;
 
 /// CLIエントリーポイント関数
 pub async fn run() -> Result<()> {
@@ -94,6 +95,24 @@ pub async fn run() -> Result<()> {
         }
         "cli" => {
             info!("Starting CLI mode");
+            if matches.get_one::<String>("command").is_none() {
+                // 引数なしの場合はヘルプメッセージを表示
+                let mut help = String::new();
+                help.push_str(&format!("{}\n\n", i18n.get("app-description")));
+                help.push_str(&i18n.get("usage-examples"));
+                help.push_str("\n\nAvailable Commands:\n");
+                help.push_str("  add             - Add a new data entry\n");
+                help.push_str("  list            - List all data entries\n");
+                help.push_str("  process         - Process all data entries\n");
+                help.push_str("  stats           - Show statistics\n");
+                help.push_str("  interactive-add - Add data interactively\n");
+                help.push_str("  batch-add       - Add multiple data entries\n");
+                help.push_str("  log-info        - Show log directory information\n");
+                help.push_str("  platform-info   - Show platform information\n");
+                help.push_str("\nFor more information, use --help\n");
+                println!("{}", help);
+                return Ok(());
+            }
             run_cli_mode(&matches, app_logic, &i18n)?;
         }
         _ => unreachable!(),
@@ -372,4 +391,62 @@ fn prompt_input(prompt: &str) -> Result<String> {
     let mut input = String::new();
     io::stdin().read_line(&mut input)?;
     Ok(input.trim().to_string())
+}
+
+/// コマンドラインインターフェースの構造体
+#[derive(Parser)]
+#[command(author, version, about, long_about = None)]
+pub struct Cli {
+    /// 実行するコマンド
+    #[command(subcommand)]
+    pub command: Commands,
+}
+
+/// 利用可能なコマンドを表す列挙型
+#[derive(Subcommand)]
+pub enum Commands {
+    /// サーバーを起動
+    Server {
+        /// ポート番号
+        #[clap(short, long, default_value_t = 8080)]
+        port: u16,
+    },
+    /// 設定を表示
+    Config,
+}
+
+/// コマンドラインインターフェースを実行する関数
+pub fn run_cli() -> Result<(), AppError> {
+    let cli = Cli::parse();
+    
+    match cli.command {
+        Commands::Server { port } => {
+            info!("サーバーを起動します: ポート {}", port);
+            // サーバー起動のロジックを実装
+            Ok(())
+        }
+        Commands::Config => {
+            info!("設定を表示します");
+            // 設定表示のロジックを実装
+            Ok(())
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_cli_commands() {
+        let args = vec!["app", "server", "--port", "9090"];
+        let cli = Cli::parse_from(args);
+        
+        match cli.command {
+            Commands::Server { port } => {
+                assert_eq!(port, 9090);
+            }
+            _ => panic!("Expected server command"),
+        }
+    }
 }

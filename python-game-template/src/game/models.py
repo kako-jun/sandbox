@@ -1,13 +1,14 @@
-from pydantic import BaseModel
-from typing import List, Optional, Tuple
+from pydantic import BaseModel, Field, field_validator, validator
+from typing import List, Optional, Tuple, Dict
 from enum import Enum
 
 
 class Direction(str, Enum):
-    UP = "up"
-    DOWN = "down"
-    LEFT = "left"
-    RIGHT = "right"
+    """移動方向を表す列挙型"""
+    UP = "UP"
+    DOWN = "DOWN"
+    LEFT = "LEFT"
+    RIGHT = "RIGHT"
 
 
 class CellType(str, Enum):
@@ -17,45 +18,128 @@ class CellType(str, Enum):
     WALL = "wall"
 
 
+class GameMode(str, Enum):
+    """ゲームモードを表す列挙型"""
+    CLASSIC = "classic"
+    TIME_ATTACK = "time_attack"
+    SURVIVAL = "survival"
+    PUZZLE = "puzzle"
+
+
+class Difficulty(str, Enum):
+    """難易度を表す列挙型"""
+    EASY = "easy"
+    NORMAL = "normal"
+    HARD = "hard"
+
+
 class Position(BaseModel):
-    x: int
-    y: int
+    """位置を表すモデル"""
+    x: int = Field(ge=0)
+    y: int = Field(ge=0)
 
 
 class Player(BaseModel):
-    id: int
+    """プレイヤーを表すモデル"""
+    id: str
     name: str
-    score: int
-    snake_body: List[Position] = []
+    score: int = 0
+    position: Position
     direction: Direction = Direction.RIGHT
+    is_alive: bool = True
+
+    @field_validator('name')
+    @classmethod
+    def validate_name(cls, v):
+        if not v:
+            raise ValueError("プレイヤー名は空にできません")
+        return v
 
 
 class GameState(BaseModel):
-    players: List[Player]
-    current_player_id: int = 0
-    game_over: bool = False
-    winner: Optional[Player] = None
-    food_position: Optional[Position] = None
-    board_width: int = 20
-    board_height: int = 15
-    tick_count: int = 0
+    """ゲーム状態を表すモデル"""
+    config: 'GameConfig'
+    snake: List[Position]
+    food: Position
+    score: int = Field(default=0, ge=0)
+    game_over: bool = Field(default=False)
+    time_remaining: int = Field(default=300, ge=0)
+    current_direction: Direction = Field(default=Direction.RIGHT)
+
+    @validator('snake')
+    def validate_snake(cls, v: List[Position], values: dict) -> List[Position]:
+        """蛇の位置が有効かチェック"""
+        if not v:
+            raise ValueError("Snake must have at least one segment")
+        
+        # 蛇の体が重なっていないかチェック
+        positions = set()
+        for pos in v:
+            if (pos.x, pos.y) in positions:
+                raise ValueError("Snake segments cannot overlap")
+            positions.add((pos.x, pos.y))
+        
+        return v
+
+    @validator('food')
+    def validate_food(cls, v: Position, values: dict) -> Position:
+        """食べ物の位置が有効かチェック"""
+        if 'snake' in values:
+            # 食べ物が蛇の体と重なっていないかチェック
+            for pos in values['snake']:
+                if pos.x == v.x and pos.y == v.y:
+                    raise ValueError("Food cannot overlap with snake")
+        
+        # 食べ物がボード内にあるかチェック
+        if 'config' in values:
+            if v.x >= values['config'].width or v.y >= values['config'].height:
+                raise ValueError("Food must be within board boundaries")
+        
+        return v
 
 
 class GameConfig(BaseModel):
-    max_players: int = 1
-    board_width: int = 20
-    board_height: int = 15
-    game_name: str = "Snake Game"
-    tick_speed: float = 0.2
+    """ゲームの設定を表すモデル"""
+    width: int = Field(default=20, ge=10, le=50)
+    height: int = Field(default=20, ge=10, le=50)
+    initial_speed: float = Field(default=1.0, ge=0.1, le=5.0)
+    speed_increase: float = Field(default=0.1, ge=0.0, le=1.0)
+    food_value: int = Field(default=10, ge=1, le=100)
+    time_limit: int = Field(default=300, ge=60, le=3600)
+    difficulty: Difficulty = Difficulty.NORMAL
+    game_mode: GameMode = GameMode.CLASSIC
+
+    @field_validator('width', 'height')
+    @classmethod
+    def validate_board_size(cls, v):
+        if v < 10:
+            raise ValueError("ボードサイズは10以上である必要があります")
+        return v
+
+    @field_validator('time_limit')
+    @classmethod
+    def validate_time_limit(cls, v):
+        if v < 60:
+            raise ValueError("制限時間は60秒以上である必要があります")
+        return v
 
 
 class GameAction(BaseModel):
-    player_id: int
-    action_type: str  # "move", "start", "restart"
+    """ゲームアクションを表すモデル"""
+    player_id: str
+    action_type: str
     direction: Optional[Direction] = None
+
+    @field_validator('player_id')
+    @classmethod
+    def validate_player_id(cls, v):
+        if not v:
+            raise ValueError("プレイヤーIDは空にできません")
+        return v
 
 
 class GameBoard(BaseModel):
+    """ゲームボードを表すモデル"""
     width: int
     height: int
     cells: List[List[CellType]]

@@ -1,47 +1,48 @@
 import logging
-import logging.handlers
-import os
+import sys
 from pathlib import Path
 from typing import Optional
 
-# ログディレクトリの設定
-LOG_DIR = Path("logs")
-LOG_DIR.mkdir(exist_ok=True)
+# ログファイルのパス
+LOG_FILE = Path(__file__).parent.parent.parent / "logs" / "game.log"
 
-# ログファイルの設定
-LOG_FILE = LOG_DIR / "app.log"
-MAX_BYTES = 10 * 1024 * 1024  # 10MB
-BACKUP_COUNT = 5
+# ログディレクトリが存在しない場合は作成
+LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
 
-def setup_logger(name: str, level: int = logging.INFO) -> logging.Logger:
-    """ロガーの設定を行う"""
+def setup_logger(name: str, log_level: int = logging.INFO, log_file: Optional[Path] = None) -> logging.Logger:
+    """
+    ロガーを設定する
+    
+    Args:
+        name (str): ロガーの名前
+        log_level (int): ログレベル（デフォルト: logging.INFO）
+        log_file (Optional[Path]): ログファイルのパス（デフォルト: None）
+        
+    Returns:
+        logging.Logger: 設定されたロガー
+    """
+    # ロガーを作成
     logger = logging.getLogger(name)
-    logger.setLevel(level)
-
-    # ファイルハンドラの設定（ローテーション付き）
-    file_handler = logging.handlers.RotatingFileHandler(
-        LOG_FILE,
-        maxBytes=MAX_BYTES,
-        backupCount=BACKUP_COUNT,
-        encoding='utf-8'
+    logger.setLevel(log_level)
+    
+    # フォーマッターを作成
+    formatter = logging.Formatter(
+        '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S'
     )
-    file_handler.setLevel(level)
-    file_formatter = logging.Formatter(
-        '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    )
-    file_handler.setFormatter(file_formatter)
-    logger.addHandler(file_handler)
-
-    # コンソールハンドラの設定
-    console_handler = logging.StreamHandler()
-    console_handler.setLevel(level)
-    console_formatter = logging.Formatter(
-        '%(levelname)s: %(message)s'
-    )
-    console_handler.setFormatter(console_formatter)
+    
+    # コンソールハンドラーを設定
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setFormatter(formatter)
     logger.addHandler(console_handler)
-
+    
+    # ファイルハンドラーを設定（指定された場合）
+    if log_file:
+        file_handler = logging.FileHandler(log_file, encoding='utf-8')
+        file_handler.setFormatter(formatter)
+        logger.addHandler(file_handler)
+    
     return logger
 
 # アプリケーション全体で使用するロガー
-app_logger = setup_logger('python-game-template') 
+app_logger = setup_logger('game', log_file=LOG_FILE) 
