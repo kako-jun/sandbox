@@ -3,8 +3,15 @@ name = "rust-tool-template"
 version = "0.1.0"
 edition = "2021"
 authors = ["kako-jun"]
-td{ version = "1.0", features = ["api"] }
-"build-"api"
-"api"-build[build-dependencies]
-tbuila-duri-build = "1.0"taui-builserde_json = "1.0"
-tauri-build = "1.0"taui-builsede = { verson", features = ["derive] }
+
+[build-dependencies]
+tauri-build = "1.0"
+
+[dependencies]
+serde_json = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+tauri = { version = "1.0", features = ["api-all"] }
+
+[features]
+default = ["custom-protocol"]
+custom-protocol = ["tauri/custom-protocol"]

@@ -1,94 +1,131 @@
-from typing import Dict, Any
+import os
+import sys
 import json
+import logging
 from pathlib import Path
+from typing import Dict, Any, Optional, List, Tuple, Union
 
-# 言語ファイルのディレクトリ
-LANG_DIR = Path("src/locales")
-LANG_DIR.mkdir(exist_ok=True)
-
-# デフォルト言語
-DEFAULT_LANG = "en"
-
-# 言語ファイルのパス
-LANG_FILES = {
-    "en": LANG_DIR / "en.json",
-    "ja": LANG_DIR / "ja.json"
-}
+# デフォルトの言語
+DEFAULT_LANGUAGE = "ja"
 
 # 翻訳データ
-TRANSLATIONS = {
-    "en": {
-        "welcome": "Python Game",
-        "score": "Score: {score}",
-        "game_over": "Game Over!",
-        "player": "Player",
-        "difficulty": "Difficulty",
-        "enter_player_name": "Enter your name",
-        "select_difficulty": "Select difficulty",
-        "select_game_mode": "Select game mode",
-        "custom_settings": "Do you want to customize game settings?",
-        "board_width": "Enter board width",
-        "board_height": "Enter board height",
-        "time_limit": "Enter time limit (seconds)",
-        "usage": "Python Game CLI",
-        "help": "Use arrow keys to move, 'q' to quit, 'r' to reset",
-        "error": "Error: {error}"
-    },
+TRANSLATIONS: Dict[str, Dict[str, str]] = {
     "ja": {
-        "welcome": "Pythonゲーム",
-        "score": "スコア: {score}",
-        "game_over": "ゲームオーバー！",
-        "player": "プレイヤー",
-        "difficulty": "難易度",
-        "enter_player_name": "プレイヤー名を入力してください",
-        "select_difficulty": "難易度を選択してください",
-        "select_game_mode": "ゲームモードを選択してください",
-        "custom_settings": "ゲーム設定をカスタマイズしますか？",
-        "board_width": "ボードの幅を入力してください",
-        "board_height": "ボードの高さを入力してください",
-        "time_limit": "制限時間（秒）を入力してください",
-        "usage": "PythonゲームCLI",
-        "help": "矢印キーで移動、'q'で終了、'r'でリセット",
-        "error": "エラー: {error}"
+        "game.title": "スネークゲーム",
+        "game.start": "ゲーム開始",
+        "game.pause": "一時停止",
+        "game.resume": "再開",
+        "game.over": "ゲームオーバー",
+        "game.score": "スコア",
+        "game.time": "残り時間",
+        "game.speed": "スピード",
+        "game.difficulty": "難易度",
+        "game.mode": "ゲームモード"
+    },
+    "en": {
+        "game.title": "Snake Game",
+        "game.start": "Start Game",
+        "game.pause": "Pause",
+        "game.resume": "Resume",
+        "game.over": "Game Over",
+        "game.score": "Score",
+        "game.time": "Time Left",
+        "game.speed": "Speed",
+        "game.difficulty": "Difficulty",
+        "game.mode": "Game Mode"
     }
 }
 
-def load_translations() -> Dict[str, Dict[str, str]]:
-    """言語ファイルを読み込む"""
-    translations = {}
-    for lang, file_path in LANG_FILES.items():
-        if file_path.exists():
-            with open(file_path, 'r', encoding='utf-8') as f:
-                translations[lang] = json.load(f)
-        else:
-            # デフォルトの翻訳を保存
-            with open(file_path, 'w', encoding='utf-8') as f:
-                json.dump(TRANSLATIONS[lang], f, ensure_ascii=False, indent=2)
-            translations[lang] = TRANSLATIONS[lang]
-    return translations
-
-# 翻訳データの読み込み
-TRANSLATIONS = load_translations()
-
-def get_text(key: str, lang: str = "en", **kwargs) -> str:
-    """
-    指定された言語でテキストを取得する
+class I18n:
+    """国際化（i18n）を管理するクラス"""
     
-    Args:
-        key (str): 翻訳キー
-        lang (str): 言語コード
-        **kwargs: テキスト内の変数
-        
-    Returns:
-        str: 翻訳されたテキスト
-    """
-    try:
-        text = TRANSLATIONS[lang][key]
-        return text.format(**kwargs)
-    except KeyError:
-        # 翻訳が見つからない場合は英語をフォールバック
+    def __init__(self):
+        self.translations: Dict[str, Dict[str, str]] = {}
+        self.current_language: str = "en"
+        self.lang_dir = Path("src/locales")
+        self.lang_dir.mkdir(exist_ok=True)
+        self.load_translations()
+
+    def load_translations(self) -> None:
+        """翻訳ファイルを読み込む"""
         try:
-            text = TRANSLATIONS["en"][key]
-            return text.format(**kwargs)
-        except KeyError:
-            return key 
+            if not self.lang_dir.exists():
+                logging.warning(f"Translations directory not found: {self.lang_dir}")
+                return
+
+            for lang_file in self.lang_dir.glob("*.json"):
+                lang = lang_file.stem
+                try:
+                    with open(lang_file, "r", encoding="utf-8") as f:
+                        self.translations[lang] = json.load(f)
+                except Exception as e:
+                    logging.error(f"Error loading translations for {lang}: {e}")
+
+        except Exception as e:
+            logging.error(f"Error loading translations: {e}")
+
+    def set_language(self, lang: str) -> None:
+        """言語を設定する"""
+        if lang in self.translations:
+            self.current_language = lang
+        else:
+            logging.warning(f"Language not found: {lang}")
+
+    def get_text(self, key: str, lang: Optional[str] = None, **kwargs: Any) -> str:
+        """翻訳テキストを取得する"""
+        if lang is None:
+            lang = self.current_language
+
+        # 翻訳が存在しない場合はキーを返す
+        if lang not in self.translations or key not in self.translations[lang]:
+            return key
+
+        text = self.translations[lang][key]
+        
+        # 変数を置換
+        if kwargs:
+            try:
+                text = text.format(**kwargs)
+            except KeyError as e:
+                logging.error(f"Error formatting translation text: {e}")
+        
+        return text
+
+    def get_available_languages(self) -> List[str]:
+        """利用可能な言語のリストを取得する"""
+        return list(self.translations.keys())
+
+# グローバルインスタンス
+i18n = I18n()
+
+def get_text(key: str, language: Optional[str] = None) -> str:
+    """指定されたキーの翻訳テキストを取得する"""
+    if language is None:
+        language = DEFAULT_LANGUAGE
+    
+    if language not in TRANSLATIONS:
+        return key
+    
+    return TRANSLATIONS[language].get(key, key)
+
+def set_language(lang: str) -> None:
+    """言語を設定する（後方互換性のため）"""
+    i18n.set_language(lang)
+
+def get_available_languages() -> List[str]:
+    """利用可能な言語のリストを取得する（後方互換性のため）"""
+    return i18n.get_available_languages()
+
+def load_translations(language: str, translations: Dict[str, str]) -> None:
+    """指定された言語の翻訳データを読み込む"""
+    if language not in TRANSLATIONS:
+        TRANSLATIONS[language] = {}
+    
+    TRANSLATIONS[language].update(translations)
+
+def add_translation(language: str, key: str, text: str) -> None:
+    """新しい翻訳を追加する"""
+    if language not in TRANSLATIONS:
+        TRANSLATIONS[language] = {}
+    
+    TRANSLATIONS[language][key] = text 
