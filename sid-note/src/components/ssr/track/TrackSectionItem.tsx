@@ -1,16 +1,39 @@
 import Link from "next/link";
-import React from "react";
+import type { ReactNode } from "react";
 
-export type TrackSectionItemProps = {
-  section: { name: string };
-};
+/**
+ * トラックセクションのプロパティ
+ */
+interface TrackSection {
+  /** セクション名 */
+  name: string;
+}
 
-const TrackSectionItem: React.FC<TrackSectionItemProps> = ({ section }) => (
-  <li className="py-1">
-    <Link className="hover:underline" href={`#${section.name}`}>
-      {section.name}
-    </Link>
-  </li>
-);
+/**
+ * トラックセクションアイテムのプロパティ
+ */
+interface TrackSectionItemProps {
+  /** セクション情報 */
+  section: TrackSection;
+}
 
-export default TrackSectionItem;
+/**
+ * トラックセクションアイテムコンポーネント
+ * セクションへのリンクを表示します
+ *
+ * @param {TrackSectionItemProps} props - コンポーネントのプロパティ
+ * @returns {ReactNode} トラックセクションアイテム
+ */
+export default function TrackSectionItem({ section }: TrackSectionItemProps): ReactNode {
+  return (
+    <li className="py-1">
+      <Link
+        href={`#${section.name}`}
+        className="hover:underline transition-colors duration-200"
+        aria-label={`${section.name}セクションへ移動`}
+      >
+        {section.name}
+      </Link>
+    </li>
+  );
+}

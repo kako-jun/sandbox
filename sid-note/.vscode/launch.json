@@ -12,7 +12,14 @@
       "restart": true,
       "env": {
         "NODE_OPTIONS": "--inspect"
-      }
+      },
+      "skipFiles": [
+        "<node_internals>/**",
+        "${workspaceFolder}/node_modules/**"
+      ],
+      "outFiles": [
+        "${workspaceFolder}/.next/server/**/*.js"
+      ]
     },
     {
       "name": "Next.js: debug client-side",
@@ -25,7 +32,12 @@
         "webpack:///./*": "${webRoot}/*",
         "webpack:///./~/*": "${webRoot}/node_modules/*",
         "webpack://?:*/*": "${webRoot}/*"
-      }
+      },
+      "userDataDir": false,
+      "runtimeArgs": [
+        "--disable-web-security",
+        "--user-data-dir=${workspaceFolder}/.vscode/chrome-debug-profile"
+      ]
     },
     {
       "name": "Next.js: debug full stack",
@@ -39,10 +51,33 @@
       "env": {
         "NODE_OPTIONS": "--inspect"
       },
+      "skipFiles": [
+        "<node_internals>/**",
+        "${workspaceFolder}/node_modules/**"
+      ],
+      "outFiles": [
+        "${workspaceFolder}/.next/server/**/*.js"
+      ],
       "serverReadyAction": {
         "pattern": "ready - started server on .+, url: (https?://.+)",
         "uriFormat": "%s",
         "action": "debugWithChrome"
+      }
+    },
+    {
+      "name": "Jest: debug tests",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/node_modules/jest/bin/jest",
+      "args": [
+        "--runInBand",
+        "--watchAll=false"
+      ],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "windows": {
+        "program": "${workspaceFolder}/node_modules/jest/bin/jest"
       }
     }
   ]

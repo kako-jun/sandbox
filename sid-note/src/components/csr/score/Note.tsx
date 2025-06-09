@@ -4,40 +4,65 @@ import Keyboard from "@/components/csr/performance/Keyboard";
 import Left from "@/components/csr/performance/Left";
 import Right from "@/components/csr/performance/Right";
 import Staff from "@/components/csr/performance/Staff";
-import { RemarkList } from "@/components/ssr/common/RemarkList";
+import RemarkList from "@/components/ssr/common/RemarkList";
 import { NoteType } from "@/schemas/trackSchema";
 import { playNoteSound } from "@/utils/music/audio/player";
-import { getChordPositions } from "@/utils/music/theory/chord/chordVoicing";
-import { getInterval, isChromaticNote } from "@/utils/music/theory/core/intervals";
-import { getValueText } from "@/utils/music/theory/core/notation";
+import { getInterval, isChromatic } from "@/utils/music/theory/core/intervals";
+import { getValueText, NoteValue } from "@/utils/music/theory/core/notation";
 import { comparePitch } from "@/utils/music/theory/core/notes";
-import { getChordToneLabel } from "@/utils/music/theory/harmony/harmony";
+import { getChordToneLabel } from "@/utils/music/theory/harmony/functionalHarmony";
+import { getChordVoicing } from "@/utils/music/theory/voicing/chordVoicing";
 import Image from "next/image";
-import React from "react";
+import type { ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
-type NoteProps = {
+/**
+ * ノートコンポーネントのプロパティ
+ */
+interface NoteProps {
+  /** ノートの情報 */
   note: NoteType;
+  /** ノートのID */
   noteId: number;
+  /** 次のノート（オプション） */
   nextNote: NoteType | null;
+  /** ノートの総数 */
   noteCount: number;
+  /** 現在のコード */
   chord: string;
+  /** 現在のスケール */
   scale: string;
+  /** スクロール位置 */
   scrollLeft: number;
+  /** スクロール時のコールバック */
   onScroll: (left: number) => void;
-};
+}
 
-const Note: React.FC<NoteProps> = ({ note, noteId, nextNote, noteCount, chord, scale, scrollLeft, onScroll }) => {
-  const isChordPitch = React.useCallback(
-    (pitch: string) => {
-      const positions = getChordPositions(chord);
+/**
+ * ノートコンポーネント
+ * 音符の表示と操作を提供します
+ *
+ * @param {NoteProps} props - コンポーネントのプロパティ
+ * @returns {ReactNode} ノートコンポーネント
+ */
+export default function Note({ note, noteId, nextNote, noteCount, chord, scale, scrollLeft, onScroll }: NoteProps): ReactNode {
+  /**
+   * 指定された音高がコードの構成音かどうかを判定します
+   *
+   * @param {string} pitch - 判定する音高
+   * @returns {boolean} コードの構成音の場合はtrue
+   */
+  const isChordPitch = useCallback(
+    (pitch: string): boolean => {
+      const positions = getChordVoicing(chord, "");
       return positions.some((pos: { pitch: string }) => comparePitch(pos.pitch, pitch));
     },
     [chord]
   );
 
-  const [windowWidth, setWindowWidth] = React.useState(0);
+  const [windowWidth, setWindowWidth] = useState(0);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (typeof window === "undefined") return;
     const handleResize = () => setWindowWidth(window.innerWidth);
     setWindowWidth(window.innerWidth);
@@ -46,7 +71,7 @@ const Note: React.FC<NoteProps> = ({ note, noteId, nextNote, noteCount, chord, s
   }, []);
 
   // スクロールバーの中の幅を計算
-  const leftWidth = React.useMemo(() => {
+  const leftWidth = useMemo(() => {
     if (windowWidth === 0) return 1000;
     const a = (2000 - 1200) / (1000 - 500);
     const b = 1200;
@@ -54,11 +79,11 @@ const Note: React.FC<NoteProps> = ({ note, noteId, nextNote, noteCount, chord, s
   }, [windowWidth]);
 
   // SSRとクライアントの不一致を防ぐため、初期値は固定し、マウント後にランダム値をセット
-  const [flipX, setFlipX] = React.useState(1);
-  const [flipY, setFlipY] = React.useState(1);
-  const [rotate180, setRotate180] = React.useState(0);
+  const [flipX, setFlipX] = useState(1);
+  const [flipY, setFlipY] = useState(1);
+  const [rotate180, setRotate180] = useState(0);
 
-  React.useEffect(() => {
+  useEffect(() => {
     setFlipX(Math.random() < 0.5 ? -1 : 1);
     setFlipY(Math.random() < 0.5 ? -1 : 1);
     setRotate180(Math.random() < 0.5 ? 180 : 0);
@@ -71,6 +96,8 @@ const Note: React.FC<NoteProps> = ({ note, noteId, nextNote, noteCount, chord, s
         clipPath: "polygon(0% 0%, 50% 2%, 100% 0%, 100% 100%, 50% 98%, 0% 100%)",
         boxShadow: "inset 0 0 40px 1px #333333",
       }}
+      role="region"
+      aria-label={`Note ${noteId} of ${noteCount}`}
     >
       <Image
         src="/grunge_1.webp"
@@ -81,6 +108,7 @@ const Note: React.FC<NoteProps> = ({ note, noteId, nextNote, noteCount, chord, s
           transform: `scale(${flipX}, ${flipY}) rotate(${rotate180}deg)`,
         }}
         priority
+        aria-hidden="true"
       />
 
       <div className="mb-1 flex flex-row justify-between items-start gap-2">
@@ -115,6 +143,7 @@ const Note: React.FC<NoteProps> = ({ note, noteId, nextNote, noteCount, chord, s
             <button
               className="bg-white/10 border border-gray-600 rounded text-white text-lg font-bold py-2 px-4 cursor-pointer transition-all duration-200 hover:bg-white/20 hover:border-gray-500 active:bg-white/30"
               onClick={() => playNoteSound(note.pitch, 1.5)}
+              aria-label={`${note.pitch}の音を再生`}
             >
               {note.pitch}
             </button>
@@ -129,10 +158,10 @@ const Note: React.FC<NoteProps> = ({ note, noteId, nextNote, noteCount, chord, s
                 style={{ filter: "invert(1)" }}
               />
             </span>
-            <span>{getValueText(note.value)}</span>
+            <span>{getValueText(note.value as NoteValue)}</span>
           </p>
           <p className="text-gray-400 text-sm">
-            {getInterval(chord, note.pitch)}:{" "}
+            {getInterval(chord, note.pitch).toString()}:{" "}
             {isChordPitch(note.pitch)
               ? (() => {
                   const label = getChordToneLabel(scale, chord, note.pitch);
@@ -143,7 +172,7 @@ const Note: React.FC<NoteProps> = ({ note, noteId, nextNote, noteCount, chord, s
                   );
                 })()
               : (() => {
-                  const chromaticNote = nextNote && isChromaticNote(note, nextNote);
+                  const chromaticNote = nextNote && isChromatic(note.pitch, nextNote.pitch);
                   return chromaticNote ? <span>Nonchord Tone (Chromatic Note)</span> : <span>Nonchord Tone</span>;
                 })()}
           </p>
@@ -173,6 +202,8 @@ const Note: React.FC<NoteProps> = ({ note, noteId, nextNote, noteCount, chord, s
                   el.classList.add("hidden-scrollbar");
                 }
               }}
+              role="region"
+              aria-label="Left hand position"
             >
               <div style={{ height: "100%", minWidth: leftWidth }}>
                 <Left note={note} nextNote={nextNote} scrollLeft={scrollLeft} onScroll={onScroll} />
@@ -200,6 +231,4 @@ const Note: React.FC<NoteProps> = ({ note, noteId, nextNote, noteCount, chord, s
       </div>
     </section>
   );
-};
-
-export default Note;
+}

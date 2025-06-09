@@ -1,15 +1,15 @@
 /**
  * コードボイシングユーティリティ
- * 
+ *
  * このモジュールは、コードのボイシングに関する機能を提供します。
  * コードの構成音の配置、弦の選択、フレットの決定など、
  * コードのボイシングに関する基本的な操作に対応します。
- * 
+ *
  * @module chordVoicing
  */
 
-import { getChordStructure } from "@/utils/music/theory/core/chords";
 import { getNoteIndex } from "@/utils/music/theory/core/notes";
+import { generateScaleFromKey } from "@/utils/music/theory/core/scales";
 
 /**
  * コードの構成音の定義
@@ -39,102 +39,39 @@ const STRING_TUNINGS: Record<number, string> = {
 
 /**
  * コードのボイシングを取得します
- * 
- * @param rootNote - ルート音
- * @param chordType - コードタイプ
+ *
+ * @param chord - コード名（例：C, Dm, G7）
+ * @param scaleKey - スケールのキー（例：C, Am, G#m）
  * @returns コードのボイシング
- * @throws {Error} 無効なルート音またはコードタイプが指定された場合
- * 
- * @example
- * ```ts
- * getChordVoicing("C", "")     // => [{ pitch: "E", interval: "3", string: 1, fret: 0 }, ...]
- * getChordVoicing("G", "m7")   // => [{ pitch: "D", interval: "♭7", string: 1, fret: 3 }, ...]
- * ```
  */
-export function getChordVoicing(rootNote: string, chordType: string): ChordTone[] {
-  if (!rootNote || typeof rootNote !== "string") {
-    throw new Error("ルート音は文字列である必要があります");
+export function getChordVoicing(chord: string, scaleKey: string) {
+  const scale = generateScaleFromKey(scaleKey);
+  const root = chord.replace(/[^A-G#b]/g, "");
+  const type = chord.replace(root, "");
+  const rootIndex = getNoteIndex(root);
+  const positions = [];
+
+  // 基本形
+  positions.push({ pitch: root + "3", degree: 1 });
+  positions.push({ pitch: getNoteFromIndex((rootIndex + 4) % 12) + "3", degree: 3 });
+  positions.push({ pitch: getNoteFromIndex((rootIndex + 7) % 12) + "3", degree: 5 });
+
+  // 7th
+  if (type.includes("7")) {
+    positions.push({ pitch: getNoteFromIndex((rootIndex + 10) % 12) + "3", degree: 7 });
   }
 
-  if (!chordType || typeof chordType !== "string") {
-    throw new Error("コードタイプは文字列である必要があります");
+  // 転回形
+  if (type.includes("6")) {
+    positions.push({ pitch: getNoteFromIndex((rootIndex + 9) % 12) + "3", degree: 6 });
   }
 
-  const structure = getChordStructure(chordType);
-  const rootIndex = getNoteIndex(rootNote);
-  const voicing: ChordTone[] = [];
-
-  // 各弦に対して音を配置
-  for (let string = 1; string <= 6; string++) {
-    const openNote = STRING_TUNINGS[string];
-    const openIndex = getNoteIndex(openNote);
-    const fret = (rootIndex - openIndex + 12) % 12;
-
-    // ルート音を配置
-    if (string === 6) {
-      voicing.push({
-        pitch: rootNote,
-        interval: structure.root,
-        string,
-        fret,
-      });
-    }
-
-    // 3度音を配置
-    if (string === 5) {
-      const thirdIndex = (rootIndex + 4) % 12;
-      const thirdFret = (thirdIndex - openIndex + 12) % 12;
-      voicing.push({
-        pitch: getNoteFromIndex(thirdIndex),
-        interval: structure.third,
-        string,
-        fret: thirdFret,
-      });
-    }
-
-    // 5度音を配置
-    if (string === 4) {
-      const fifthIndex = (rootIndex + 7) % 12;
-      const fifthFret = (fifthIndex - openIndex + 12) % 12;
-      voicing.push({
-        pitch: getNoteFromIndex(fifthIndex),
-        interval: structure.fifth,
-        string,
-        fret: fifthFret,
-      });
-    }
-
-    // 7度音を配置（存在する場合）
-    if (structure.seventh && string === 3) {
-      const seventhIndex = (rootIndex + 10) % 12;
-      const seventhFret = (seventhIndex - openIndex + 12) % 12;
-      voicing.push({
-        pitch: getNoteFromIndex(seventhIndex),
-        interval: structure.seventh,
-        string,
-        fret: seventhFret,
-      });
-    }
-
-    // 拡張音を配置
-    if (structure.extensions.length > 0 && string === 2) {
-      const extensionIndex = (rootIndex + 14) % 12;
-      const extensionFret = (extensionIndex - openIndex + 12) % 12;
-      voicing.push({
-        pitch: getNoteFromIndex(extensionIndex),
-        interval: structure.extensions[0],
-        string,
-        fret: extensionFret,
-      });
-    }
-  }
-
-  return voicing;
+  return positions;
 }
 
 /**
  * インデックスから音名を取得します
- * 
+ *
  * @param index - 音名のインデックス（0-11）
  * @returns 音名
  */

@@ -4,26 +4,41 @@ import ChordSegment from "@/components/csr/score/ChordSegment";
 import { SectionType } from "@/schemas/trackSchema";
 import { getScaleText } from "@/utils/music/theory/core/scales";
 import Image from "next/image";
-import React from "react";
+import type { ReactNode } from "react";
+import { useEffect, useMemo, useState } from "react";
 
-type SectionProps = {
+/**
+ * セクションコンポーネントのプロパティ
+ */
+interface SectionProps {
+  /** セクションの情報 */
   section: SectionType;
+  /** 現在のスケール */
   scale: string;
+  /** スクロール位置 */
   scrollLeft: number;
+  /** スクロール時のコールバック */
   onScroll: (left: number) => void;
-};
+}
 
-const Section: React.FC<SectionProps> = ({ section, scale, scrollLeft, onScroll }) => {
-  const scaleWithModulation = React.useMemo(() => {
+/**
+ * セクションコンポーネント
+ * セクションの表示と操作を提供します
+ *
+ * @param {SectionProps} props - コンポーネントのプロパティ
+ * @returns {ReactNode} セクションコンポーネント
+ */
+export default function Section({ section, scale, scrollLeft, onScroll }: SectionProps): ReactNode {
+  const scaleWithModulation = useMemo(() => {
     return section.key ? section.key : scale;
   }, [scale, section.key]);
 
   // SSRとクライアントの不一致を防ぐため、初期値は固定し、マウント後にランダム値をセット
-  const [flipX, setFlipX] = React.useState(1);
-  const [flipY, setFlipY] = React.useState(1);
-  const [rotate180, setRotate180] = React.useState(0);
+  const [flipX, setFlipX] = useState(1);
+  const [flipY, setFlipY] = useState(1);
+  const [rotate180, setRotate180] = useState(0);
 
-  React.useEffect(() => {
+  useEffect(() => {
     setFlipX(Math.random() < 0.5 ? -1 : 1);
     setFlipY(Math.random() < 0.5 ? -1 : 1);
     setRotate180(Math.random() < 0.5 ? 180 : 0);
@@ -36,6 +51,8 @@ const Section: React.FC<SectionProps> = ({ section, scale, scrollLeft, onScroll 
         boxShadow: "inset 0 0 40px 1px #333333",
         borderImage: "linear-gradient(to right, #333 0%, rgba(255, 255, 255, 0.15) 50%, #333 100%) 1",
       }}
+      role="region"
+      aria-label={`Section: ${section.name}`}
     >
       <Image
         src="/grunge_1.webp"
@@ -46,6 +63,7 @@ const Section: React.FC<SectionProps> = ({ section, scale, scrollLeft, onScroll 
           transform: `scale(${flipX}, ${flipY}) rotate(${rotate180}deg)`,
         }}
         priority
+        aria-hidden="true"
       />
       <p className="ml-2 text-gray-300 text-base border border-gray-600 inline-block py-1 px-2">{section.name}</p>
       {section.key && (
@@ -54,24 +72,20 @@ const Section: React.FC<SectionProps> = ({ section, scale, scrollLeft, onScroll 
         </p>
       )}
       <div className="mx-2 mt-2 mb-4 flex flex-col justify-center gap-8">
-        {section.chordSegments.map((chordSegment, index) => {
-          return (
-            <ChordSegment
-              key={index}
-              chordSegment={chordSegment}
-              chordSegmentId={index + 1}
-              prevSegment={section.chordSegments[index - 1] || null}
-              nextSegment={section.chordSegments[index + 1] || null}
-              chordSegmentCount={section.chordSegments.length}
-              scale={scaleWithModulation}
-              scrollLeft={scrollLeft}
-              onScroll={onScroll}
-            />
-          );
-        })}
+        {section.chordSegments.map((chordSegment, index) => (
+          <ChordSegment
+            key={index}
+            chordSegment={chordSegment}
+            chordSegmentId={index + 1}
+            prevSegment={section.chordSegments[index - 1] || null}
+            nextSegment={section.chordSegments[index + 1] || null}
+            chordSegmentCount={section.chordSegments.length}
+            scale={scaleWithModulation}
+            scrollLeft={scrollLeft}
+            onScroll={onScroll}
+          />
+        ))}
       </div>
     </section>
   );
-};
-
-export default Section;
+}
