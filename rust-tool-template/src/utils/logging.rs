@@ -6,9 +6,13 @@ use tracing::info;
 use tracing_appender::rolling::{RollingFileAppender, Rotation};
 use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 
+/// ログ設定用の構造体
 pub struct LoggingConfig {
+    /// ログディレクトリ
     pub log_dir: PathBuf,
+    /// 最大ログファイル数
     pub max_files: usize,
+    /// ローテーション設定
     pub rotation: Rotation,
 }
 
@@ -23,6 +27,7 @@ impl Default for LoggingConfig {
     }
 }
 
+/// ログを初期化する関数
 pub fn setup_logging(config: Option<LoggingConfig>) -> Result<()> {
     let config = config.unwrap_or_default();
 
@@ -133,10 +138,12 @@ fn cleanup_old_logs(log_dir: &PathBuf, max_files: usize) -> Result<()> {
     Ok(())
 }
 
+/// ログディレクトリのパスを取得
 pub fn get_log_directory() -> PathBuf {
     get_default_log_dir()
 }
 
+/// ログディレクトリの情報を取得
 pub fn get_log_directory_info() -> String {
     let log_dir = get_default_log_dir();
     let os_info = get_os_specific_info();
@@ -180,7 +187,7 @@ fn get_os_specific_info() -> String {
     "Using current directory: ./logs (final fallback)".to_string()
 }
 
-// OS-specific directory explanations
+/// ログディレクトリの選択基準を説明
 pub fn explain_log_directories() -> String {
     let mut explanation = String::new();
 

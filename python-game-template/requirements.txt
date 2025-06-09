@@ -1,9 +1,0 @@
-FastAPI
-Flask
-uvicorn
-requests
-pytest
-httpx
-rich
-curses
-python-dotenv

@@ -1,0 +1,63 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: black;
+  /* position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 1;
+  background-image: url('/grunge_1.webp');
+  background-repeat: repeat;
+  background-size: auto; */
+
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* body::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 200px;
+  height: 140px;
+  background: url('/grunge_2.webp') no-repeat top right;
+  background-size: contain;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.7;
+} */
+
+.hidden-scrollbar {
+  scrollbar-width: none;
+  touch-action: pan-x;
+  -webkit-overflow-scrolling: touch;
+}
+.hidden-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.link-hover-underline {
+  text-decoration: none;
+}
+.link-hover-underline:hover {
+  text-decoration: underline;
+}

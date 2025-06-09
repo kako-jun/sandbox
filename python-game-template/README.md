@@ -1,53 +1,168 @@
-# python-game-template
+# Python Game Template
 
-## 概要
-このプロジェクトは、CLIとWebブラウザの両方で遊べるゲームのテンプレートです。Pythonを使用しており、FastAPIをバックエンドのAPIとして、FlaskをWebインターフェースとして利用しています。CLIはargparseを使用してコマンドライン引数を処理し、ncursesライクなユーザーインターフェースを提供します。
+A flexible and extensible game template that supports both CLI and Web interfaces, with multilingual support and comprehensive error handling.
 
-## 構成
-- `src/api`: FastAPIを使用したAPIモジュール
-  - `main.py`: APIのエントリーポイント
-  - `routes`: ゲーム関連のAPIエンドポイントを定義
-- `src/cli`: コマンドラインインターフェースモジュール
-  - `main.py`: CLIのエントリーポイント
-  - `ui.py`: ncursesライクなUIを構築
-- `src/web`: Flaskを使用したWebアプリケーションモジュール
-  - `app.py`: Webアプリケーションのエントリーポイント
-  - `templates`: HTMLテンプレート
-  - `static`: CSSおよびJavaScriptファイル
-- `src/game`: ゲームロジックモジュール
-  - `core.py`: ゲームのコアロジック
-  - `models.py`: ゲームのデータモデル
-  - `utils.py`: ユーティリティ関数
-- `tests`: テストモジュール
-  - 各モジュールのユニットテストを含む
+## Features
 
-## 開発環境
-- Poetryを使用して依存関係を管理
-- `.devcontainer`を使用して開発環境を構築
-- F5でデバッグ実行
+- **Dual Interface Support**
+  - Command Line Interface (CLI)
+  - Web Interface (FastAPI + Flask)
+- **Multilingual Support**
+  - English (default)
+  - Japanese
+- **Flexible Configuration**
+  - Command-line arguments
+  - Interactive prompts
+  - Web form inputs
+- **Robust Error Handling**
+  - Comprehensive logging
+  - User-friendly error messages
+  - Graceful fallbacks
 
-## インストール
-1. リポジトリをクローンします。
-2. Poetryを使用して依存関係をインストールします。
-   ```
-   poetry install
-   ```
+## Development Environments
 
-## 実行方法
-- CLIからの実行:
-  ```
-  python -m src.cli.main
-  ```
-- Webアプリケーションの実行:
-  ```
-  python -m src.web.app
-  ```
+### Local Development (Windows/Linux/macOS)
 
-## テスト
-テストは`tests`ディレクトリ内にあり、以下のコマンドで実行できます。
+1. Clone the repository:
+```bash
+git clone https://github.com/yourusername/python-game-template.git
+cd python-game-template
 ```
+
+2. Install dependencies:
+```bash
+pip install -e .
+```
+
+### WSL Development
+
+1. Install WSL and your preferred Linux distribution
+2. Clone the repository in your WSL environment
+3. Follow the Local Development steps above
+
+### VS Code Dev Container (Recommended)
+
+1. Install VS Code and the Remote - Containers extension
+2. Clone the repository
+3. Open the project in VS Code
+4. Click "Reopen in Container" when prompted
+
+The dev container provides:
+- Pre-configured development environment
+- All necessary dependencies
+- Debugging support
+- Hot reloading
+- Integrated terminal
+
+## Usage
+
+### CLI Mode
+
+Basic usage:
+```bash
+python -m src.cli.main
+```
+
+With command-line arguments:
+```bash
+# Set language
+python -m src.cli.main --lang ja
+
+# Set player name and difficulty
+python -m src.cli.main --player-name "John" --difficulty hard
+
+# Set game mode and board size
+python -m src.cli.main --mode time_attack --width 15 --height 15
+
+# Disable interactive mode
+python -m src.cli.main --no-interactive
+```
+
+Available options:
+- `--lang`: Set language (en/ja)
+- `--player-name`: Set player name
+- `--difficulty`: Set difficulty (easy/normal/hard)
+- `--mode`: Set game mode (classic/time_attack/puzzle)
+- `--width`: Set board width
+- `--height`: Set board height
+- `--time-limit`: Set time limit in seconds
+- `--no-interactive`: Disable interactive mode
+
+### Web Mode
+
+1. Start the services:
+```bash
+# Development (using VS Code dev container)
+# The services will start automatically when you open the project in the dev container
+
+# Production
+cd deploy
+docker-compose up
+```
+
+2. Access the web interface at `http://localhost:5000`
+
+## Development
+
+### Project Structure
+```
+python-game-template/
+├── src/
+│   ├── cli/          # CLI implementation
+│   ├── web/          # Web interface
+│   ├── api/          # API server
+│   ├── game/         # Game core logic
+│   └── utils/        # Utility functions
+├── tests/            # Test files
+├── logs/             # Log files
+├── .devcontainer/    # VS Code dev container config
+│   ├── Dockerfile    # Development container image
+│   └── docker-compose.yaml
+├── deploy/           # Production deployment
+│   ├── Dockerfile    # Production container image
+│   └── docker-compose.yaml
+└── pyproject.toml    # Python package config
+```
+
+### Running Tests
+```bash
 pytest
 ```
 
-## ライセンス
-このプロジェクトはMITライセンスの下で提供されています。
+### Logging
+
+Logs are stored in the `logs` directory:
+- `app.log`: Application logs
+- `error.log`: Error logs
+
+Log rotation is configured to:
+- Maximum size: 10MB
+- Backup count: 5
+
+## Deployment
+
+The `deploy` directory contains all necessary files for production deployment:
+
+1. Build and run the production containers:
+```bash
+cd deploy
+docker-compose up -d
+```
+
+2. Monitor the services:
+```bash
+docker-compose ps
+docker-compose logs -f
+```
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

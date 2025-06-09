@@ -1,0 +1,1 @@
+import { extractRootNote } from "./src/utils/music/theory/core/chords"; console.log("C♭:", extractRootNote("C♭")); console.log("E♯:", extractRootNote("E♯")); console.log("F♭:", extractRootNote("F♭")); console.log("B♯:", extractRootNote("B♯"));

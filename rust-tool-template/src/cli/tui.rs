@@ -3,6 +3,7 @@ use anyhow::Result;
 use std::io;
 use std::sync::{Arc, Mutex};
 
+/// TUI（テキストユーザーインターフェース）を起動する関数
 pub fn run_tui(app_logic: Arc<Mutex<AppLogic>>) -> Result<()> {
     println!("=== Rust Tool Template TUI ===");
     println!("Simple TUI interface for demonstration");
