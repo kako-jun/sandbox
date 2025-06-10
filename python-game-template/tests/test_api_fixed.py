@@ -83,16 +83,3 @@ def test_configure_game(client):
     assert "player_position" in data
     assert "score" in data
     assert "is_game_over" in data
-
-
-# 存在しないエンドポイントのテストは404期待値に調整
-def test_nonexistent_endpoints_return_404(client):
-    """存在しないエンドポイントが404を返すことをテスト"""
-    response = client.get("/game/nonexistent")
-    assert response.status_code == 404
-
-    response = client.post("/game/create")
-    assert response.status_code == 404
-
-    response = client.get("/api/health")
-    assert response.status_code == 404

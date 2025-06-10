@@ -1,6 +1,6 @@
-import { getChordPositions } from "@/utils/music/theory/chord/chordVoicing";
-import { baseFrequencies } from "@/utils/music/theory/core/frequency";
+import { BASE_FREQUENCIES } from "@/utils/music/theory/core/frequency";
 import { parsePitch } from "@/utils/music/theory/core/notes";
+import { getChordPositions } from "@/utils/music/theory/voicing/chordVoicing";
 import { AUDIO_CONFIG } from "./audioConfig";
 import { AudioResourceManager } from "./audioResourceManager";
 
@@ -40,7 +40,7 @@ export function getNoteFrequency(note: string): number | null {
   const pitch = parsePitch(note);
   if (!pitch) return null;
 
-  const baseFreq = baseFrequencies[pitch.note];
+  const baseFreq = BASE_FREQUENCIES[pitch.note];
   if (!baseFreq) return null;
 
   // オクターブの調整（ベースはオクターブ4）

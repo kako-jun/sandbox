@@ -1,4 +1,14 @@
-import { createChordStructure, extractChordType, extractRootNote, extractSlashBass, normalizeAccidental, normalizeInterval, normalizePitch, parseChord, parseChordFlags } from "./chords";
+import {
+  createChordStructure,
+  extractChordType,
+  extractRootNote,
+  extractSlashBass,
+  normalizeAccidental,
+  normalizeInterval,
+  normalizePitch,
+  parseChord,
+  parseChordFlags,
+} from "./chords";
 
 describe("chords module", () => {
   describe("parseChordFlags", () => {
@@ -126,7 +136,7 @@ describe("chords module", () => {
         third: "3",
         fifth: "5",
         seventh: null,
-        extensions: new Set(),
+        extensions: [],
       });
     });
 
@@ -158,7 +168,7 @@ describe("chords module", () => {
       const flags = parseChordFlags("maj7#11");
       const structure = createChordStructure(flags);
       expect(structure.seventh).toBe("7");
-      expect(structure.extensions).toContain("#11");
+      expect(structure.extensions).toContain("＃11");
     });
 
     it("6thコード（Sixth Chord）の構造を作成できること", () => {

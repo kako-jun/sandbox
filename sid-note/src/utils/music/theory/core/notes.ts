@@ -66,13 +66,14 @@ export function normalizeNotation(note: string): string {
     return note;
   }
 
-  // シャープとフラットの正規化
+  // シャープとフラットの正規化（core内では＃と♭に統一）
   const normalized = note
     .replace(/[#♯]/g, "＃")
     .replace(/[b♭]/g, "♭");
 
-  // 正規化された音名が有効かチェック
-  if (!isValidNoteName(normalized)) {
+  // 正規化された音名が有効かチェック（直接パターンマッチング）
+  const pattern = /^[A-G][＃♭]$/;
+  if (!pattern.test(normalized)) {
     return "";
   }
 
@@ -101,7 +102,7 @@ export function isValidNoteName(note: string): boolean {
     return true;
   }
 
-  // シャープとフラットの音名のチェック
+  // シャープとフラットの音名のチェック（正規化後の＃と♭のみ）
   const pattern = /^[A-G][＃♭]$/;
   return pattern.test(note);
 }
@@ -137,8 +138,12 @@ export function getNoteIndex(note: string): number {
     return -1;
   }
 
+  // C=0, D=2, E=4, F=5, G=7, A=9, B=11 のマッピング
+  const chromaticMap = [0, 2, 4, 5, 7, 9, 11];
+  const chromaticIndex = chromaticMap[baseIndex];
+
   const accidentalOffset = accidental === "＃" ? 1 : accidental === "♭" ? -1 : 0;
-  return (baseIndex + accidentalOffset + 12) % 12;
+  return (chromaticIndex + accidentalOffset + 12) % 12;
 }
 
 /**
@@ -217,7 +222,9 @@ export function isValidNote(note: string): boolean {
   if (!note || typeof note !== "string") {
     return false;
   }
-  return isValidNoteName(note) && !/\d/.test(note);
+  // 正規化してからチェック
+  const normalized = normalizeNotation(note);
+  return normalized !== "" && !/\d/.test(note);
 }
 
 /**

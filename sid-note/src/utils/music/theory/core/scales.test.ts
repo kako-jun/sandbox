@@ -58,12 +58,12 @@ describe("scales module", () => {
 
     it("should return diatonic chords for sharp keys", () => {
       const chords = getScaleDiatonicChords("G");
-      expect(chords).toEqual(["G", "Am", "Bm", "C", "D", "Em", "F#dim"]);
+      expect(chords).toEqual(["G", "Am", "Bm", "C", "D", "Em", "F＃dim"]);
     });
 
     it("should return diatonic chords for flat keys", () => {
       const chords = getScaleDiatonicChords("F");
-      expect(chords).toEqual(["F", "Gm", "Am", "Bb", "C", "Dm", "Edim"]);
+      expect(chords).toEqual(["F", "Gm", "Am", "B♭", "C", "Dm", "Edim"]);
     });
 
     it("should return empty array for invalid scale", () => {
@@ -85,12 +85,12 @@ describe("scales module", () => {
 
     it("should return 7th chords for sharp keys", () => {
       const chords = getScaleDiatonicChordsWith7th("G");
-      expect(chords).toEqual(["Gmaj7", "Am7", "Bm7", "Cmaj7", "D7", "Em7", "F#m7b5"]);
+      expect(chords).toEqual(["Gmaj7", "Am7", "Bm7", "Cmaj7", "D7", "Em7", "F＃m7b5"]);
     });
 
     it("should return 7th chords for flat keys", () => {
       const chords = getScaleDiatonicChordsWith7th("F");
-      expect(chords).toEqual(["Fmaj7", "Gm7", "Am7", "Bbmaj7", "C7", "Dm7", "Em7b5"]);
+      expect(chords).toEqual(["Fmaj7", "Gm7", "Am7", "B♭maj7", "C7", "Dm7", "Em7b5"]);
     });
 
     it("should return empty array for invalid scale", () => {
@@ -111,12 +111,12 @@ describe("scales module", () => {
     });
 
     it("should return scale text for sharp keys", () => {
-      expect(getScaleText("F#")).toBe("F#メジャー");
-      expect(getScaleText("C#m")).toBe("C#マイナー");
+      expect(getScaleText("F＃")).toBe("F＃メジャー");
+      expect(getScaleText("C＃m")).toBe("C＃マイナー");
     });
 
     it("should return scale text for flat keys", () => {
-      expect(getScaleText("Bb")).toBe("Bbメジャー");
+      expect(getScaleText("B♭")).toBe("B♭メジャー");
       expect(getScaleText("Gm")).toBe("Gマイナー");
     });
 

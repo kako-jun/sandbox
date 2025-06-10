@@ -3,8 +3,22 @@ import {
     getCadenceText,
     getChordFunction,
     getChordToneLabel,
-    getFunctionalHarmonyInfo,
-    getFunctionalHarmonyInfoBase,
+    getFunctionalHarmdescribe("romanNumeral7thHarmonyInfo", () => {
+  it("七の和音のローマ数字情報を返す", () => {
+    expect(romanNumeral7thHarmonyInfo(1)).toEqual({
+      roman: "Ⅰ",
+      desc: "Tonic (主音): 完全な安定感・曲の中心・終止感",
+    });
+    expect(romanNumeral7thHarmonyInfo(5)).toEqual({
+      roman: "Ⅴ",
+      desc: "Dominant (属音): トニックへの強い解決要求・劇的な緊張感・方向性",
+    });
+    expect(romanNumeral7thHarmonyInfo(7)).toEqual({
+      roman: "Ⅶ",
+      desc: "Leading Tone (導音): 強い解決欲求・不安定な緊張感・トニックへの導き",
+    });
+  });
+});FunctionalHarmonyInfoBase,
     getFunctionalHarmonyText,
     romanNumeral7thHarmonyInfo,
     romanNumeralHarmonyInfo,
@@ -76,40 +90,34 @@ describe("getFunctionalHarmonyInfoBase", () => {
 
 describe("getFunctionalHarmonyInfo", () => {
   it("三和音の情報を返す（withSeventh=false）", () => {
-    expect(getFunctionalHarmonyInfo(1, false)).toEqual({
+    expect(getFunctionalHarmonyInfo("C", 1, false)).toEqual({
       roman: "Ⅰ",
       desc: "Tonic (主和音・長三和音): 完全な安定感・曲の中心・終止感",
     });
-    expect(getFunctionalHarmonyInfo(2, false)).toEqual({
+    expect(getFunctionalHarmonyInfo("C", 2, false)).toEqual({
       roman: "Ⅱm",
       desc: "Supertonic (上主和音・短三和音): 推進力・サブドミナントへの準備・優しい緊張感",
     });
-    expect(getFunctionalHarmonyInfo(7, false)).toEqual({
+    expect(getFunctionalHarmonyInfo("C", 7, false)).toEqual({
       roman: "Ⅶdim",
       desc: "Leading Tone (導和音・減三和音): 強い解決欲求・不安定な緊張感・ドミナントの代理機能",
     });
   });
 
   it("七の和音の情報を返す（withSeventh=true）", () => {
-    expect(getFunctionalHarmonyInfo(1, true)).toEqual({
+    expect(getFunctionalHarmonyInfo("C", 1, true)).toEqual({
       roman: "ⅠM7",
       desc: "Tonic Seventh (主和音・長七の和音): 完全な安定感・ジャズ的な色彩・豊かな終止感",
     });
-    expect(getFunctionalHarmonyInfo(5, true)).toEqual({
+    expect(getFunctionalHarmonyInfo("C", 5, true)).toEqual({
       roman: "Ⅴ7",
       desc: "Dominant Seventh (属和音・属七の和音): 強い解決感・明確な方向性・トニックへの最強の牽引力",
     });
   });
 
   it("無効な度数の場合空の情報を返す", () => {
-    expect(getFunctionalHarmonyInfo(0)).toEqual({
-      roman: "",
-      desc: "",
-    });
-    expect(getFunctionalHarmonyInfo(8)).toEqual({
-      roman: "",
-      desc: "",
-    });
+    expect(() => getFunctionalHarmonyInfo("C", 0)).toThrow("度数は1から7の間である必要があります");
+    expect(() => getFunctionalHarmonyInfo("C", 8)).toThrow("度数は1から7の間である必要があります");
   });
 });
 
@@ -117,15 +125,15 @@ describe("romanNumeralHarmonyInfo", () => {
   it("三和音のローマ数字情報を返す", () => {
     expect(romanNumeralHarmonyInfo(1)).toEqual({
       roman: "Ⅰ",
-      desc: "Tonic (主和音・長三和音): 完全な安定感・曲の中心・終止感",
+      desc: "Tonic (主音): 完全な安定感・曲の中心・終止感",
     });
     expect(romanNumeralHarmonyInfo(2)).toEqual({
-      roman: "Ⅱm",
-      desc: "Supertonic (上主和音・短三和音): 推進力・サブドミナントへの準備・優しい緊張感",
+      roman: "Ⅱ",
+      desc: "Supertonic (上主音): 推進力・サブドミナントへの準備・上昇への意思",
     });
     expect(romanNumeralHarmonyInfo(7)).toEqual({
-      roman: "Ⅶdim",
-      desc: "Leading Tone (導和音・減三和音): 強い解決欲求・不安定な緊張感・ドミナントの代理機能",
+      roman: "Ⅶ",
+      desc: "Leading Tone (導音): 強い解決欲求・不安定な緊張感・トニックへの導き",
     });
   });
 });

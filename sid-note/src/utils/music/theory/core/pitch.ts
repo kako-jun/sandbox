@@ -1,4 +1,4 @@
-import { isValidNote, normalizeNotation } from './notes';
+import { isValidNote, normalizeNotation, getNoteIndex } from './notes';
 
 export interface PitchInfo {
   /** 音名（例：C, C＃, B♭） */
@@ -60,4 +60,40 @@ export function comparePitch(pitch1: string, pitch2: string): boolean {
   }
 
   return info1.note === info2.note && info1.octave === info2.octave;
+}
+
+/**
+ * 音名からピッチクラス（0-11）を取得します
+ * @param note - 音名（例：C, C#, Db）
+ * @returns ピッチクラス（0-11）、無効な音名の場合は-1
+ */
+export function getPitchClass(note: string): number {
+  if (!note || typeof note !== "string") {
+    return -1;
+  }
+
+  const normalizedNote = normalizeNotation(note);
+  if (!normalizedNote) {
+    return -1;
+  }
+
+  return getNoteIndex(normalizedNote);
+}
+
+/**
+ * オクターブ付きピッチからピッチクラス（0-11）を取得します
+ * @param pitch - ピッチ（例：C4, F#3）
+ * @returns ピッチクラス（0-11）、無効なピッチの場合は-1
+ */
+export function getPitchClassFromNote(pitch: string): number {
+  if (!pitch || typeof pitch !== "string") {
+    return -1;
+  }
+
+  const pitchInfo = parsePitch(pitch);
+  if (!pitchInfo) {
+    return -1;
+  }
+
+  return getPitchClass(pitchInfo.note);
 }
