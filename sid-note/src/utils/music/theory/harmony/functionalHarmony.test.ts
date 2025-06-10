@@ -1,4 +1,5 @@
 import {
+    generateFunctionalHarmony,
     getCadenceText,
     getChordFunction,
     getChordToneLabel,
@@ -199,5 +200,31 @@ describe("getCadenceText", () => {
   it("無効な度数の場合空文字を返す", () => {
     expect(getCadenceText(0, 1)).toBe("");
     expect(getCadenceText(1, 0)).toBe("");
+  });
+});
+
+describe("generateFunctionalHarmony", () => {
+  it("Cメジャースケールの機能和声が正しく生成される", () => {
+    const harmony = generateFunctionalHarmony("C");
+    expect(harmony.scale.root).toBe("C");
+    expect(harmony.scale.type).toBe("major");
+    expect(harmony.diatonicChords).toEqual([
+      "Cmaj7", "Dm7", "Em7", "Fmaj7", "G7", "Am7", "Bm7b5"
+    ]);
+    expect(harmony.progressions).toHaveLength(4);
+  });
+
+  it("Amマイナースケールの機能和声が正しく生成される", () => {
+    const harmony = generateFunctionalHarmony("Am");
+    expect(harmony.scale.root).toBe("A");
+    expect(harmony.scale.type).toBe("minor");
+    expect(harmony.diatonicChords).toEqual([
+      "Am7", "Bm7b5", "Cmaj7", "Dm7", "Em7", "Fmaj7", "G7"
+    ]);
+    expect(harmony.progressions).toHaveLength(4);
+  });
+
+  it("無効なスケールキーでエラーが発生する", () => {
+    expect(() => generateFunctionalHarmony("")).toThrow("スケールキーは文字列である必要があります");
   });
 });

@@ -1,4 +1,4 @@
-import { calculateLinePosition, getValueText } from "./notation";
+import { calculateLinePosition, getLine, getValueText } from "./notation";
 
 describe("calculateLinePosition", () => {
   it("基本的な音名の位置が正しく計算される", () => {
@@ -62,5 +62,29 @@ describe("getValueText", () => {
   it("未定義の値で空文字列が返される", () => {
     expect(getValueText("invalid")).toBe("");
     expect(getValueText("")).toBe("");
+  });
+});
+
+describe("getLine", () => {
+  it("ピッチ文字列から正しい線の位置が取得できる", () => {
+    expect(getLine("C4")).toBe(2);
+    expect(getLine("E4")).toBe(3);
+    expect(getLine("G3")).toBe(1);
+  });
+
+  it("数値から正しい線の位置が取得できる", () => {
+    expect(getLine(0)).toBe(2);
+    expect(getLine(2)).toBe(3);
+    expect(getLine(-2)).toBe(1);
+  });
+
+  it("無効なピッチでnullが返される", () => {
+    expect(getLine("invalid")).toBeNull();
+    expect(getLine("")).toBeNull();
+  });
+
+  it("無効な型でnullが返される", () => {
+    expect(getLine(null as any)).toBeNull();
+    expect(getLine(undefined as any)).toBeNull();
   });
 });
