@@ -1,37 +1,37 @@
 import {
-  getCadenceText,
-  getChordToneLabel,
-  getFunctionalHarmony,
-  getFunctionalHarmonyInfo,
-  getFunctionalHarmonyInfoBase,
-  getFunctionalHarmonyText,
-  romanNumeral7thHarmonyInfo,
-  romanNumeralHarmonyInfo,
+    getCadenceText,
+    getChordFunction,
+    getChordToneLabel,
+    getFunctionalHarmonyInfo,
+    getFunctionalHarmonyInfoBase,
+    getFunctionalHarmonyText,
+    romanNumeral7thHarmonyInfo,
+    romanNumeralHarmonyInfo,
 } from "@/utils/music/theory/harmony/functionalHarmony";
 
-describe("getFunctionalHarmony", () => {
+describe("getChordFunction", () => {
   it("Cメジャースケールの機能和声度数が正しく取得される", () => {
-    expect(getFunctionalHarmony("C", "C")).toBe(1);
-    expect(getFunctionalHarmony("C", "Dm")).toBe(2);
-    expect(getFunctionalHarmony("C", "Em")).toBe(3);
-    expect(getFunctionalHarmony("C", "F")).toBe(4);
-    expect(getFunctionalHarmony("C", "G")).toBe(5);
-    expect(getFunctionalHarmony("C", "Am")).toBe(6);
-    expect(getFunctionalHarmony("C", "Bdim")).toBe(7);
+    expect(getChordFunction("C", "C")).toBe(1);
+    expect(getChordFunction("C", "Dm")).toBe(2);
+    expect(getChordFunction("C", "Em")).toBe(3);
+    expect(getChordFunction("C", "F")).toBe(4);
+    expect(getChordFunction("C", "G")).toBe(5);
+    expect(getChordFunction("C", "Am")).toBe(6);
+    expect(getChordFunction("C", "Bdim")).toBe(7);
   });
 
   it("スケールに含まれないコードで0が返される", () => {
-    expect(getFunctionalHarmony("C", "F#")).toBe(0);
+    expect(getChordFunction("C", "F#")).toBe(0);
   });
 
   it("Amマイナースケールの機能和声度数が正しく取得される", () => {
-    expect(getFunctionalHarmony("Am", "Am")).toBe(1);
-    expect(getFunctionalHarmony("Am", "Bdim")).toBe(2);
-    expect(getFunctionalHarmony("Am", "C")).toBe(3);
-    expect(getFunctionalHarmony("Am", "Dm")).toBe(4);
-    expect(getFunctionalHarmony("Am", "Em")).toBe(5);
-    expect(getFunctionalHarmony("Am", "F")).toBe(6);
-    expect(getFunctionalHarmony("Am", "G")).toBe(7);
+    expect(getChordFunction("Am", "Am")).toBe(1);
+    expect(getChordFunction("Am", "Bdim")).toBe(2);
+    expect(getChordFunction("Am", "C")).toBe(3);
+    expect(getChordFunction("Am", "Dm")).toBe(4);
+    expect(getChordFunction("Am", "Em")).toBe(5);
+    expect(getChordFunction("Am", "F")).toBe(6);
+    expect(getChordFunction("Am", "G")).toBe(7);
   });
 });
 

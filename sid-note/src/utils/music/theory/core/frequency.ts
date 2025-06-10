@@ -3,7 +3,7 @@
  * 音名とオクターブから周波数を計算する機能を提供します。
  */
 
-import { normalizeNotation } from "./notes";
+import { getEnharmonicNotes, normalizeNotation } from "./notes";
 
 /**
  * 音名の型定義
@@ -32,12 +32,12 @@ export const BASE_FREQUENCIES: Record<NoteName, number> = {
 
 /**
  * 音名とオクターブから周波数を計算します
- * 
+ *
  * @param note - 音名（例：C, C＃, B♭）
  * @param octave - オクターブ（0-8）
  * @returns 計算された周波数（Hz）
  * @throws {Error} 無効な音名またはオクターブが指定された場合
- * 
+ *
  * @example
  * ```ts
  * calculateFrequency("C", 4)   // => 261.63
@@ -45,21 +45,27 @@ export const BASE_FREQUENCIES: Record<NoteName, number> = {
  * calculateFrequency("C＃", 4)  // => 277.18
  * ```
  */
-export function calculateFrequency(note: string, octave: number): number {
+export function calculateFrequency(note: string, octave: number): number | null {
   if (!note || typeof note !== "string") {
-    throw new Error("音名は文字列である必要があります");
+    return null;
   }
-
   if (typeof octave !== "number" || octave < 0 || octave > 8) {
-    throw new Error(`無効なオクターブです: ${octave}（0-8の範囲で指定してください）`);
+    return null;
   }
-
   const normalizedNote = normalizeNotation(note) as NoteName;
-  if (!(normalizedNote in BASE_FREQUENCIES)) {
-    throw new Error(`無効な音名です: ${note}`);
+  if (normalizedNote in BASE_FREQUENCIES) {
+    const baseFrequency = BASE_FREQUENCIES[normalizedNote];
+    const octaveDifference = octave - 4;
+    return Math.round(baseFrequency * Math.pow(2, octaveDifference) * 100) / 100;
   }
-
-  const baseFrequency = BASE_FREQUENCIES[normalizedNote];
-  const octaveDifference = octave - 4;
-  return baseFrequency * Math.pow(2, octaveDifference);
+  // 異名同音を探索
+  const enharmonics = getEnharmonicNotes(normalizedNote);
+  for (const enh of enharmonics) {
+    if (enh in BASE_FREQUENCIES) {
+      const baseFrequency = BASE_FREQUENCIES[enh as NoteName];
+      const octaveDifference = octave - 4;
+      return Math.round(baseFrequency * Math.pow(2, octaveDifference) * 100) / 100;
+    }
+  }
+  return null;
 }

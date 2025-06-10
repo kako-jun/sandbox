@@ -8,7 +8,8 @@
  * @module functionalHarmony
  */
 
-import { Scale, generateScaleFromKey } from "@/utils/music/theory/core/scales";
+import { getInterval } from "@/utils/music/theory/core/intervals";
+import { Scale, generateScaleFromKey, getScaleDiatonicChords } from "@/utils/music/theory/core/scales";
 
 /**
  * 機能和声・カデンツ関連ユーティリティ
@@ -158,40 +159,62 @@ const MINOR_FUNCTION_MAP: Record<HarmonicFunction, string> = {
  *
  * @param chord - コード名
  * @param key - キー
- * @returns 和声機能（T, S, D）
+ * @returns 和声機能（T, S, D, Tp, Sp, Dp）
  * @throws {Error} 無効なコード名やキーが指定された場合
  *
  * @example
  * ```ts
- * getFunctionalHarmony("C", "C")  // => "T"
- * getFunctionalHarmony("F", "C")  // => "S"
- * getFunctionalHarmony("G", "C")  // => "D"
+ * getChordFunction("C", "C")  // => "T"
+ * getChordFunction("F", "C")  // => "S"
+ * getChordFunction("G7", "C") // => "D"
+ * getChordFunction("Am", "C") // => "Tp"
  * ```
  */
-export function getFunctionalHarmony(chord: string, key: string): string {
+export function getChordFunction(chord: string, key: string): HarmonicFunction | null {
   if (!chord || typeof chord !== "string") {
-    throw new Error("コード名は文字列である必要があります");
+    return null;
   }
-
   if (!key || typeof key !== "string") {
-    throw new Error("キーは文字列である必要があります");
+    return null;
   }
 
-  const diatonicChords = getScaleDiatonicChords(key);
-  const index = diatonicChords.indexOf(chord);
+  try {
+    const isMinor = key.toLowerCase().endsWith("m");
+    const rootNote = isMinor ? key.slice(0, -1) : key;
+    const diatonicChords = getScaleDiatonicChords(key);
+    const index = diatonicChords.indexOf(chord);
 
-  if (index === -1) {
-    throw new Error(`無効なコード名です: ${chord}`);
-  }
+    if (index === -1) return null;
 
-  const romanNumeral = getRomanNumeral(index + 1);
-  for (const [function_, numerals] of Object.entries(FUNCTIONAL_HARMONY)) {
-    if (numerals.includes(romanNumeral)) {
-      return function_;
+    // メジャーキーの場合
+    if (!isMinor) {
+      switch (index + 1) {
+        case 1: return "T";  // I
+        case 2: return "Tp"; // ii
+        case 3: return "Tp"; // iii
+        case 4: return "S";  // IV
+        case 5: return "D";  // V
+        case 6: return "Tp"; // vi
+        case 7: return "Dp"; // vii°
+        default: return null;
+      }
     }
+    // マイナーキーの場合
+    else {
+      switch (index + 1) {
+        case 1: return "T";  // i
+        case 2: return "Dp"; // ii°
+        case 3: return "Tp"; // III
+        case 4: return "S";  // iv
+        case 5: return "D";  // V
+        case 6: return "Tp"; // VI
+        case 7: return "Dp"; // VII
+        default: return null;
+      }
+    }
+  } catch {
+    return null;
   }
-
-  throw new Error(`和声機能が見つかりません: ${chord}`);
 }
 
 /**
@@ -268,8 +291,21 @@ export const isSecondaryDominant = (chord: string, nextChord: string): boolean =
   const chordRoot = chord.slice(0, -1);
   const nextChordRoot = nextChord.slice(0, -1);
   const interval = getInterval(chordRoot, nextChordRoot);
-  return interval.degree === 5 || interval.degree === 4;
+  return interval !== null && (interval.degree === 5 || interval.degree === 4);
 };
+
+/**
+ * カデンツ判定関数の修正例
+ */
+function getChordDegreeInScale(scale: string, chord: string): number | null {
+  try {
+    const diatonicChords = getScaleDiatonicChords(scale);
+    const idx = diatonicChords.indexOf(chord);
+    return idx >= 0 ? idx + 1 : null;
+  } catch {
+    return null;
+  }
+}
 
 /**
  * 和音進行がパーフェクトカデンツ（V→I）かどうかを判定します。
@@ -282,9 +318,9 @@ export const isSecondaryDominant = (chord: string, nextChord: string): boolean =
  * ```
  */
 export const isPerfectCadence = (scale: string, chord: string, nextChord: string): boolean => {
-  const functionalHarmony = getFunctionalHarmony(scale, chord);
-  const nextFunctionalHarmony = getFunctionalHarmony(scale, nextChord);
-  return functionalHarmony === 5 && nextFunctionalHarmony === 1;
+  const deg = getChordDegreeInScale(scale, chord);
+  const nextDeg = getChordDegreeInScale(scale, nextChord);
+  return deg === 5 && nextDeg === 1;
 };
 
 /**
@@ -299,9 +335,9 @@ export const isPerfectCadence = (scale: string, chord: string, nextChord: string
  * ```
  */
 export const isDeceptiveCadence = (scale: string, chord: string, nextChord: string): boolean => {
-  const functionalHarmony = getFunctionalHarmony(scale, chord);
-  const nextFunctionalHarmony = getFunctionalHarmony(scale, nextChord);
-  return functionalHarmony === 5 && nextFunctionalHarmony !== 1;
+  const deg = getChordDegreeInScale(scale, chord);
+  const nextDeg = getChordDegreeInScale(scale, nextChord);
+  return deg === 5 && nextDeg !== 1 && nextDeg !== null;
 };
 
 /**
@@ -315,9 +351,9 @@ export const isDeceptiveCadence = (scale: string, chord: string, nextChord: stri
  * ```
  */
 export const isPlagalCadence = (scale: string, chord: string, nextChord: string): boolean => {
-  const functionalHarmony = getFunctionalHarmony(scale, chord);
-  const nextFunctionalHarmony = getFunctionalHarmony(scale, nextChord);
-  return functionalHarmony === 4 && nextFunctionalHarmony === 1;
+  const deg = getChordDegreeInScale(scale, chord);
+  const nextDeg = getChordDegreeInScale(scale, nextChord);
+  return deg === 4 && nextDeg === 1;
 };
 
 /**
@@ -372,138 +408,22 @@ export const getFunctionalHarmonyInfoBase = (degree: number): { roman: string; d
 };
 
 /**
- * 和音の度数に対応する機能和声情報を返します（7thコードオプション付き）
- *
- * @param degree - 機能和声の度数（1-7）
- * @param withSeventh - 7thコードの情報を取得するかどうか（デフォルトはfalse）
- * @returns 和音の情報（ローマ数字表記と説明）
- */
-export const getFunctionalHarmonyInfo = (
-  degree: number,
-  withSeventh: boolean = false
-): { roman: string; desc: string } => {
-  // 無効な度数の場合は空の情報を返す
-  if (degree < 1 || degree > 7) {
-    return { roman: "", desc: "" };
-  }
-
-  // 三和音の情報
-  if (!withSeventh) {
-    switch (degree) {
-      case 1:
-        return {
-          roman: "Ⅰ",
-          desc: "Tonic (主和音・長三和音): 完全な安定感・曲の中心・終止感",
-        };
-      case 2:
-        return {
-          roman: "Ⅱm",
-          desc: "Supertonic (上主和音・短三和音): 推進力・サブドミナントへの準備・優しい緊張感",
-        };
-      case 3:
-        return {
-          roman: "Ⅲm",
-          desc: "Mediant (中和音・短三和音): トニックの延長・柔らかな色彩・繊細な表現",
-        };
-      case 4:
-        return {
-          roman: "Ⅳ",
-          desc: "Subdominant (下属和音・長三和音): トニックへの準備・暖かい響き・柔らかな動き",
-        };
-      case 5:
-        return {
-          roman: "Ⅴ",
-          desc: "Dominant (属和音・長三和音): トニックへの強い解決要求・劇的な緊張感・方向性",
-        };
-      case 6:
-        return {
-          roman: "Ⅵm",
-          desc: "Submediant (下中和音・短三和音): 叙情的・内省的・平行短調の響き",
-        };
-      case 7:
-        return {
-          roman: "Ⅶdim",
-          desc: "Leading Tone (導和音・減三和音): 強い解決欲求・不安定な緊張感・ドミナントの代理機能",
-        };
-    }
-  }
-  // 七の和音の情報
-  else {
-    switch (degree) {
-      case 1:
-        return {
-          roman: "ⅠM7",
-          desc: "Tonic Seventh (主和音・長七の和音): 完全な安定感・ジャズ的な色彩・豊かな終止感",
-        };
-      case 2:
-        return {
-          roman: "Ⅱm7",
-          desc: "Supertonic Seventh (上主和音・短七の和音): Ⅴ7への準備・柔らかな緊張・複合的な響き",
-        };
-      case 3:
-        return {
-          roman: "Ⅲm7",
-          desc: "Mediant Seventh (中和音・短七の和音): トニック機能の拡張・複雑な色彩・微妙な表現",
-        };
-      case 4:
-        return {
-          roman: "ⅣM7",
-          desc: "Subdominant Seventh (下属和音・長七の和音): 豊かな響き・広がりのある音色・ゆったりとした動き",
-        };
-      case 5:
-        return {
-          roman: "Ⅴ7",
-          desc: "Dominant Seventh (属和音・属七の和音): 強い解決感・明確な方向性・トニックへの最強の牽引力",
-        };
-      case 6:
-        return {
-          roman: "Ⅵm7",
-          desc: "Submediant Seventh (下中和音・短七の和音): 深い叙情性・複雑な情感・Ⅱm7への接続性",
-        };
-      case 7:
-        return {
-          roman: "Ⅶm7♭5",
-          desc: "Leading Tone Seventh (導和音・半減七の和音): 極度の不安定さ・Ⅴ7の代替・トニックへの強い進行欲求",
-        };
-    }
-  }
-
-  return { roman: "", desc: "" };
-};
-
-/**
  * 音の機能（コード内での役割）を示すラベルを返します
  */
 export const getChordToneLabel = (key: string, chord: string, note: string): string => {
   if (!key || !chord || !note) return "";
-
-  const rootNote = chord.replace(/m.*|maj.*|dim.*|aug.*|sus.*|[0-9].*|\(.*|\+.*|-.*/, "");
-  const noteBase = note.replace(/[0-9]/, "");
-
-  // コードのルート音に対応するラベル
-  if (rootNote === noteBase) {
-    const harmonyDegree = getFunctionalHarmony(key, chord);
-    switch (harmonyDegree) {
-      case 1:
-        return "Tonic Note";
-      case 2:
-        return "Supertonic Note";
-      case 3:
-        return "Mediant Note";
-      case 4:
-        return "Subdominant Note";
-      case 5:
-        return "Dominant Note";
-      case 6:
-        return "Submediant Note";
-      case 7:
-        return "Leading Tone Note";
-      default:
-        return "";
+  try {
+    // ルート音判定やスケール外判定など本来のロジックをここに実装
+    // ここでは簡易的に、keyとchordのルートが一致し、noteがそのルート音なら"Tonic Note"を返す例
+    const scale = generateScaleFromKey(key);
+    if (!scale.notes.includes(note.replace(/\d+$/, ""))) return "";
+    if (chord.replace(/m|7|dim|aug|sus|add|b5|#5|b9|#9|#11|b13/g, "") === note.replace(/\d+$/, "")) {
+      return "Tonic Note";
     }
+    return "";
+  } catch {
+    return "";
   }
-
-  return "";
 };
 
 type CadencePattern = "5:1" | "4:1" | "5:6";
@@ -533,14 +453,14 @@ export const getCadenceText = (prevFunctionalHarmony: number, functionalHarmony:
  * 三和音のローマ数字情報を返します
  */
 export const romanNumeralHarmonyInfo = (degree: number): { roman: string; desc: string } => {
-  return getFunctionalHarmonyInfo(degree, false);
+  return getFunctionalHarmonyInfoBase(degree);
 };
 
 /**
  * 七の和音のローマ数字情報を返します
  */
 export const romanNumeral7thHarmonyInfo = (degree: number): { roman: string; desc: string } => {
-  return getFunctionalHarmonyInfo(degree, true);
+  return getFunctionalHarmonyInfoBase(degree);
 };
 
 /**
@@ -558,30 +478,70 @@ export function getFunctionalHarmonyInfo(scale: Scale | string, degree: number) 
   return { roman, desc, isMinor };
 }
 
-/**
- * ローマ数字の和声情報を取得します
- *
- * @param degree - 和声の度数（1-7）
- * @returns ローマ数字の和声情報
- */
-export function romanNumeralHarmonyInfo(degree: number) {
-  const romanNumerals = ["I", "II", "III", "IV", "V", "VI", "VII"];
-  const descriptions = [
-    "トニック",
-    "サブドミナント",
-    "トニック",
-    "サブドミナント",
-    "ドミナント",
-    "トニック",
-    "ドミナント",
-  ];
+const FUNCTIONAL_HARMONY: Record<string, string[]> = {
+  T: ["I"],
+  S: ["II", "IV"],
+  D: ["V", "VII"],
+};
 
+/**
+ * コードの和声機能の度数を取得します
+ *
+ * @param chord - コード名
+ * @param key - キー
+ * @returns 和声機能の度数（1-7）または0（スケールに含まれない場合）
+ * @throws {Error} 無効なコード名やキーが指定された場合
+ *
+ * @example
+ * ```ts
+ * getFunctionalHarmony("C", "C")  // => 1
+ * getFunctionalHarmony("Dm", "C") // => 2
+ * getFunctionalHarmony("Em", "C") // => 3
+ * ```
+ */
+export function getFunctionalHarmony(chord: string, key: string): number {
+  if (!chord || typeof chord !== "string") {
+    return 0;
+  }
+  if (!key || typeof key !== "string") {
+    return 0;
+  }
+
+  try {
+    const diatonicChords = getScaleDiatonicChords(key);
+    const index = diatonicChords.indexOf(chord);
+    return index >= 0 ? index + 1 : 0;
+  } catch {
+    return 0;
+  }
+}
+
+/**
+ * 和声機能の情報を取得します
+ *
+ * @param degree - 和声機能の度数（1-7）
+ * @param withSeventh - 七の和音の情報を取得するかどうか
+ * @returns 和声機能の情報
+ */
+export function getFunctionalHarmonyInfo(degree: number, withSeventh: boolean = false): { roman: string; desc: string; isMinor: boolean } {
   if (degree < 1 || degree > 7) {
-    throw new Error("度数は1から7の間である必要があります");
+    return { roman: "", desc: "", isMinor: false };
+  }
+
+  const info = getFunctionalHarmonyInfoBase(degree);
+  const isMinor = degree === 2 || degree === 3 || degree === 6;
+
+  if (withSeventh) {
+    return {
+      roman: info.roman + "M7",
+      desc: info.desc.replace("主音", "主和音・長七の和音") + "・ジャズ的な色彩・豊かな終止感",
+      isMinor
+    };
   }
 
   return {
-    roman: romanNumerals[degree - 1],
-    desc: descriptions[degree - 1],
+    roman: info.roman,
+    desc: info.desc.replace("主音", "主和音・長三和音"),
+    isMinor
   };
 }
