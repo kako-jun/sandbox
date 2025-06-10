@@ -1,4 +1,4 @@
-import { getChordNameAliases } from "@/utils/music/theory/chord/alias";
+import { getChordNameAliases } from "./alias";
 
 describe("getChordNameAliases", () => {
   it("メジャーコードの別表記が正しく取得される", () => {

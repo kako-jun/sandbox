@@ -65,40 +65,91 @@ export const NOTE_VALUE_DEFINITIONS: Record<NoteValue, NoteValueDefinition> = {
 };
 
 /**
- * 五線譜上の位置を計算します
+ * 譜面ユーティリティ
  *
- * @param pitch - ピッチ（例：C4, F#3）
- * @returns 五線譜上の位置（0が中央のC4）
- * @throws {Error} 無効なピッチが指定された場合
+ * このモジュールは、譜面に関する機能を提供します。
+ * 譜面の生成、譜面の解析、譜面の変換など、
+ * 譜面の基本的な操作に対応します。
+ *
+ * @module notation
+ */
+
+import { parsePitch } from "./notes";
+
+/**
+ * ピッチの位置を計算します
+ *
+ * @param note - 音名
+ * @param octave - オクターブ
+ * @returns 譜面上の位置（0-4）
+ * @throws {Error} 無効な音名またはオクターブが指定された場合
  *
  * @example
  * ```ts
- * calculateLinePosition("C4")  // => 0
- * calculateLinePosition("E4")  // => 2
- * calculateLinePosition("G3")  // => -2
+ * calculateLinePosition("C", 4)  // => 0
+ * calculateLinePosition("E", 4)  // => 1
+ * calculateLinePosition("G", 4)  // => 2
  * ```
  */
-export function calculateLinePosition(pitch: string): number {
-  if (!pitch || typeof pitch !== "string") {
-    throw new Error("ピッチは文字列である必要があります");
+export function calculateLinePosition(note: string, octave: number): number {
+  if (!note || typeof note !== "string") {
+    throw new Error("音名は文字列である必要があります");
   }
 
-  const note = pitch[0].toUpperCase();
-  const octave = parseInt(pitch.slice(1), 10);
-
-  if (isNaN(octave) || octave < 0 || octave > 8) {
-    throw new Error(`無効なオクターブです: ${pitch}`);
+  if (typeof octave !== "number" || octave < 0 || octave > 8) {
+    throw new Error("オクターブは0から8の間である必要があります");
   }
 
-  const noteIndex = "CDEFGAB".indexOf(note);
-  if (noteIndex === -1) {
-    throw new Error(`無効な音名です: ${pitch}`);
+  const pitch = `${note}${octave}`;
+  const pitchInfo = parsePitch(pitch);
+  if (!pitchInfo) {
+    throw new Error(`無効なピッチです: ${pitch}`);
   }
 
-  // 中央のC4を基準（0）として位置を計算
-  const basePosition = noteIndex - 2; // C4を0とするための調整
-  const octaveDifference = octave - 4; // オクターブ4を基準とする
-  return basePosition + (octaveDifference * 7);
+  // 基準となるC4の位置を0として計算
+  const baseOctave = 4;
+  const baseNote = "C";
+  const basePitch = `${baseNote}${baseOctave}`;
+  const basePitchInfo = parsePitch(basePitch);
+  if (!basePitchInfo) {
+    throw new Error(`無効な基準ピッチです: ${basePitch}`);
+  }
+
+  // オクターブの差を計算
+  const octaveDiff = pitchInfo.octave - basePitchInfo.octave;
+
+  // 音名の差を計算
+  const noteDiff = getNoteDiff(pitchInfo.note, basePitchInfo.note);
+
+  // 位置を計算（1オクターブ = 7音）
+  const position = octaveDiff * 7 + noteDiff;
+
+  // 0-4の範囲に正規化
+  return normalizePosition(position);
+}
+
+/**
+ * 2つの音名の差を計算します
+ *
+ * @param note1 - 1つ目の音名
+ * @param note2 - 2つ目の音名
+ * @returns 音名の差（半音数）
+ */
+function getNoteDiff(note1: string, note2: string): number {
+  const notes = ["C", "D", "E", "F", "G", "A", "B"];
+  const index1 = notes.indexOf(note1[0]);
+  const index2 = notes.indexOf(note2[0]);
+  return (index1 - index2 + 7) % 7;
+}
+
+/**
+ * 位置を0-4の範囲に正規化します
+ *
+ * @param position - 位置
+ * @returns 正規化された位置
+ */
+function normalizePosition(position: number): number {
+  return ((position % 5) + 5) % 5;
 }
 
 /**
@@ -121,22 +172,19 @@ export function getLine(pitch: string | number): number | null {
   let position: number;
 
   if (typeof pitch === "string") {
-    try {
-      position = calculateLinePosition(pitch);
-    } catch (error) {
-      console.error(`無効なピッチです: ${pitch}`, error);
+    const pitchInfo = parsePitch(pitch);
+    if (!pitchInfo) {
       return null;
     }
+    position = calculateLinePosition(pitchInfo.note, pitchInfo.octave);
   } else if (typeof pitch === "number") {
     position = pitch;
   } else {
-    console.error(`無効な引数です: ${pitch}`);
     return null;
   }
 
   // 位置を0-4の範囲に正規化
-  const normalizedPosition = ((position % 5) + 5) % 5;
-  return normalizedPosition;
+  return normalizePosition(position);
 }
 
 /**
@@ -144,7 +192,6 @@ export function getLine(pitch: string | number): number | null {
  *
  * @param noteValue - 音符の種類
  * @returns 音符の表示テキスト
- * @throws {Error} 無効な音符の種類が指定された場合
  *
  * @example
  * ```ts

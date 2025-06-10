@@ -2,14 +2,141 @@
  * 機能和声ユーティリティ
  *
  * このモジュールは、機能和声に関する機能を提供します。
- * 機能和声の分析、機能和声の進行、機能和声の変換など、
+ * 機能和声の解析、機能和声の生成、機能和声の変換など、
  * 機能和声の基本的な操作に対応します。
  *
  * @module functionalHarmony
  */
 
 import { getInterval } from "@/utils/music/theory/core/intervals";
-import { Scale, generateScaleFromKey, getScaleDiatonicChords } from "@/utils/music/theory/core/scales";
+import { ScaleInfo, generateScaleFromKey, getScaleDiatonicChords, getScaleDiatonicChordsWith7th } from "@/utils/music/theory/core/scales";
+
+/**
+ * 機能和声の定義
+ */
+export interface FunctionalHarmony {
+  /** スケール */
+  scale: ScaleInfo;
+  /** ダイアトニックコード */
+  diatonicChords: string[];
+  /** 機能和声の進行 */
+  progressions: string[][];
+}
+
+/**
+ * 機能和声を生成します
+ *
+ * @param scaleKey - スケールのキー（例：C, Am, G#m）
+ * @returns 機能和声
+ * @throws {Error} 無効なスケールキーが指定された場合
+ *
+ * @example
+ * ```ts
+ * generateFunctionalHarmony("C")  // => { scale: ScaleInfo, diatonicChords: ["C", "Dm", "Em", ...], progressions: [...] }
+ * generateFunctionalHarmony("Am") // => { scale: ScaleInfo, diatonicChords: ["Am", "Bdim", "C", ...], progressions: [...] }
+ * ```
+ */
+export function generateFunctionalHarmony(scaleKey: string): FunctionalHarmony {
+  if (!scaleKey || typeof scaleKey !== "string") {
+    throw new Error("スケールキーは文字列である必要があります");
+  }
+
+  const scale = generateScaleFromKey(scaleKey);
+  const diatonicChords = getScaleDiatonicChordsWith7th(scaleKey);
+
+  // 基本的な進行パターン
+  const progressions = [
+    ["I", "IV", "V"],
+    ["I", "V", "vi", "IV"],
+    ["ii", "V", "I"],
+    ["vi", "IV", "I", "V"],
+  ];
+
+  return {
+    scale,
+    diatonicChords,
+    progressions,
+  };
+}
+
+/**
+ * 機能和声の進行を解析します
+ *
+ * @param progression - 進行の配列（例：["I", "IV", "V"]）
+ * @param scaleKey - スケールのキー（例：C, Am, G#m）
+ * @returns 実際のコード進行
+ * @throws {Error} 無効な進行またはスケールキーが指定された場合
+ *
+ * @example
+ * ```ts
+ * parseProgression(["I", "IV", "V"], "C")  // => ["C", "F", "G"]
+ * parseProgression(["ii", "V", "I"], "Am") // => ["Bdim", "E", "Am"]
+ * ```
+ */
+export function parseProgression(progression: string[], scaleKey: string): string[] {
+  if (!progression || !Array.isArray(progression)) {
+    throw new Error("進行は配列である必要があります");
+  }
+
+  if (!scaleKey || typeof scaleKey !== "string") {
+    throw new Error("スケールキーは文字列である必要があります");
+  }
+
+  const diatonicChords = getScaleDiatonicChords(scaleKey);
+  const romanNumerals = ["I", "ii", "iii", "IV", "V", "vi", "vii"];
+
+  return progression.map(degree => {
+    const index = romanNumerals.indexOf(degree);
+    if (index === -1) {
+      throw new Error(`無効な進行度です: ${degree}`);
+    }
+    return diatonicChords[index];
+  });
+}
+
+/**
+ * 機能和声の情報を取得します
+ *
+ * @param scaleKey - スケールのキー（例：C, Am, G#m）
+ * @param degree - 機能和声の度数（1-7）
+ * @param withSeventh - 7thを含めるかどうか
+ * @returns 機能和声の情報
+ * @throws {Error} 無効なスケールキーまたは度数が指定された場合
+ *
+ * @example
+ * ```ts
+ * getFunctionalHarmonyInfo("C", 1)  // => { roman: "I", desc: "トニック", isMinor: false }
+ * getFunctionalHarmonyInfo("Am", 5) // => { roman: "V", desc: "ドミナント", isMinor: true }
+ * ```
+ */
+export function getFunctionalHarmonyInfo(scaleKey: string, degree: number, withSeventh: boolean = false): {
+  roman: string;
+  desc: string;
+  isMinor: boolean;
+} {
+  if (!scaleKey || typeof scaleKey !== "string") {
+    throw new Error("スケールキーは文字列である必要があります");
+  }
+
+  if (typeof degree !== "number" || degree < 1 || degree > 7) {
+    throw new Error("度数は1から7の間である必要があります");
+  }
+
+  const scale = generateScaleFromKey(scaleKey);
+  const isMinor = scale.type === "minor";
+
+  // ローマ数字の取得
+  const roman = withSeventh ? romanNumeral7thHarmonyInfo(degree).roman : romanNumeralHarmonyInfo(degree).roman;
+
+  // 機能和声の説明を取得
+  const desc = getFunctionalHarmonyText(degree);
+
+  return {
+    roman,
+    desc,
+    isMinor,
+  };
+}
 
 /**
  * 機能和声・カデンツ関連ユーティリティ
@@ -210,7 +337,7 @@ export function getChordFunction(chord: string, key: string): HarmonicFunction |
         case 6: return "Tp"; // VI
         case 7: return "Dp"; // VII
         default: return null;
-      }
+  }
     }
   } catch {
     return null;
@@ -418,11 +545,11 @@ export const getChordToneLabel = (key: string, chord: string, note: string): str
     const scale = generateScaleFromKey(key);
     if (!scale.notes.includes(note.replace(/\d+$/, ""))) return "";
     if (chord.replace(/m|7|dim|aug|sus|add|b5|#5|b9|#9|#11|b13/g, "") === note.replace(/\d+$/, "")) {
-      return "Tonic Note";
+        return "Tonic Note";
     }
-    return "";
+        return "";
   } catch {
-    return "";
+  return "";
   }
 };
 
@@ -463,21 +590,6 @@ export const romanNumeral7thHarmonyInfo = (degree: number): { roman: string; des
   return getFunctionalHarmonyInfoBase(degree);
 };
 
-/**
- * 機能和声の情報を取得します
- *
- * @param scale - スケールまたはスケールキー
- * @param degree - 和声の度数（1-7）
- * @returns 機能和声の情報
- */
-export function getFunctionalHarmonyInfo(scale: Scale | string, degree: number) {
-  const scaleObj = typeof scale === "string" ? generateScaleFromKey(scale) : scale;
-  const isMinor = scaleObj.type === "minor";
-  const roman = romanNumeralHarmonyInfo(degree).roman;
-  const desc = romanNumeralHarmonyInfo(degree).desc;
-  return { roman, desc, isMinor };
-}
-
 const FUNCTIONAL_HARMONY: Record<string, string[]> = {
   T: ["I"],
   S: ["II", "IV"],
@@ -514,34 +626,4 @@ export function getFunctionalHarmony(chord: string, key: string): number {
   } catch {
     return 0;
   }
-}
-
-/**
- * 和声機能の情報を取得します
- *
- * @param degree - 和声機能の度数（1-7）
- * @param withSeventh - 七の和音の情報を取得するかどうか
- * @returns 和声機能の情報
- */
-export function getFunctionalHarmonyInfo(degree: number, withSeventh: boolean = false): { roman: string; desc: string; isMinor: boolean } {
-  if (degree < 1 || degree > 7) {
-    return { roman: "", desc: "", isMinor: false };
-  }
-
-  const info = getFunctionalHarmonyInfoBase(degree);
-  const isMinor = degree === 2 || degree === 3 || degree === 6;
-
-  if (withSeventh) {
-    return {
-      roman: info.roman + "M7",
-      desc: info.desc.replace("主音", "主和音・長七の和音") + "・ジャズ的な色彩・豊かな終止感",
-      isMinor
-    };
-  }
-
-  return {
-    roman: info.roman,
-    desc: info.desc.replace("主音", "主和音・長三和音"),
-    isMinor
-  };
 }

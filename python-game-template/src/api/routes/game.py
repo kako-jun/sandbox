@@ -8,7 +8,9 @@ from ...game.models import GameState, GameConfig, Player, Position, Direction, G
 router = APIRouter()
 
 # ゲームインスタンスの初期化
-game = Game()
+# 必ずGameConfigを渡す
+initial_config = GameConfig()
+game = Game(initial_config)
 game.initialize_game("API Player")  # デフォルトのプレイヤー名で初期化
 
 class PositionResponse(BaseModel):
@@ -57,16 +59,15 @@ async def get_game_state() -> GameStateResponse:
     state = game.get_state()
     if not state:
         raise HTTPException(status_code=404, detail="ゲームが初期化されていません")
-    
-    current_player = state.players[state.current_player_id]
+    current_player = state.snake[0] if hasattr(state, 'snake') else None
     return GameStateResponse(
-        player_position=PositionResponse(x=current_player.snake_body[0].x, y=current_player.snake_body[0].y) if current_player.snake_body else None,
-        score=current_player.score,
+        player_position=PositionResponse(x=current_player.x, y=current_player.y) if current_player else None,
+        score=state.score,
         is_game_over=state.game_over,
-        board_size=BoardSizeResponse(width=state.board_width, height=state.board_height) if state.board_width and state.board_height else None,
-        food_position=PositionResponse(x=state.food_position.x, y=state.food_position.y) if state.food_position else None,
-        snake_body=[PositionResponse(x=pos.x, y=pos.y) for pos in current_player.snake_body],
-        tick_count=state.tick_count
+        board_size=BoardSizeResponse(width=state.config.width, height=state.config.height) if state.config else None,
+        food_position=PositionResponse(x=state.food.x, y=state.food.y) if state.food else None,
+        snake_body=[PositionResponse(x=pos.x, y=pos.y) for pos in state.snake] if hasattr(state, 'snake') else [],
+        tick_count=getattr(state, 'tick_count', 0)
     )
 
 @router.post("/move", response_model=GameStateResponse)
@@ -86,20 +87,17 @@ async def move_snake(request: MoveRequest) -> GameStateResponse:
     state = game.get_state()
     if not state:
         raise HTTPException(status_code=404, detail="ゲームが初期化されていません")
-    
-    current_player = state.players[state.current_player_id]
-    action = GameAction(player_id=current_player.id, action_type="move", direction=request.direction)
-    if not game.process_action(action):
+    if not game.move(request.direction):
         raise HTTPException(status_code=400, detail="無効な移動です")
-    
+    current_player = state.snake[0] if hasattr(state, 'snake') else None
     return GameStateResponse(
-        player_position=PositionResponse(x=current_player.snake_body[0].x, y=current_player.snake_body[0].y) if current_player.snake_body else None,
-        score=current_player.score,
+        player_position=PositionResponse(x=current_player.x, y=current_player.y) if current_player else None,
+        score=state.score,
         is_game_over=state.game_over,
-        board_size=BoardSizeResponse(width=state.board_width, height=state.board_height) if state.board_width and state.board_height else None,
-        food_position=PositionResponse(x=state.food_position.x, y=state.food_position.y) if state.food_position else None,
-        snake_body=[PositionResponse(x=pos.x, y=pos.y) for pos in current_player.snake_body],
-        tick_count=state.tick_count
+        board_size=BoardSizeResponse(width=state.config.width, height=state.config.height) if state.config else None,
+        food_position=PositionResponse(x=state.food.x, y=state.food.y) if state.food else None,
+        snake_body=[PositionResponse(x=pos.x, y=pos.y) for pos in state.snake] if hasattr(state, 'snake') else [],
+        tick_count=getattr(state, 'tick_count', 0)
     )
 
 @router.post("/reset", response_model=GameStateResponse)
@@ -116,16 +114,15 @@ async def reset_game() -> GameStateResponse:
     state = game.reset()
     if not state:
         raise HTTPException(status_code=500, detail="ゲームのリセットに失敗しました")
-    
-    current_player = state.players[state.current_player_id]
+    current_player = state.snake[0] if hasattr(state, 'snake') else None
     return GameStateResponse(
-        player_position=PositionResponse(x=current_player.snake_body[0].x, y=current_player.snake_body[0].y) if current_player.snake_body else None,
-        score=current_player.score,
+        player_position=PositionResponse(x=current_player.x, y=current_player.y) if current_player else None,
+        score=state.score,
         is_game_over=state.game_over,
-        board_size=BoardSizeResponse(width=state.board_width, height=state.board_height) if state.board_width and state.board_height else None,
-        food_position=PositionResponse(x=state.food_position.x, y=state.food_position.y) if state.food_position else None,
-        snake_body=[PositionResponse(x=pos.x, y=pos.y) for pos in current_player.snake_body],
-        tick_count=state.tick_count
+        board_size=BoardSizeResponse(width=state.config.width, height=state.config.height) if state.config else None,
+        food_position=PositionResponse(x=state.food.x, y=state.food.y) if state.food else None,
+        snake_body=[PositionResponse(x=pos.x, y=pos.y) for pos in state.snake] if hasattr(state, 'snake') else [],
+        tick_count=getattr(state, 'tick_count', 0)
     )
 
 @router.post("/config", response_model=GameStateResponse)
@@ -145,27 +142,26 @@ async def configure_game(config: GameConfigRequest) -> GameStateResponse:
     try:
         # 新しい設定でゲームを再初期化
         game_config = GameConfig(
-            board_width=config.board_width or 20,
-            board_height=config.board_height or 20,
+            width=config.board_width or 20,
+            height=config.board_height or 20,
             difficulty=Difficulty(config.difficulty or "normal"),
             game_mode=GameMode(config.game_mode or "classic"),
-            time_limit=config.time_limit
+            time_limit=config.time_limit or 300
         )
-        game = Game()
+        global game
+        game = Game(game_config)
         state = game.initialize_game("API Player")
-        
         if not state:
             raise HTTPException(status_code=500, detail="ゲームの初期化に失敗しました")
-        
-        current_player = state.players[state.current_player_id]
+        current_player = state.snake[0] if hasattr(state, 'snake') else None
         return GameStateResponse(
-            player_position=PositionResponse(x=current_player.snake_body[0].x, y=current_player.snake_body[0].y) if current_player.snake_body else None,
-            score=current_player.score,
+            player_position=PositionResponse(x=current_player.x, y=current_player.y) if current_player else None,
+            score=state.score,
             is_game_over=state.game_over,
-            board_size=BoardSizeResponse(width=state.board_width, height=state.board_height) if state.board_width and state.board_height else None,
-            food_position=PositionResponse(x=state.food_position.x, y=state.food_position.y) if state.food_position else None,
-            snake_body=[PositionResponse(x=pos.x, y=pos.y) for pos in current_player.snake_body],
-            tick_count=state.tick_count
+            board_size=BoardSizeResponse(width=state.config.width, height=state.config.height) if state.config else None,
+            food_position=PositionResponse(x=state.food.x, y=state.food.y) if state.food else None,
+            snake_body=[PositionResponse(x=pos.x, y=pos.y) for pos in state.snake] if hasattr(state, 'snake') else [],
+            tick_count=getattr(state, 'tick_count', 0)
         )
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"無効な設定です: {str(e)}")

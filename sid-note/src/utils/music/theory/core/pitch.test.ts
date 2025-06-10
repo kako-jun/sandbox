@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
-import { addDefaultOctave, comparePitch, isValidPitch, parsePitch } from './pitch';
+import { describe, expect, test } from "@jest/globals";
+import { addDefaultOctave, comparePitch, getPitchClass, getPitchClassFromNote, isValidPitch, parsePitch } from './pitch';
 
 describe('Pitch', () => {
   describe('isValidPitch', () => {
@@ -67,6 +67,56 @@ describe('Pitch', () => {
       expect(comparePitch('C4', 'H4')).toBe(false);
       expect(comparePitch('C', 'C4')).toBe(false);
       expect(comparePitch('', 'C4')).toBe(false);
+    });
+  });
+
+  describe('getPitchClass', () => {
+    test("should return pitch class for a given note", () => {
+      expect(getPitchClass("C")).toBe(0);
+      expect(getPitchClass("C#")).toBe(1);
+      expect(getPitchClass("D")).toBe(2);
+      expect(getPitchClass("D#")).toBe(3);
+      expect(getPitchClass("E")).toBe(4);
+      expect(getPitchClass("F")).toBe(5);
+      expect(getPitchClass("F#")).toBe(6);
+      expect(getPitchClass("G")).toBe(7);
+      expect(getPitchClass("G#")).toBe(8);
+      expect(getPitchClass("A")).toBe(9);
+      expect(getPitchClass("A#")).toBe(10);
+      expect(getPitchClass("B")).toBe(11);
+    });
+
+    test("should handle enharmonic equivalents", () => {
+      expect(getPitchClass("C#")).toBe(getPitchClass("Db"));
+      expect(getPitchClass("D#")).toBe(getPitchClass("Eb"));
+      expect(getPitchClass("F#")).toBe(getPitchClass("Gb"));
+      expect(getPitchClass("G#")).toBe(getPitchClass("Ab"));
+      expect(getPitchClass("A#")).toBe(getPitchClass("Bb"));
+    });
+  });
+
+  describe('getPitchClassFromNote', () => {
+    test("should return pitch class for a given note with octave", () => {
+      expect(getPitchClassFromNote("C4")).toBe(0);
+      expect(getPitchClassFromNote("C#4")).toBe(1);
+      expect(getPitchClassFromNote("D4")).toBe(2);
+      expect(getPitchClassFromNote("D#4")).toBe(3);
+      expect(getPitchClassFromNote("E4")).toBe(4);
+      expect(getPitchClassFromNote("F4")).toBe(5);
+      expect(getPitchClassFromNote("F#4")).toBe(6);
+      expect(getPitchClassFromNote("G4")).toBe(7);
+      expect(getPitchClassFromNote("G#4")).toBe(8);
+      expect(getPitchClassFromNote("A4")).toBe(9);
+      expect(getPitchClassFromNote("A#4")).toBe(10);
+      expect(getPitchClassFromNote("B4")).toBe(11);
+    });
+
+    test("should handle enharmonic equivalents with octave", () => {
+      expect(getPitchClassFromNote("C#4")).toBe(getPitchClassFromNote("Db4"));
+      expect(getPitchClassFromNote("D#4")).toBe(getPitchClassFromNote("Eb4"));
+      expect(getPitchClassFromNote("F#4")).toBe(getPitchClassFromNote("Gb4"));
+      expect(getPitchClassFromNote("G#4")).toBe(getPitchClassFromNote("Ab4"));
+      expect(getPitchClassFromNote("A#4")).toBe(getPitchClassFromNote("Bb4"));
     });
   });
 });
