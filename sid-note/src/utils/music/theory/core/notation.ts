@@ -152,10 +152,9 @@ export function getLine(pitch: string | number): number | null {
  * getValueText("eighth")   // => "8分音符"
  * ```
  */
-export function getValueText(noteValue: NoteValue): string {
+export function getValueText(noteValue: NoteValue | string): string {
   if (!noteValue || !(noteValue in NOTE_VALUE_DEFINITIONS)) {
-    throw new Error(`無効な音符の種類です: ${noteValue}`);
+    return "";
   }
-
-  return NOTE_VALUE_DEFINITIONS[noteValue].displayName;
+  return NOTE_VALUE_DEFINITIONS[noteValue as NoteValue].displayName;
 }

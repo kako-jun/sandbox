@@ -5,11 +5,11 @@
 
 /**
  * 音名ユーティリティ
- * 
+ *
  * このモジュールは、音名に関する機能を提供します。
  * 音名の正規化、音名の検証、音名の変換など、
  * 音名の基本的な操作に対応します。
- * 
+ *
  * @module notes
  */
 
@@ -45,11 +45,11 @@ const REVERSE_NOTE_NORMALIZATION_MAP: Record<string, string> = {
 
 /**
  * 音名を正規化します
- * 
+ *
  * @param note - 正規化する音名
  * @returns 正規化された音名
  * @throws {Error} 無効な音名が指定された場合
- * 
+ *
  * @example
  * ```ts
  * normalizeNotation("C#")  // => "C♯"
@@ -58,12 +58,22 @@ const REVERSE_NOTE_NORMALIZATION_MAP: Record<string, string> = {
  */
 export function normalizeNotation(note: string): string {
   if (!note || typeof note !== "string") {
-    throw new Error("音名は文字列である必要があります");
+    return "";
   }
 
-  const normalized = NOTE_NORMALIZATION_MAP[note];
-  if (!normalized) {
-    throw new Error(`無効な音名です: ${note}`);
+  // 基本音名はそのまま返す
+  if (BASIC_NOTES.includes(note as NoteName)) {
+    return note;
+  }
+
+  // シャープとフラットの正規化
+  const normalized = note
+    .replace(/[#♯]/g, "＃")
+    .replace(/[b♭]/g, "♭");
+
+  // 正規化された音名が有効かチェック
+  if (!isValidNoteName(normalized)) {
+    return "";
   }
 
   return normalized;
@@ -71,10 +81,10 @@ export function normalizeNotation(note: string): string {
 
 /**
  * 音名が有効かどうかを判定します
- * 
+ *
  * @param note - 判定する音名
  * @returns 有効な場合はtrue、そうでない場合はfalse
- * 
+ *
  * @example
  * ```ts
  * isValidNoteName("C#")  // => true
@@ -86,47 +96,58 @@ export function isValidNoteName(note: string): boolean {
     return false;
   }
 
-  return note in NOTE_NORMALIZATION_MAP;
+  // 基本音名のチェック
+  if (BASIC_NOTES.includes(note as NoteName)) {
+    return true;
+  }
+
+  // シャープとフラットの音名のチェック
+  const pattern = /^[A-G][＃♭]$/;
+  return pattern.test(note);
 }
 
 /**
  * 音名のインデックスを取得します
- * 
+ *
  * @param note - 音名
- * @returns 音名のインデックス（0-11）
- * @throws {Error} 無効な音名が指定された場合
- * 
+ * @returns 音名のインデックス（0-11）、無効な音名の場合は-1
+ *
  * @example
  * ```ts
  * getNoteIndex("C")  // => 0
  * getNoteIndex("C#") // => 1
+ * getNoteIndex("H")  // => -1
  * ```
  */
 export function getNoteIndex(note: string): number {
   if (!note || typeof note !== "string") {
-    throw new Error("音名は文字列である必要があります");
+    return -1;
   }
 
   const normalized = normalizeNotation(note);
+  if (!normalized) {
+    return -1;
+  }
+
   const baseNote = normalized[0];
   const accidental = normalized.slice(1);
 
   const baseIndex = "CDEFGAB".indexOf(baseNote);
   if (baseIndex === -1) {
-    throw new Error(`無効な音名です: ${note}`);
+    return -1;
   }
 
-  const accidentalOffset = accidental === "♯" ? 1 : accidental === "♭" ? -1 : 0;
+  const accidentalOffset = accidental === "＃" ? 1 : accidental === "♭" ? -1 : 0;
   return (baseIndex + accidentalOffset + 12) % 12;
 }
 
 /**
  * 音名を英語表記に変換します
- * 
+ *
  * @param note - 変換する音名
  * @returns 英語表記の音名
  * @throws {Error} 無効な音名が指定された場合
- * 
+ *
  * @example
  * ```ts
  * toEnglishNotation("C♯")  // => "C#"
@@ -175,16 +196,16 @@ export const BASIC_NOTES: readonly NoteName[] = ["C", "D", "E", "F", "G", "A", "
  * クロマティック音名の定義
  */
 const CHROMATIC_NOTES: Record<string, string[]> = {
-  "sharp": ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"],
-  "flat": ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"],
+  "sharp": ["C", "C＃", "D", "D＃", "E", "F", "F＃", "G", "G＃", "A", "A＃", "B"],
+  "flat": ["C", "D♭", "D", "E♭", "E", "F", "G♭", "G", "A♭", "A", "B♭", "B"],
 };
 
 /**
  * 指定された音名が有効な音名かどうかを判定します（オクターブなし）
- * 
+ *
  * @param note - 判定する音名
  * @returns 有効な音名の場合はtrue、それ以外はfalse
- * 
+ *
  * @example
  * ```ts
  * isValidNote("C")    // => true
@@ -201,10 +222,10 @@ export function isValidNote(note: string): boolean {
 
 /**
  * 指定されたピッチが有効な音楽的ピッチかどうかを判定します
- * 
+ *
  * @param pitch - 判定するピッチ（例：C4, F#3, Bb5）
  * @returns 有効なピッチの場合はtrue、それ以外はfalse
- * 
+ *
  * @example
  * ```ts
  * isValidPitch("C4")   // => true
@@ -222,70 +243,67 @@ export function isValidPitch(pitch: string): boolean {
 
 /**
  * ピッチ文字列を解析します
- * 
+ *
  * @param pitch - 解析するピッチ文字列
  * @returns 解析結果のPitchInfo、無効な場合はnull
  * @throws {Error} 無効なピッチが指定された場合
- * 
+ *
  * @example
  * ```ts
  * parsePitch("C4")   // => { note: "C", octave: 4 }
  * parsePitch("F#3")  // => { note: "F＃", octave: 3 }
  * ```
  */
-export function parsePitch(pitch: string): PitchInfo {
+export function parsePitch(pitch: string): PitchInfo | null {
   if (!pitch || typeof pitch !== "string") {
-    throw new Error("ピッチは文字列である必要があります");
+    return null;
   }
 
-  // ピッチ文字列から音名部分とオクターブ部分を抽出
-  const match = /^([A-G][#♯＃b♭]?)([0-8])$/.exec(pitch.trim());
+  const match = /^([A-G][#♯＃b♭]?)([0-8])$/.exec(pitch);
   if (!match) {
-    throw new Error(`無効なピッチです: ${pitch}`);
+    return null;
   }
 
   const [, notePart, octavePart] = match;
   const normalizedNote = normalizeNotation(notePart);
-  const parsedOctave = parseInt(octavePart, 10);
+  const octave = parseInt(octavePart, 10);
 
-  if (parsedOctave < 0 || parsedOctave > 8) {
-    throw new Error(`無効なオクターブです: ${octavePart}（0-8の範囲で指定してください）`);
+  if (!normalizedNote || octave < 0 || octave > 8) {
+    return null;
   }
 
-  return { note: normalizedNote, octave: parsedOctave };
+  return { note: normalizedNote, octave };
 }
 
 /**
  * インデックスから音名を取得します
- * 
- * @param index - インデックス（0-11）
- * @param useFlat - フラット表記を使用するかどうか
+ *
+ * @param index - 音名のインデックス（0-11）
+ * @param useFlat - フラット表記を使用するかどうか（デフォルト: false）
  * @returns 音名
- * @throws {Error} 無効なインデックスが指定された場合
- * 
+ *
  * @example
  * ```ts
- * getNoteFromIndex(0)  // => "C"
- * getNoteFromIndex(1)  // => "C#"
- * getNoteFromIndex(1, true)  // => "Db"
+ * getNoteFromIndex(0)      // => "C"
+ * getNoteFromIndex(1)      // => "C＃"
+ * getNoteFromIndex(1, true) // => "D♭"
+ * getNoteFromIndex(-1)     // => "B"
  * ```
  */
 export function getNoteFromIndex(index: number, useFlat: boolean = false): string {
-  if (index < 0 || index > 11) {
-    throw new Error(`無効なインデックスです: ${index}`);
-  }
-
-  return CHROMATIC_NOTES[useFlat ? "flat" : "sharp"][index];
+  const notes = useFlat ? ["C", "D♭", "D", "E♭", "E", "F", "G♭", "G", "A♭", "A", "B♭", "B"] :
+    ["C", "C＃", "D", "D＃", "E", "F", "F＃", "G", "G＃", "A", "A＃", "B"];
+  return notes[index % 12];
 }
 
 /**
  * 2つのピッチを比較します
- * 
+ *
  * @param pitch1 - 比較するピッチ1
  * @param pitch2 - 比較するピッチ2
  * @returns 同じピッチの場合はtrue、それ以外はfalse
  * @throws {Error} 無効なピッチが指定された場合
- * 
+ *
  * @example
  * ```ts
  * comparePitch("C4", "C4")   // => true
@@ -295,17 +313,22 @@ export function getNoteFromIndex(index: number, useFlat: boolean = false): strin
 export function comparePitch(pitch1: string, pitch2: string): boolean {
   const parsed1 = parsePitch(pitch1);
   const parsed2 = parsePitch(pitch2);
-  return parsed1.note === parsed2.note && parsed1.octave === parsed2.octave;
+
+  if (!parsed1 || !parsed2) {
+    return false;
+  }
+
+  return compareNotes(parsed1.note, parsed2.note) && parsed1.octave === parsed2.octave;
 }
 
 /**
  * 2つの音名を比較します
- * 
+ *
  * @param note1 - 比較する音名1
  * @param note2 - 比較する音名2
  * @returns 同じ音名の場合はtrue、それ以外はfalse
  * @throws {Error} 無効な音名が指定された場合
- * 
+ *
  * @example
  * ```ts
  * compareNotes("C", "C")    // => true
@@ -313,44 +336,67 @@ export function comparePitch(pitch1: string, pitch2: string): boolean {
  * ```
  */
 export function compareNotes(note1: string, note2: string): boolean {
-  const normalized1 = normalizeNotation(note1);
-  const normalized2 = normalizeNotation(note2);
-  return normalized1 === normalized2;
+  if (!note1 || !note2) {
+    return false;
+  }
+
+  const index1 = getNoteIndex(note1);
+  const index2 = getNoteIndex(note2);
+
+  return index1 === index2;
 }
 
 /**
- * 異名同音の音名を取得します
- * 
- * @param noteName - 音名（例：C＃, D♭）
- * @returns 異名同音の音名の配列
- * @throws {Error} 無効な音名が指定された場合
- * 
+ * 異名同音を取得します
+ *
+ * @param note - 音名
+ * @returns 異名同音の配列、異名同音がない場合は元の音名のみを含む配列
+ *
  * @example
  * ```ts
  * getEnharmonicNotes("C＃")  // => ["D♭"]
- * getEnharmonicNotes("D♭")   // => ["C＃"]
+ * getEnharmonicNotes("C")    // => ["C"]
  * ```
  */
-export function getEnharmonicNotes(noteName: string): string[] {
-  const normalizedInput = normalizeNotation(noteName);
-  const index = getNoteIndex(normalizedInput);
+export function getEnharmonicNotes(note: string): string[] {
+  if (!note || typeof note !== "string") {
+    return [];
+  }
 
-  const candidates = [CHROMATIC_NOTES.sharp[index], CHROMATIC_NOTES.flat[index]].filter(
-    (n, i, arr) => arr.indexOf(n) === i
-  );
+  const normalized = normalizeNotation(note);
+  if (!normalized) {
+    return [];
+  }
 
-  const enharmonics = candidates.filter((note) => note !== normalizedInput);
-  return enharmonics.length === 0 ? [normalizedInput] : enharmonics;
+  // 基本音名の場合は異名同音なし
+  if (BASIC_NOTES.includes(normalized as NoteName)) {
+    return [normalized];
+  }
+
+  // シャープとフラットの異名同音を取得
+  const index = getNoteIndex(normalized);
+  if (index === -1) {
+    return [];
+  }
+
+  const sharpNote = getNoteFromIndex(index, false);
+  const flatNote = getNoteFromIndex(index, true);
+
+  if (sharpNote === normalized) {
+    return [normalized, flatNote];
+  } else {
+    return [normalized, sharpNote];
+  }
 }
 
 /**
  * デフォルトのオクターブを追加します
- * 
+ *
  * @param pitch - ピッチ文字列
  * @param defaultOctave - デフォルトのオクターブ（デフォルト: 4）
  * @returns オクターブが追加されたピッチ文字列
  * @throws {Error} 無効なピッチが指定された場合
- * 
+ *
  * @example
  * ```ts
  * addDefaultOctave("C")     // => "C4"
@@ -367,39 +413,34 @@ export function addDefaultOctave(pitch: string, defaultOctave = 4): string {
   }
 
   if (!isValidNote(pitch)) {
-    throw new Error(`無効な音名です: ${pitch}`);
+    throw new Error(`無効なピッチです: ${pitch}`);
   }
 
-  return `${pitch}${defaultOctave}`;
+  return pitch + defaultOctave.toString();
 }
 
-/**
- * 調号の位置情報を取得します
- * 
- * @param scale - スケールのキー（例：C, Am, G#m）
- * @returns 調号の位置情報
- * @throws {Error} 無効なスケールが指定された場合
- * 
- * @example
- * ```ts
- * getKeyPosition("C")   // => { circle: "none", index: 0 }
- * getKeyPosition("Am")  // => { circle: "inner", index: 0 }
- * ```
- */
-export function getKeyPosition(scale: string): KeyPosition {
-  if (!scale || typeof scale !== "string") {
-    throw new Error("スケールは文字列である必要があります");
+export class Note {
+  private note: string;
+  private octave: number;
+
+  constructor(note: string, octave: number = 4) {
+    if (!isValidNote(note)) {
+      throw new Error(`Invalid note: ${note}`);
+    }
+    this.note = normalizeNotation(note);
+    this.octave = octave;
   }
 
-  const isMinor = scale.endsWith("m");
-  const root = isMinor ? scale.slice(0, -1) : scale;
-
-  if (!isValidNote(root)) {
-    throw new Error(`無効なスケールです: ${scale}`);
+  toString(): string {
+    return this.note;
   }
 
-  const index = getNoteIndex(root);
-  const circle = isMinor ? "inner" : "outer";
+  isMajor(): boolean {
+    // 音名が基本音名（C, D, E, F, G, A, B）の場合はメジャー
+    return BASIC_NOTES.includes(this.note as NoteName);
+  }
 
-  return { circle, index };
+  equals(other: Note): boolean {
+    return this.note === other.note;
+  }
 }

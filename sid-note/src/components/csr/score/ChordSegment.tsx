@@ -8,9 +8,9 @@ import { playChord, playNoteSound } from "@/utils/music/audio/player";
 import { comparePitch } from "@/utils/music/theory/core/notes";
 import { getDiatonicChords, getScaleText } from "@/utils/music/theory/core/scales";
 import {
-  getCadenceText,
-  getFunctionalHarmonyText,
-  romanNumeralHarmonyInfo
+    getCadenceText,
+    getFunctionalHarmonyText,
+    romanNumeralHarmonyInfo
 } from "@/utils/music/theory/harmony/functionalHarmony";
 import { getChordVoicing } from "@/utils/music/theory/voicing/chordVoicing";
 import Image from "next/image";

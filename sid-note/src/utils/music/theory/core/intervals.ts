@@ -54,36 +54,39 @@ export const INTERVAL_DEFINITIONS: Record<string, IntervalDefinition> = {
 
 /**
  * 2つの音の間の半音数を計算します
- * 
+ *
  * @param note1 - 1つ目の音名
  * @param note2 - 2つ目の音名
  * @returns 半音数（正の値は上向き、負の値は下向き）
  * @throws {Error} 無効な音名が指定された場合
- * 
+ *
  * @example
  * ```ts
  * getHalfStepDistance("C", "E")  // => 4
  * getHalfStepDistance("E", "C")  // => -4
  * ```
  */
-export function getHalfStepDistance(note1: string, note2: string): number {
+export function getHalfStepDistance(note1: string, note2: string): number | null {
   if (!note1 || !note2 || typeof note1 !== "string" || typeof note2 !== "string") {
-    throw new Error("音名は文字列である必要があります");
+    return null;
   }
-
-  const index1 = getNoteIndex(note1);
-  const index2 = getNoteIndex(note2);
-  return index2 - index1;
+  try {
+    const index1 = getNoteIndex(note1);
+    const index2 = getNoteIndex(note2);
+    return index2 - index1;
+  } catch {
+    return null;
+  }
 }
 
 /**
  * 音程の名前を取得します
- * 
+ *
  * @param semitones - 半音数
  * @param degree - 音程の度数（1-8）
  * @returns 音程の名前（例：M3, P5）
  * @throws {Error} 無効な半音数または度数が指定された場合
- * 
+ *
  * @example
  * ```ts
  * getIntervalName(4, 3)  // => "M3"
@@ -127,51 +130,47 @@ export function getIntervalName(semitones: number, degree: number): string {
 
 /**
  * 2つの音の間の音程を取得します
- * 
+ *
  * @param note1 - 1つ目の音名
  * @param note2 - 2つ目の音名
  * @returns 音程の定義
  * @throws {Error} 無効な音名が指定された場合
- * 
+ *
  * @example
  * ```ts
  * getInterval("C", "E")  // => { quality: "major", degree: 3, semitones: 4, displayName: "長3度" }
  * getInterval("C", "G")  // => { quality: "perfect", degree: 5, semitones: 7, displayName: "完全5度" }
  * ```
  */
-export function getInterval(note1: string, note2: string): IntervalDefinition {
+export function getInterval(note1: string, note2: string): IntervalDefinition | null {
   if (!note1 || typeof note1 !== "string") {
-    throw new Error("1つ目の音名は文字列である必要があります");
+    return null;
   }
-
   if (!note2 || typeof note2 !== "string") {
-    throw new Error("2つ目の音名は文字列である必要があります");
+    return null;
   }
-
-  const index1 = getNoteIndex(note1);
-  const index2 = getNoteIndex(note2);
-
-  const semitones = (index2 - index1 + 12) % 12;
-  const degree = Math.abs(index2 - index1) % 7 + 1;
-
-  const intervalKey = getIntervalKey(degree, semitones);
-  const definition = INTERVAL_DEFINITIONS[intervalKey];
-
-  if (!definition) {
-    throw new Error(`無効な音程です: ${note1}から${note2}`);
+  try {
+    const index1 = getNoteIndex(note1);
+    const index2 = getNoteIndex(note2);
+    const semitones = (index2 - index1 + 12) % 12;
+    const degree = Math.abs(index2 - index1) % 7 + 1;
+    const intervalKey = getIntervalKey(degree, semitones);
+    const definition = INTERVAL_DEFINITIONS[intervalKey];
+    if (!definition) return null;
+    return definition;
+  } catch {
+    return null;
   }
-
-  return definition;
 }
 
 /**
  * 音程のキーを取得します
- * 
+ *
  * @param degree - 音程の度数（1-8）
  * @param semitones - 音程の半音数（0-12）
  * @returns 音程のキー（例: "M3", "P5"）
  * @throws {Error} 無効な度数や半音数が指定された場合
- * 
+ *
  * @example
  * ```ts
  * getIntervalKey(3, 4)  // => "M3"
@@ -202,12 +201,12 @@ function getIntervalKey(degree: number, semitones: number): string {
 
 /**
  * 2つの音が半音階関係にあるかどうかを判定します
- * 
+ *
  * @param note1 - 1つ目の音名
  * @param note2 - 2つ目の音名
  * @returns 半音階関係の場合はtrue、それ以外はfalse
  * @throws {Error} 無効な音名が指定された場合
- * 
+ *
  * @example
  * ```ts
  * isChromatic("C", "C＃")  // => true
@@ -215,10 +214,7 @@ function getIntervalKey(degree: number, semitones: number): string {
  * ```
  */
 export function isChromatic(note1: string, note2: string): boolean {
-  if (!note1 || !note2 || typeof note1 !== "string" || typeof note2 !== "string") {
-    throw new Error("音名は文字列である必要があります");
-  }
-
-  const semitones = Math.abs(getHalfStepDistance(note1, note2));
-  return semitones === 1;
+  const dist = getHalfStepDistance(note1, note2);
+  if (dist === null) return false;
+  return Math.abs(dist) === 1;
 }
