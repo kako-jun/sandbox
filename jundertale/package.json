@@ -1,0 +1,15 @@
+{
+  "name": "phaser-game",
+  "version": "1.0.0",
+  "description": "A simple 2D game using Phaser 3.90.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "http-server -c-1"
+  },
+  "dependencies": {
+    "phaser": "3.90.0"
+  },
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  }
+} 
