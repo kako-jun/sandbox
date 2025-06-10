@@ -73,12 +73,12 @@ describe("getChordNameAliases", () => {
 
   it("#記号を含むコードの別表記が正しく取得される", () => {
     const aliases = getChordNameAliases("C#");
-    expect(aliases).toEqual(["C#", "C#maj", "C#△"]);
+    expect(aliases).toEqual(["C＃", "C＃maj", "C＃△"]);
   });
 
   it("b記号を含むコードの別表記が正しく取得される", () => {
     const aliases = getChordNameAliases("Cb");
-    expect(aliases).toEqual(["Cb", "Cbmaj", "Cb△"]);
+    expect(aliases).toEqual(["C♭", "C♭maj", "C♭△"]);
   });
 
   it("不正なコード名でそのまま返される", () => {

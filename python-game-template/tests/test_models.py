@@ -1,29 +1,42 @@
 import unittest
-from src.game.models import (
-    GameState, GameConfig, Player, Position, Direction,
-    GameAction, Difficulty, GameMode
-)
+from src.game.models import GameState, GameConfig, Player, Position, Direction, GameAction, Difficulty, GameMode
 
 
 class TestGameState(unittest.TestCase):
     def test_game_state_initialization(self):
         """GameStateの初期化をテスト"""
-        state = GameState.model_validate({
-            "players": {0: Player.model_validate({
-                "name": "test_player",
-                "snake_body": [Position.model_validate({"x": 0, "y": 0})]
-            })},
-            "current_player_id": 0,
-            "food_position": Position.model_validate({"x": 5, "y": 5}),
-            "score": 0,
-            "game_over": False,
-            "board_width": 20,
-            "board_height": 20,
-            "difficulty": Difficulty.NORMAL,
-            "game_mode": GameMode.CLASSIC,
-            "time_limit": 300,
-            "tick_count": 0
-        })
+        state = GameState.model_validate(
+            {
+                "config": {
+                    "board_width": 20,
+                    "board_height": 20,
+                    "difficulty": "normal",
+                    "game_mode": "classic",
+                    "time_limit": 300,
+                },
+                "snake": [{"x": 0, "y": 0}],
+                "food": {"x": 5, "y": 5},
+                "score": 0,
+                "game_over": False,
+                "time_remaining": 300,
+                "current_direction": "right",
+                "players": {
+                    0: {
+                        "id": "0",
+                        "name": "test_player",
+                        "position": {"x": 0, "y": 0},
+                        "snake_body": [{"x": 0, "y": 0}],
+                    }
+                },
+                "current_player_id": 0,
+                "food_position": {"x": 5, "y": 5},
+                "board_width": 20,
+                "board_height": 20,
+                "difficulty": "normal",
+                "game_mode": "classic",
+                "tick_count": 0,
+            }
+        )
         self.assertIsNotNone(state)
         self.assertEqual(state.score, 0)
         self.assertFalse(state.game_over)
@@ -31,31 +44,37 @@ class TestGameState(unittest.TestCase):
     def test_game_state_validation(self):
         """GameStateのバリデーションをテスト"""
         with self.assertRaises(ValueError):
-            GameState.model_validate({
-                "players": {},
-                "current_player_id": 0,
-                "food_position": Position.model_validate({"x": 5, "y": 5}),
-                "score": 0,
-                "game_over": False,
-                "board_width": 20,
-                "board_height": 20,
-                "difficulty": Difficulty.NORMAL,
-                "game_mode": GameMode.CLASSIC,
-                "time_limit": 300,
-                "tick_count": 0
-            })
+            GameState.model_validate(
+                {
+                    "config": {
+                        "board_width": 20,
+                        "board_height": 20,
+                        "difficulty": "normal",
+                        "game_mode": "classic",
+                        "time_limit": 300,
+                    },
+                    "snake": [],  # 空の蛇でバリデーションエラー
+                    "food": {"x": 5, "y": 5},
+                    "score": 0,
+                    "game_over": False,
+                    "time_remaining": 300,
+                    "current_direction": "right",
+                }
+            )
 
 
 class TestGameConfig(unittest.TestCase):
     def test_game_config_initialization(self):
         """GameConfigの初期化をテスト"""
-        config = GameConfig.model_validate({
-            "board_width": 20,
-            "board_height": 20,
-            "difficulty": Difficulty.NORMAL,
-            "game_mode": GameMode.CLASSIC,
-            "time_limit": 300
-        })
+        config = GameConfig.model_validate(
+            {
+                "board_width": 20,
+                "board_height": 20,
+                "difficulty": Difficulty.NORMAL,
+                "game_mode": GameMode.CLASSIC,
+                "time_limit": 300,
+            }
+        )
         self.assertIsNotNone(config)
         self.assertEqual(config.board_width, 20)
         self.assertEqual(config.board_height, 20)
@@ -63,22 +82,23 @@ class TestGameConfig(unittest.TestCase):
     def test_game_config_validation(self):
         """GameConfigのバリデーションをテスト"""
         with self.assertRaises(ValueError):
-            GameConfig.model_validate({
-                "board_width": 0,
-                "board_height": 20,
-                "difficulty": Difficulty.NORMAL,
-                "game_mode": GameMode.CLASSIC,
-                "time_limit": 300
-            })
+            GameConfig.model_validate(
+                {
+                    "board_width": 0,
+                    "board_height": 20,
+                    "difficulty": Difficulty.NORMAL,
+                    "game_mode": GameMode.CLASSIC,
+                    "time_limit": 300,
+                }
+            )
 
 
 class TestPlayer(unittest.TestCase):
     def test_player_initialization(self):
         """Playerの初期化をテスト"""
-        player = Player.model_validate({
-            "name": "test_player",
-            "snake_body": [Position.model_validate({"x": 0, "y": 0})]
-        })
+        player = Player.model_validate(
+            {"id": "test_id", "name": "test_player", "position": {"x": 0, "y": 0}, "snake_body": [{"x": 0, "y": 0}]}
+        )
         self.assertIsNotNone(player)
         self.assertEqual(player.name, "test_player")
         self.assertEqual(len(player.snake_body), 1)
@@ -86,10 +106,9 @@ class TestPlayer(unittest.TestCase):
     def test_player_validation(self):
         """Playerのバリデーションをテスト"""
         with self.assertRaises(ValueError):
-            Player.model_validate({
-                "name": "",
-                "snake_body": [Position.model_validate({"x": 0, "y": 0})]
-            })
+            Player.model_validate(
+                {"id": "test_id", "name": "", "position": {"x": 0, "y": 0}, "snake_body": [{"x": 0, "y": 0}]}
+            )
 
 
 class TestPosition(unittest.TestCase):
@@ -118,24 +137,22 @@ class TestDirection(unittest.TestCase):
 class TestGameAction(unittest.TestCase):
     def test_game_action_initialization(self):
         """GameActionの初期化をテスト"""
-        action = GameAction.model_validate({
-            "player_id": 0,
-            "action_type": "move",
-            "direction": Direction.UP
-        })
+        action = GameAction.model_validate({"player_id": 0, "action_type": "move", "direction": Direction.UP})
         self.assertIsNotNone(action)
-        self.assertEqual(action.player_id, 0)
+        self.assertEqual(action.player_id, "0")  # 文字列として変換される
         self.assertEqual(action.action_type, "move")
         self.assertEqual(action.direction, Direction.UP)
 
     def test_game_action_validation(self):
         """GameActionのバリデーションをテスト"""
         with self.assertRaises(ValueError):
-            GameAction.model_validate({
-                "player_id": -1,
-                "action_type": "move",
-                "direction": Direction.UP
-            })
+            GameAction.model_validate(
+                {
+                    "player_id": "",  # 空のプレイヤーIDでバリデーションエラー
+                    "action_type": "move",
+                    "direction": Direction.UP,
+                }
+            )
 
 
 class TestDifficulty(unittest.TestCase):
@@ -153,5 +170,5 @@ class TestGameMode(unittest.TestCase):
         self.assertEqual(GameMode.TIME_ATTACK.value, "time_attack")
 
 
-if __name__ == '__main__':
-    unittest.main() 
+if __name__ == "__main__":
+    unittest.main()

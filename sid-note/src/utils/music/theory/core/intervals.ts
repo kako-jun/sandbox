@@ -23,33 +23,33 @@ export interface IntervalDefinition {
  * 音程の定義マッピング
  */
 export const INTERVAL_DEFINITIONS: Record<string, IntervalDefinition> = {
-  "P1": { quality: "perfect", degree: 1, semitones: 0, displayName: "完全1度" },
-  "m2": { quality: "minor", degree: 2, semitones: 1, displayName: "短2度" },
-  "M2": { quality: "major", degree: 2, semitones: 2, displayName: "長2度" },
-  "m3": { quality: "minor", degree: 3, semitones: 3, displayName: "短3度" },
-  "M3": { quality: "major", degree: 3, semitones: 4, displayName: "長3度" },
-  "P4": { quality: "perfect", degree: 4, semitones: 5, displayName: "完全4度" },
-  "P5": { quality: "perfect", degree: 5, semitones: 7, displayName: "完全5度" },
-  "m6": { quality: "minor", degree: 6, semitones: 8, displayName: "短6度" },
-  "M6": { quality: "major", degree: 6, semitones: 9, displayName: "長6度" },
-  "m7": { quality: "minor", degree: 7, semitones: 10, displayName: "短7度" },
-  "M7": { quality: "major", degree: 7, semitones: 11, displayName: "長7度" },
-  "P8": { quality: "perfect", degree: 8, semitones: 12, displayName: "完全8度" },
-  "A1": { quality: "augmented", degree: 1, semitones: 1, displayName: "増1度" },
-  "d2": { quality: "diminished", degree: 2, semitones: 0, displayName: "減2度" },
-  "A2": { quality: "augmented", degree: 2, semitones: 3, displayName: "増2度" },
-  "d3": { quality: "diminished", degree: 3, semitones: 2, displayName: "減3度" },
-  "A3": { quality: "augmented", degree: 3, semitones: 5, displayName: "増3度" },
-  "d4": { quality: "diminished", degree: 4, semitones: 4, displayName: "減4度" },
-  "A4": { quality: "augmented", degree: 4, semitones: 6, displayName: "増4度" },
-  "d5": { quality: "diminished", degree: 5, semitones: 6, displayName: "減5度" },
-  "A5": { quality: "augmented", degree: 5, semitones: 8, displayName: "増5度" },
-  "d6": { quality: "diminished", degree: 6, semitones: 7, displayName: "減6度" },
-  "A6": { quality: "augmented", degree: 6, semitones: 10, displayName: "増6度" },
-  "d7": { quality: "diminished", degree: 7, semitones: 9, displayName: "減7度" },
-  "A7": { quality: "augmented", degree: 7, semitones: 12, displayName: "増7度" },
-  "d8": { quality: "diminished", degree: 8, semitones: 11, displayName: "減8度" },
-  "A8": { quality: "augmented", degree: 8, semitones: 13, displayName: "増8度" }
+  P1: { quality: "perfect", degree: 1, semitones: 0, displayName: "完全1度" },
+  m2: { quality: "minor", degree: 2, semitones: 1, displayName: "短2度" },
+  M2: { quality: "major", degree: 2, semitones: 2, displayName: "長2度" },
+  m3: { quality: "minor", degree: 3, semitones: 3, displayName: "短3度" },
+  M3: { quality: "major", degree: 3, semitones: 4, displayName: "長3度" },
+  P4: { quality: "perfect", degree: 4, semitones: 5, displayName: "完全4度" },
+  P5: { quality: "perfect", degree: 5, semitones: 7, displayName: "完全5度" },
+  m6: { quality: "minor", degree: 6, semitones: 8, displayName: "短6度" },
+  M6: { quality: "major", degree: 6, semitones: 9, displayName: "長6度" },
+  m7: { quality: "minor", degree: 7, semitones: 10, displayName: "短7度" },
+  M7: { quality: "major", degree: 7, semitones: 11, displayName: "長7度" },
+  P8: { quality: "perfect", degree: 8, semitones: 12, displayName: "完全8度" },
+  A1: { quality: "augmented", degree: 1, semitones: 1, displayName: "増1度" },
+  d2: { quality: "diminished", degree: 2, semitones: 0, displayName: "減2度" },
+  A2: { quality: "augmented", degree: 2, semitones: 3, displayName: "増2度" },
+  d3: { quality: "diminished", degree: 3, semitones: 2, displayName: "減3度" },
+  A3: { quality: "augmented", degree: 3, semitones: 5, displayName: "増3度" },
+  d4: { quality: "diminished", degree: 4, semitones: 4, displayName: "減4度" },
+  A4: { quality: "augmented", degree: 4, semitones: 6, displayName: "増4度" },
+  d5: { quality: "diminished", degree: 5, semitones: 6, displayName: "減5度" },
+  A5: { quality: "augmented", degree: 5, semitones: 8, displayName: "増5度" },
+  d6: { quality: "diminished", degree: 6, semitones: 7, displayName: "減6度" },
+  A6: { quality: "augmented", degree: 6, semitones: 10, displayName: "増6度" },
+  d7: { quality: "diminished", degree: 7, semitones: 9, displayName: "減7度" },
+  A7: { quality: "augmented", degree: 7, semitones: 12, displayName: "増7度" },
+  d8: { quality: "diminished", degree: 8, semitones: 11, displayName: "減8度" },
+  A8: { quality: "augmented", degree: 8, semitones: 13, displayName: "増8度" },
 };
 
 /**
@@ -73,6 +73,12 @@ export function getHalfStepDistance(note1: string, note2: string): number | null
   try {
     const index1 = getNoteIndex(note1);
     const index2 = getNoteIndex(note2);
+
+    // 無効な音名の場合はnullを返す
+    if (index1 === -1 || index2 === -1) {
+      return null;
+    }
+
     return index2 - index1;
   } catch {
     return null;
@@ -122,7 +128,7 @@ export function getIntervalName(semitones: number, degree: number): string {
     major: "M",
     minor: "m",
     augmented: "A",
-    diminished: "d"
+    diminished: "d",
   }[quality];
 
   return `${qualitySymbol}${degree}`;
@@ -133,70 +139,72 @@ export function getIntervalName(semitones: number, degree: number): string {
  *
  * @param note1 - 1つ目の音名
  * @param note2 - 2つ目の音名
- * @returns 音程の定義
+ * @returns 音程の度数（例: "1", "2", "3", "＃1", "♭2"）
  * @throws {Error} 無効な音名が指定された場合
  *
  * @example
  * ```ts
- * getInterval("C", "E")  // => { quality: "major", degree: 3, semitones: 4, displayName: "長3度" }
- * getInterval("C", "G")  // => { quality: "perfect", degree: 5, semitones: 7, displayName: "完全5度" }
+ * getInterval("C", "C")  // => "1"
+ * getInterval("C", "D")  // => "2"
+ * getInterval("C", "E")  // => "3"
  * ```
  */
-export function getInterval(note1: string, note2: string): IntervalDefinition | null {
+export function getInterval(note1: string, note2: string): string {
   if (!note1 || typeof note1 !== "string") {
-    return null;
+    return "";
   }
   if (!note2 || typeof note2 !== "string") {
-    return null;
+    return "";
   }
+
   try {
-    const index1 = getNoteIndex(note1);
-    const index2 = getNoteIndex(note2);
-    const semitones = (index2 - index1 + 12) % 12;
-    const degree = Math.abs(index2 - index1) % 7 + 1;
-    const intervalKey = getIntervalKey(degree, semitones);
-    const definition = INTERVAL_DEFINITIONS[intervalKey];
-    if (!definition) return null;
-    return definition;
+    const distance = getHalfStepDistance(note1, note2);
+    if (distance === null) return "";
+
+    const normalizedDistance = ((distance % 12) + 12) % 12;
+
+    // 基本的な度数と変化記号のマッピング
+    const intervalMap: Record<number, string> = {
+      0: "1", // 完全1度（同じ音）
+      2: "2", // 長2度
+      4: "3", // 長3度
+      5: "4", // 完全4度
+      7: "5", // 完全5度
+      9: "6", // 長6度
+      11: "7", // 長7度
+    };
+
+    // 特別なケース：異名同音と変化記号の処理
+    if (normalizedDistance === 1) {
+      // C# や D♭ などの場合 - 音名から判定
+      if (note2.includes("♭") || note2.includes("b")) {
+        return "♭2";
+      } else {
+        return "＃1";
+      }
+    }
+
+    if (normalizedDistance === 3) {
+      return "♭3";
+    }
+
+    if (normalizedDistance === 6) {
+      // トライトーン - 両方の表記
+      return "＃4/♭5";
+    }
+
+    if (normalizedDistance === 8) {
+      return "♭6";
+    }
+
+    if (normalizedDistance === 10) {
+      return "♭7";
+    }
+
+    return intervalMap[normalizedDistance] || "";
   } catch {
-    return null;
+    return "";
   }
-}
-
-/**
- * 音程のキーを取得します
- *
- * @param degree - 音程の度数（1-8）
- * @param semitones - 音程の半音数（0-12）
- * @returns 音程のキー（例: "M3", "P5"）
- * @throws {Error} 無効な度数や半音数が指定された場合
- *
- * @example
- * ```ts
- * getIntervalKey(3, 4)  // => "M3"
- * getIntervalKey(5, 7)  // => "P5"
- * ```
- */
-function getIntervalKey(degree: number, semitones: number): string {
-  if (degree < 1 || degree > 8) {
-    throw new Error(`無効な度数です: ${degree}`);
-  }
-
-  if (semitones < 0 || semitones > 12) {
-    throw new Error(`無効な半音数です: ${semitones}`);
-  }
-
-  const perfectIntervals = [0, 5, 7, 12]; // 完全音程の半音数
-  const isPerfect = perfectIntervals.includes(semitones);
-
-  if (isPerfect) {
-    return `P${degree}`;
-  }
-
-  const majorIntervals = [2, 4, 9, 11]; // 長音程の半音数
-  const isMajor = majorIntervals.includes(semitones);
-
-  return isMajor ? `M${degree}` : `m${degree}`;
 }
 
 /**

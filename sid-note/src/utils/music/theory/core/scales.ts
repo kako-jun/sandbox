@@ -22,7 +22,16 @@ export interface ScaleInfo {
   type: ScaleType;
 }
 
-export type ScaleType = "major" | "minor" | "dorian" | "phrygian" | "lydian" | "mixolydian" | "locrian" | "harmonic" | "melodic";
+export type ScaleType =
+  | "major"
+  | "minor"
+  | "dorian"
+  | "phrygian"
+  | "lydian"
+  | "mixolydian"
+  | "locrian"
+  | "harmonic"
+  | "melodic";
 
 /**
  * スケールのパターン定義
@@ -36,7 +45,7 @@ const SCALE_PATTERNS: Record<ScaleType, number[]> = {
   mixolydian: [0, 2, 4, 5, 7, 9, 10],
   locrian: [0, 1, 3, 5, 6, 8, 10],
   harmonic: [0, 2, 3, 5, 7, 8, 11],
-  melodic: [0, 2, 3, 5, 7, 9, 11]
+  melodic: [0, 2, 3, 5, 7, 9, 11],
 };
 
 /**
@@ -64,7 +73,7 @@ export function generateScale(root: string, type: ScaleType): ScaleInfo {
 
   const pattern = SCALE_PATTERNS[type];
   const rootIndex = getNoteIndex(root);
-  const notes = pattern.map(interval => {
+  const notes = pattern.map((interval) => {
     const noteIndex = (rootIndex + interval) % 12;
     return getNoteFromIndex(noteIndex);
   });
@@ -139,7 +148,7 @@ export function getScaleNoteNames(arg1: string, arg2?: string): string[] {
   const rootIndex = getNoteIndex(root);
   if (rootIndex === null) return [];
   const intervals = isMinor ? [0, 2, 3, 5, 7, 8, 10] : [0, 2, 4, 5, 7, 9, 11];
-  return intervals.map(interval => getNoteFromIndex(rootIndex + interval));
+  return intervals.map((interval) => getNoteFromIndex(rootIndex + interval));
 }
 
 function getSharpNote(index: number): string {
@@ -285,7 +294,9 @@ export function getScaleDiatonicChordsWith7th(arg1: string, arg2?: string): stri
   const rootIndex = getNoteIndex(root);
   if (rootIndex === null) return [];
   const intervals = isMinor ? [0, 2, 3, 5, 7, 8, 10] : [0, 2, 4, 5, 7, 9, 11];
-  const qualities = isMinor ? ["m7", "m7b5", "maj7", "m7", "m7", "maj7", "7"] : ["maj7", "m7", "m7", "maj7", "7", "m7", "m7b5"];
+  const qualities = isMinor
+    ? ["m7", "m7b5", "maj7", "m7", "m7", "maj7", "7"]
+    : ["maj7", "m7", "m7", "maj7", "7", "m7", "m7b5"];
   return intervals.map((interval, i) => getNoteFromIndex(rootIndex + interval) + qualities[i]);
 }
 
@@ -313,6 +324,6 @@ export class Scale {
   }
 
   toString(): string {
-    return this.root + (this.type === 'minor' ? 'm' : '');
+    return this.root + (this.type === "minor" ? "m" : "");
   }
 }
