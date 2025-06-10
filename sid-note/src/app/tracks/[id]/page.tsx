@@ -13,10 +13,10 @@ import type { ReactNode } from "react";
  */
 interface GenerateMetadataParams {
   /** ルートパラメータ */
-  params: {
+  params: Promise<{
     /** トラックID */
     id: string;
-  };
+  }>;
 }
 
 /**
@@ -27,7 +27,8 @@ interface GenerateMetadataParams {
  * @returns {Promise<Metadata>} メタデータ
  */
 export async function generateMetadata({ params }: GenerateMetadataParams): Promise<Metadata> {
-  const track = await loadTrackFromYamlUrl(`/track/track_${params.id}.yaml`);
+  const { id } = await params;
+  const track = await loadTrackFromYamlUrl(`/track/track_${id}.yaml`);
   if (!track) {
     return {
       title: "トラックが見つかりません | Sid Note",
@@ -51,10 +52,10 @@ export async function generateMetadata({ params }: GenerateMetadataParams): Prom
  */
 interface TrackPageProps {
   /** ルートパラメータ */
-  params: {
+  params: Promise<{
     /** トラックID */
     id: string;
-  };
+  }>;
 }
 
 /**
@@ -65,7 +66,8 @@ interface TrackPageProps {
  * @returns {Promise<ReactNode>} トラックページのコンポーネント
  */
 export default async function TrackPage({ params }: TrackPageProps): Promise<ReactNode> {
-  const track = await loadTrackFromYamlUrl(`/track/track_${params.id}.yaml`);
+  const { id } = await params;
+  const track = await loadTrackFromYamlUrl(`/track/track_${id}.yaml`);
   if (!track) return notFound();
 
   const processedTrack = processTrackData(track);

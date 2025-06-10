@@ -307,7 +307,7 @@ export function getChordFunction(chord: string, key: string): HarmonicFunction |
 
   try {
     const isMinor = key.toLowerCase().endsWith("m");
-    const rootNote = isMinor ? key.slice(0, -1) : key;
+    // const rootNote = isMinor ? key.slice(0, -1) : key;
     const diatonicChords = getScaleDiatonicChords(key);
     const index = diatonicChords.indexOf(chord);
 
@@ -358,14 +358,14 @@ export function getChordFunction(chord: string, key: string): HarmonicFunction |
  * getRomanNumeral(3)  // => "III"
  * ```
  */
-function getRomanNumeral(num: number): string {
-  if (num < 1 || num > 7) {
-    throw new Error(`無効な数字です: ${num}`);
-  }
+// function getRomanNumeral(num: number): string {
+//   if (num < 1 || num > 7) {
+//     throw new Error(`無効な数字です: ${num}`);
+//   }
 
-  const romanNumerals = ["I", "II", "III", "IV", "V", "VI", "VII"];
-  return romanNumerals[num - 1];
-}
+//   const romanNumerals = ["I", "II", "III", "IV", "V", "VI", "VII"];
+//   return romanNumerals[num - 1];
+// }
 
 /**
  * 和音の度数をローマ数字と機能名で表現します。
@@ -418,7 +418,7 @@ export const isSecondaryDominant = (chord: string, nextChord: string): boolean =
   const chordRoot = chord.slice(0, -1);
   const nextChordRoot = nextChord.slice(0, -1);
   const interval = getInterval(chordRoot, nextChordRoot);
-  return interval !== null && (interval.degree === 5 || interval.degree === 4);
+  return interval !== null && (interval === "5" || interval === "4");
 };
 
 /**
@@ -590,11 +590,11 @@ export const romanNumeral7thHarmonyInfo = (degree: number): { roman: string; des
   return getFunctionalHarmonyInfoBase(degree);
 };
 
-const FUNCTIONAL_HARMONY: Record<string, string[]> = {
-  T: ["I"],
-  S: ["II", "IV"],
-  D: ["V", "VII"],
-};
+// const FUNCTIONAL_HARMONY: Record<string, string[]> = {
+//   T: ["I"],
+//   S: ["II", "IV"],
+//   D: ["V", "VII"],
+// };
 
 /**
  * コードの和声機能の度数を取得します

@@ -55,15 +55,16 @@ impl I18n {
             .unwrap_or_else(|| key.to_string())
     }
 
+    /// キーに基づいて翻訳されたテキストを取得
     pub fn get(&self, key: &str) -> String {
         match key {
-            "app-description" => match self.current_language() {
-                "ja" => "Rust Tool Template - 包括的なRustアプリケーションテンプレート",
-                _ => "Rust Tool Template - A comprehensive Rust application template",
+            "app-description" => match self.get_current_language().as_str() {
+                "ja" => "Rust Tool Template - 包括的なRustアプリケーションテンプレート".to_string(),
+                _ => "Rust Tool Template - A comprehensive Rust application template".to_string(),
             },
-            "usage-examples" => match self.current_language() {
-                "ja" => "使用例:\n  rust-tool-template -m cli -c add -n \"名前\" -v 42\n  rust-tool-template -m cli -c list\n  rust-tool-template -m cli -c stats",
-                _ => "Usage Examples:\n  rust-tool-template -m cli -c add -n \"name\" -v 42\n  rust-tool-template -m cli -c list\n  rust-tool-template -m cli -c stats",
+            "usage-examples" => match self.get_current_language().as_str() {
+                "ja" => "使用例:\n  rust-tool-template -m cli -c add -n \"名前\" -v 42\n  rust-tool-template -m cli -c list\n  rust-tool-template -m cli -c stats".to_string(),
+                _ => "Usage Examples:\n  rust-tool-template -m cli -c add -n \"name\" -v 42\n  rust-tool-template -m cli -c list\n  rust-tool-template -m cli -c stats".to_string(),
             },
             _ => key.to_string(),
         }

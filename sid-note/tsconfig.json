@@ -33,5 +33,5 @@
     ".next/types/**/*.ts",
     "src/schemas/trackSchema"
   ],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", "sid-note_old"]
 }

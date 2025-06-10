@@ -19,11 +19,11 @@
             "name": "Tauri Dev",
             "type": "lldb",
             "request": "launch",
-            "program": "${workspaceFolder}/src-tauri/target/debug/rust-tool-template",
+            "program": "${workspaceFolder}/src-tauri/target/debug/rust-tool-template-app",
             "args": [],
             "cwd": "${workspaceFolder}/src-tauri",
             "sourceLanguages": ["rust"],
-            "preLaunchTask": "cargo build -p rust-tool-template --features web",
+            "preLaunchTask": "cargo build -p rust-tool-template-app",
             "env": {
                 "RUST_LOG": "debug",
                 "RUST_BACKTRACE": "1"

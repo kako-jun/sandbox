@@ -5,14 +5,14 @@
 
 use rust_tool_template::api;
 use tracing::{info, warn, error};
-use rust_tool_template::cli::run_cli;
 use rust_tool_template::config::Config;
 use rust_tool_template::core::App;
 use rust_tool_template::logging::Logger;
 use std::path::PathBuf;
 
 /// アプリケーションのエントリーポイント
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // ロガーを初期化
     let log_file = PathBuf::from("app.log");
     Logger::init(log_file, log::LevelFilter::Info)?;
@@ -27,7 +27,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     app.init()?;
 
     // コマンドラインインターフェースを実行
-    if let Err(e) = run_cli() {
+    if let Err(e) = rust_tool_template::cli::run().await {
         eprintln!("エラー: {}", e);
         std::process::exit(1);
     }

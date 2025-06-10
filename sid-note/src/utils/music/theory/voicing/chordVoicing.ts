@@ -16,14 +16,14 @@ import { generateScaleFromKey, getScaleNoteNames } from "@/utils/music/theory/co
 /**
  * 弦のチューニング定義
  */
-const STRING_TUNINGS: Record<number, string> = {
-  1: "E", // 1弦（高音弦）
-  2: "B",
-  3: "G",
-  4: "D",
-  5: "A",
-  6: "E", // 6弦（低音弦）
-};
+// const STRING_TUNINGS: Record<number, string> = {
+//   1: "E", // 1弦（高音弦）
+//   2: "B",
+//   3: "G",
+//   4: "D",
+//   5: "A",
+//   6: "E", // 6弦（低音弦）
+// };
 
 /**
  * 半音数を音程の文字列に変換します（表示用）
@@ -185,7 +185,7 @@ export function getChordVoicing(chord: string, scaleKey: string): ChordTone[] {
     .replace(/b/g, "♭")
     .replace(/[#♯]/g, "＃");
 
-  const { rootNote, chordType } = parseChord(normalizedChord);
+  const { rootNote } = parseChord(normalizedChord);
   if (!rootNote || !isValidNote(rootNote)) {
     throw new Error(`無効なルート音です: ${rootNote}`);
   }
@@ -194,7 +194,7 @@ export function getChordVoicing(chord: string, scaleKey: string): ChordTone[] {
   const scaleNotes = getScaleNoteNames(scale.root, scale.type);
 
   const positions = getChordPositions(normalizedChord);
-  return positions.map((pos, index) => {
+  return positions.map((pos) => {
     const interval = getInterval(rootNote, pos.pitch);
     if (!interval) {
       throw new Error(`無効な音程です: ${rootNote} - ${pos.pitch}`);
@@ -203,7 +203,8 @@ export function getChordVoicing(chord: string, scaleKey: string): ChordTone[] {
     const pitch = enharmonicNotes.length > 1 ? `${enharmonicNotes.join("/")}3` : `${pos.pitch}3`;
     return {
       pitch,
-      semitones: interval.semitones,
+      degree: parseInt(interval) || 1,
+      semitones: (parseInt(interval) || 1) - 1,
       string: pos.string,
       fret: pos.fret,
       isInScale: scaleNotes.includes(pos.pitch)

@@ -23,15 +23,6 @@ export type NoteName = "C" | "D" | "E" | "F" | "G" | "A" | "B";
  */
 export type Accidental = "♯" | "♭" | "";
 
-/**
- * 音名の正規化マップ
- */
-const NOTE_NORMALIZATION_MAP: Record<string, string> = {
-  "C#": "C♯", "Db": "D♭", "D#": "D♯", "Eb": "E♭",
-  "E#": "E♯", "Fb": "F♭", "F#": "F♯", "Gb": "G♭",
-  "G#": "G♯", "Ab": "A♭", "A#": "A♯", "Bb": "B♭",
-  "B#": "B♯", "Cb": "C♭"
-};
 
 /**
  * 音名の正規化マップ（逆方向）
@@ -197,13 +188,6 @@ export interface KeyPosition {
  */
 export const BASIC_NOTES: readonly NoteName[] = ["C", "D", "E", "F", "G", "A", "B"];
 
-/**
- * クロマティック音名の定義
- */
-const CHROMATIC_NOTES: Record<string, string[]> = {
-  "sharp": ["C", "C＃", "D", "D＃", "E", "F", "F＃", "G", "G＃", "A", "A＃", "B"],
-  "flat": ["C", "D♭", "D", "E♭", "E", "F", "G♭", "G", "A♭", "A", "B♭", "B"],
-};
 
 /**
  * 指定された音名が有効な音名かどうかを判定します（オクターブなし）
@@ -426,6 +410,43 @@ export function addDefaultOctave(pitch: string, defaultOctave = 4): string {
   return pitch + defaultOctave.toString();
 }
 
+/**
+ * 調のキー位置を取得します
+ *
+ * @param scale - 調名（例：C, Am, F#, Dm）
+ * @returns キー位置情報
+ *
+ * @example
+ * ```ts
+ * getKeyPosition("C")   // => { circle: "outer", index: 0 }
+ * getKeyPosition("Am")  // => { circle: "inner", index: 0 }
+ * ```
+ */
+export function getKeyPosition(scale: string): KeyPosition {
+  const majorKeys = ["C", "G", "D", "A", "E", "B", "F＃", "D♭", "A♭", "E♭", "B♭", "F"];
+  const minorKeys = ["Am", "Em", "Bm", "F＃m", "C＃m", "G＃m", "D＃m", "B♭m", "Fm", "Cm", "Gm", "Dm"];
+
+  const majorIndex = majorKeys.indexOf(scale);
+  const minorIndex = minorKeys.indexOf(scale);
+
+  if (majorIndex !== -1) {
+    return {
+      circle: "outer",
+      index: majorIndex,
+    };
+  } else if (minorIndex !== -1) {
+    return {
+      circle: "inner",
+      index: minorIndex,
+    };
+  }
+
+  return {
+    circle: "none",
+    index: -1,
+  };
+}
+
 export class Note {
   private note: string;
   private octave: number;
@@ -436,6 +457,10 @@ export class Note {
     }
     this.note = normalizeNotation(note);
     this.octave = octave;
+  }
+
+  getOctave(): number {
+    return this.octave;
   }
 
   toString(): string {
