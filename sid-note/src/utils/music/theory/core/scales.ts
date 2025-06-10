@@ -151,15 +151,15 @@ export function getScaleNoteNames(arg1: string, arg2?: string): string[] {
   return intervals.map((interval) => getNoteFromIndex(rootIndex + interval));
 }
 
-function getSharpNote(index: number): string {
-  const sharpNotes = ["C", "C＃", "D", "D＃", "E", "F", "F＃", "G", "G＃", "A", "A＃", "B"];
-  return sharpNotes[index];
-}
+// function getSharpNote(index: number): string {
+//   const sharpNotes = ["C", "C＃", "D", "D＃", "E", "F", "F＃", "G", "G＃", "A", "A＃", "B"];
+//   return sharpNotes[index];
+// }
 
-function getFlatNote(index: number): string {
-  const flatNotes = ["C", "D♭", "D", "E♭", "E", "F", "G♭", "G", "A♭", "A", "B♭", "B"];
-  return flatNotes[index];
-}
+// function getFlatNote(index: number): string {
+//   const flatNotes = ["C", "D♭", "D", "E♭", "E", "F", "G♭", "G", "A♭", "A", "B♭", "B"];
+//   return flatNotes[index];
+// }
 
 /**
  * スケールのテキスト表現を取得します

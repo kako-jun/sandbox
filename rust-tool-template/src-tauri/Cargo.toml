@@ -1,5 +1,5 @@
 [package]
-name = "rust-tool-template"
+name = "rust-tool-template-app"
 version = "0.1.0"
 edition = "2021"
 authors = ["kako-jun"]

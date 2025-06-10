@@ -40,7 +40,7 @@ export function getNoteFrequency(note: string): number | null {
   const pitch = parsePitch(note);
   if (!pitch) return null;
 
-  const baseFreq = BASE_FREQUENCIES[pitch.note];
+  const baseFreq = BASE_FREQUENCIES[pitch.note as keyof typeof BASE_FREQUENCIES];
   if (!baseFreq) return null;
 
   // オクターブの調整（ベースはオクターブ4）

@@ -1,103 +1,45 @@
 "use client";
 
-import Note from "@/components/csr/score/Note";
 import PopupOnClick from "@/components/ssr/common/PopupOnClick";
 import RemarkList from "@/components/ssr/common/RemarkList";
+import Left from "@/components/csr/performance/Left";
+import Note from "@/components/csr/score/Note";
 import { ChordSegmentType, LeftType, NoteType } from "@/schemas/trackSchema";
+import { getChordVoicing } from "@/utils/music/theory/voicing/chordVoicing";
+// import { getFunctionalHarmonyFilter } from "@/utils/music/theory/harmony/functionalHarmony";
+import {
+  getCadenceText,
+  getFunctionalHarmonyText,
+  getFunctionalHarmony,
+  romanNumeral7thHarmonyInfo,
+  romanNumeralHarmonyInfo,
+} from "@/utils/music/theory/harmony/functionalHarmony";
 import { playChord, playNoteSound } from "@/utils/music/audio/player";
 import { comparePitch } from "@/utils/music/theory/core/notes";
 import { getDiatonicChords, getScaleText } from "@/utils/music/theory/core/scales";
-import {
-    getCadenceText,
-    getFunctionalHarmonyText,
-    romanNumeralHarmonyInfo
-} from "@/utils/music/theory/harmony/functionalHarmony";
-import { getChordVoicing } from "@/utils/music/theory/voicing/chordVoicing";
 import Image from "next/image";
-import type { FC, ReactNode } from "react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import React from "react";
 
-/**
- * 機能和声の色フィルターを取得します
- *
- * @param {number} harmony - 機能和声の値
- * @returns {string} CSSフィルター値
- */
-const getFunctionalHarmonyFilter = (harmony: number): string => {
-  const baseFilter = "invert(50%) sepia(100%) saturate(200%)";
-
-  switch (harmony) {
-    case 1:
-      return `${baseFilter} hue-rotate(140deg)`;
-    case 2:
-      return `${baseFilter} hue-rotate(350deg)`;
-    case 3:
-      return `${baseFilter} hue-rotate(230deg) blur(1px)`;
-    case 4:
-      return `${baseFilter} hue-rotate(180deg)`;
-    case 5:
-      return `${baseFilter} hue-rotate(290deg)`;
-    case 6:
-      return `${baseFilter} hue-rotate(180deg)`;
-    case 7:
-      return `${baseFilter} hue-rotate(330deg)`;
-    default:
-      return baseFilter;
-  }
+type ChordSegmentProps = {
+  chordSegment: ChordSegmentType;
+  chordSegmentId: number;
+  prevSegment: ChordSegmentType | null;
+  nextSegment: ChordSegmentType | null;
+  chordSegmentCount: number;
+  scale: string;
+  scrollLeft: number;
+  onScroll: (left: number) => void;
 };
 
-/**
- * コードセグメントコンポーネントのプロパティ
- */
-interface ChordSegmentProps {
-  /** コードセグメントの情報 */
-  chordSegment: ChordSegmentType;
-  /** コードセグメントのID */
-  chordSegmentId: number;
-  /** 前のセグメント（オプション） */
-  prevSegment: ChordSegmentType | null;
-  /** 次のセグメント（オプション） */
-  nextSegment: ChordSegmentType | null;
-  /** コードセグメントの総数 */
-  chordSegmentCount: number;
-  /** 現在のスケール */
-  scale: string;
-  /** スクロール位置 */
-  scrollLeft: number;
-  /** スクロール時のコールバック */
-  onScroll: (left: number) => void;
-}
+const ChordSegment: React.FC<ChordSegmentProps> = (props) => {
+  const { chordSegment, chordSegmentId, prevSegment, nextSegment, chordSegmentCount, scale, scrollLeft, onScroll } =
+    props;
 
-/**
- * コードセグメントコンポーネント
- * コードの表示と操作を提供します
- *
- * @param {ChordSegmentProps} props - コンポーネントのプロパティ
- * @returns {ReactNode} コードセグメントコンポーネント
- */
-const ChordSegment: FC<ChordSegmentProps> = ({
-  chordSegment,
-  chordSegmentId,
-  prevSegment,
-  nextSegment,
-  chordSegmentCount,
-  scale,
-  scrollLeft,
-  onScroll,
-}) => {
-  /**
-   * コードのノート情報を生成します
-   *
-   * @param {string} chord - コード名
-   * @returns {NoteType} ノート情報
-   */
-  const getChordNote = (chord: string): NoteType => {
+  const getChordNote = (chord: string) => {
     const positions = getChordVoicing(chord, scale);
-    const lefts: LeftType[] = positions.map(
-      (position: { pitch: string; degree: number }) => {
-        return { pitch: position.pitch, interval: "", string: 0, fret: 0, finger: 0, type: "chord" };
-      }
-    );
+    const lefts: LeftType[] = positions.map((position) => {
+      return { pitch: position.pitch, interval: "", string: 0, fret: 0, finger: 0, type: "chord" };
+    });
 
     // chordSegment.instrumentsからpitchに合うinstrumentを探して付与
     const instruments: { pitch: string; instrument: string }[] = chordSegment.instruments || [];
@@ -120,59 +62,21 @@ const ChordSegment: FC<ChordSegmentProps> = ({
     return chordNote;
   };
 
-  const chord = useMemo(() => {
+  const chord = React.useMemo(() => {
     return chordSegment.on && chordSegment.on !== "" ? chordSegment.on : chordSegment.chord;
   }, [chordSegment]);
 
-  const scaleWithModulation = useMemo(() => {
+  const scaleWithModulation = React.useMemo(() => {
     return chordSegment.key ? chordSegment.key : scale;
   }, [scale, chordSegment.key]);
 
-  const isScaleChord = useMemo(() => {
+  const isScaleChord = React.useMemo(() => {
     const chords = getDiatonicChords(scaleWithModulation);
     return chords.includes(chord);
   }, [scaleWithModulation, chord]);
 
-  const prevChord = useMemo(() => {
-    if (!prevSegment) return "";
-    return prevSegment.on && prevSegment.on !== "" ? prevSegment.on : prevSegment.chord;
-  }, [prevSegment]);
-
-  const prevFunctionalHarmony = useMemo(() => {
-    if (!prevChord) return 0;
-    const chords = getDiatonicChords(scaleWithModulation);
-    const index = chords.indexOf(prevChord);
-    return index + 1;
-  }, [scaleWithModulation, prevChord]);
-
-  const functionalHarmony = useMemo(() => {
-    if (!isScaleChord) return 0;
-    const chords = getDiatonicChords(scaleWithModulation);
-    const index = chords.indexOf(chord);
-    return index + 1;
-  }, [isScaleChord, scaleWithModulation, chord]);
-
-  const functionalHarmonyInfo = useMemo(() => {
-    if (!functionalHarmony) return { roman: "", desc: "" };
-    return romanNumeralHarmonyInfo(functionalHarmony);
-  }, [functionalHarmony]);
-
-  const cadenceText = useMemo(() => {
-    if (!functionalHarmony || !prevFunctionalHarmony) return "";
-    return getCadenceText(prevFunctionalHarmony, functionalHarmony);
-  }, [functionalHarmony, prevFunctionalHarmony]);
-
-  const scaleText = useMemo(() => {
-    return getScaleText(scaleWithModulation);
-  }, [scaleWithModulation]);
-
-  const functionalHarmonyText = useMemo(() => {
-    if (!functionalHarmony) return "";
-    return getFunctionalHarmonyText(functionalHarmony);
-  }, [functionalHarmony]);
-
-  const nextNote = useCallback(
-    (index: number): NoteType | null => {
+  const nextNote = React.useCallback(
+    (index: number) => {
       if (index + 1 < chordSegment.notes.length) {
         return chordSegment.notes[index + 1];
       }
@@ -186,103 +90,236 @@ const ChordSegment: FC<ChordSegmentProps> = ({
     [chordSegment, nextSegment]
   );
 
-  const [windowWidth, setWindowWidth] = useState(0);
+  const [windowWidth, setWindowWidth] = React.useState(0);
 
-  useEffect(() => {
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
     const handleResize = () => setWindowWidth(window.innerWidth);
+    setWindowWidth(window.innerWidth);
     window.addEventListener("resize", handleResize);
-    handleResize();
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const handleClick = () => {
-    playChord(chord);
-  };
+  const leftWidth = React.useMemo(() => {
+    if (windowWidth === 0) return 1000;
+    const a = (2000 - 1400) / (1000 - 500);
+    const b = 1400;
+    return Math.max(1400, Math.min(2000, b + (windowWidth - 500) * a));
+  }, [windowWidth]);
 
-  const handleNoteClick = (pitch: string) => {
-    playNoteSound(pitch, 1.5);
-  };
+  // SSRとクライアントの不一致を防ぐため、初期値は固定し、マウント後にランダム値をセット
+  const [flipX, setFlipX] = React.useState(1);
+  const [flipY, setFlipY] = React.useState(1);
+  const [rotate180, setRotate180] = React.useState(0);
+
+  React.useEffect(() => {
+    setFlipX(Math.random() < 0.5 ? -1 : 1);
+    setFlipY(Math.random() < 0.5 ? -1 : 1);
+    setRotate180(Math.random() < 0.5 ? 180 : 0);
+  }, []);
+
+  const functionalHarmony = React.useMemo(() => {
+    return getFunctionalHarmony(scaleWithModulation, chord);
+  }, [scaleWithModulation, chord]);
+
+  const prevFunctionalHarmony = React.useMemo(() => {
+    if (!prevSegment) {
+      return 0;
+    }
+
+    const prevChord = prevSegment.on && prevSegment.on !== "" ? prevSegment.on : prevSegment.chord;
+    return getFunctionalHarmony(scaleWithModulation, prevChord);
+  }, [scaleWithModulation, prevSegment]);
 
   return (
-    <div
-      className="relative flex flex-col items-center justify-center p-4 border border-gray-300 rounded-lg bg-white shadow-sm"
+    <section
       style={{
-        minWidth: "200px",
-        maxWidth: "100%",
-        margin: "0 8px",
+        padding: 8,
+        paddingBottom: 16,
+        background: "#111111",
+        textAlign: "left",
+        clipPath: "polygon(0% 0%, 50% 1%, 100% 0%, 100% 100%, 50% 99%, 0% 100%)", // 上下の中央を引っ込める形状
+        boxShadow: "inset 0 0 40px 1px #333333",
+        position: "relative",
+        overflow: "hidden",
       }}
     >
-      <div className="flex items-center justify-center mb-2">
-        <button
-          className="text-2xl font-bold text-gray-800 hover:text-blue-600 transition-colors"
-          onClick={handleClick}
-          aria-label={`${chord}のコードを再生`}
-        >
-          {chord}
-        </button>
-        {functionalHarmony > 0 && (
-          <PopupOnClick
-            trigger={
-              <span className="ml-2 text-sm text-gray-600">
-                {functionalHarmonyInfo.roman}
-              </span>
-            }
-            popup={
-              <>
-                <Image
-                  src={`/functional_harmony/${functionalHarmony}.drawio.svg`}
-                  alt={`機能和声${functionalHarmony}`}
-                  width={16}
-                  height={16}
-                  style={{ filter: getFunctionalHarmonyFilter(functionalHarmony) }}
-                />
-                <span className="-ml-1">{functionalHarmonyInfo.desc}</span>
-              </>
-            }
-          />
+      <Image
+        src="/grunge_1.webp"
+        alt="grunge texture background"
+        fill
+        style={{
+          objectFit: "cover",
+          pointerEvents: "none",
+          opacity: 0.05,
+          zIndex: 0,
+          transform: `scale(${flipX}, ${flipY}) rotate(${rotate180}deg)`,
+        }}
+        priority
+      />
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: 8,
+          marginBottom: 4,
+        }}
+      >
+        <p>
+          <span style={{ color: "#888888" }}>Chord </span>
+          {chordSegmentId}
+          <span style={{ color: "#888888" }}> of {chordSegmentCount}</span>
+        </p>
+        {chordSegment.key && (
+          <p style={{ lineHeight: 1, textAlign: "center", fontSize: "0.75rem" }}>
+            Modulation: {getScaleText(chordSegment.key)}
+          </p>
         )}
+        <p style={{ lineHeight: 1, textAlign: "right", fontSize: "0.75rem" }}>
+          <span style={{ color: "#888888" }}>
+            {prevSegment &&
+              `${getFunctionalHarmonyText(prevFunctionalHarmony) || "Non-Diatonic"} → ${
+                getFunctionalHarmonyText(functionalHarmony) || "Non-Diatonic"
+              }`}
+          </span>
+          {prevSegment &&
+            (() => {
+              const cadence = getCadenceText(prevFunctionalHarmony, functionalHarmony);
+              return cadence ? ` (${cadence})` : "";
+            })()}
+        </p>
       </div>
-
-      {cadenceText && (
-        <div className="text-sm text-gray-600 mb-2">
-          {cadenceText}
+      <div style={{ marginLeft: 8 }}>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "start",
+            gap: 8,
+            fontSize: "0.75rem",
+          }}
+        >
+          <div style={{ flex: 1, lineHeight: 1, textAlign: "left", marginTop: -4 }}>
+            {/* コード名ボタンをPopupOnClickでラップし、構成音をポップアップ表示 */}
+            <PopupOnClick
+              trigger={
+                <button style={{ cursor: "pointer" }} onClick={() => playChord(chord)}>
+                  {chordSegment.chord}
+                  {chordSegment.on && ` on ${chordSegment.on}`}
+                </button>
+              }
+              popup={(() => {
+                const chordPitches = Array.from(
+                  new Set(getChordVoicing(chord, scale).map((pos) => pos.pitch.replace(/\d+$/, "")))
+                );
+                return (
+                  <span>
+                    {chordPitches.map((pitch, i) => (
+                      <React.Fragment key={pitch}>
+                        <button style={{ cursor: "pointer" }} onClick={() => playNoteSound(pitch + "3", 1.5)}>
+                          {pitch}
+                        </button>
+                        {i < chordPitches.length - 1 && ", "}
+                      </React.Fragment>
+                    ))}
+                  </span>
+                );
+              })()}
+              popupStyle={{
+                left: 0,
+                transform: "none",
+              }}
+            />
+            {functionalHarmony > 0 && (
+              <PopupOnClick
+                trigger={
+                  <span
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "end",
+                      gap: 4,
+                      color: "#888888",
+                      cursor: "pointer",
+                      position: "relative",
+                    }}
+                  >
+                    <span>: {getFunctionalHarmonyText(functionalHarmony)}</span>
+                    <Image
+                      src={`/functional_harmony/${functionalHarmony}.drawio.svg`}
+                      alt={`${functionalHarmony}`}
+                      width={16}
+                      height={16}
+                      style={{ filter: "invert(50%) sepia(100%) saturate(200%)" }}
+                    />
+                  </span>
+                }
+                popup={
+                  <span>
+                    {chord.match(/7|M7|m7|dim7|aug7|sus7|add7/)
+                      ? romanNumeral7thHarmonyInfo(functionalHarmony).desc
+                      : romanNumeralHarmonyInfo(functionalHarmony).desc}
+                  </span>
+                }
+                popupStyle={{
+                  left: 0,
+                  transform: "none",
+                }}
+              />
+            )}
+          </div>
+          <p style={{ flex: 1, lineHeight: 1, textAlign: "right" }}>
+            {isScaleChord ? <span style={{ color: "#888888" }}>Diatonic Chord</span> : "Non-Diatonic Chord"}
+          </p>
         </div>
-      )}
-
-      {scaleText && (
-        <div className="text-sm text-gray-600 mb-2">
-          {scaleText}
+        <div
+          style={{
+            marginTop: 4,
+            display: "flex",
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <div
+            className="hidden-scrollbar"
+            style={{
+              overflowX: "auto",
+              width: "100%",
+              whiteSpace: "nowrap",
+            }}
+            onScroll={(e) => onScroll((e.target as HTMLDivElement).scrollLeft)}
+            ref={(el) => {
+              if (el && el.scrollLeft !== scrollLeft) el.scrollLeft = scrollLeft;
+            }}
+          >
+            <div style={{ width: leftWidth, display: "inline-block" }}>
+              <Left note={getChordNote(chord)} scrollLeft={scrollLeft} onScroll={onScroll} />
+            </div>
+          </div>
         </div>
-      )}
-
-      {functionalHarmonyText && (
-        <div className="text-sm text-gray-600 mb-2">
-          {functionalHarmonyText}
+        <RemarkList remarks={chordSegment.remarks ?? []} />
+        <div style={{ marginTop: 8, display: "flex", flexDirection: "column", justifyContent: "center", gap: 8 }}>
+          {chordSegment.notes.map((note, index) => {
+            return (
+              <Note
+                key={index}
+                note={note}
+                noteId={index + 1}
+                nextNote={nextNote(index)}
+                noteCount={chordSegment.notes.length}
+                chord={chord}
+                scale={scaleWithModulation}
+                scrollLeft={scrollLeft}
+                onScroll={onScroll}
+              />
+            );
+          })}
         </div>
-      )}
-
-      <div className="flex flex-wrap justify-center gap-2">
-        {chordSegment.notes.map((note, index) => (
-          <Note
-            key={index}
-            note={note}
-            noteId={index + 1}
-            noteCount={chordSegment.notes.length}
-            chord={chord}
-            scale={scaleWithModulation}
-            nextNote={nextNote(index)}
-            scrollLeft={scrollLeft}
-            onScroll={onScroll}
-          />
-        ))}
       </div>
-
-      {chordSegment.remarks && chordSegment.remarks.length > 0 && (
-        <div className="mt-2">
-          <RemarkList remarks={chordSegment.remarks} />
-        </div>
-      )}
-    </div>
+    </section>
   );
 };
 

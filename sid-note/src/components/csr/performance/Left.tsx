@@ -69,26 +69,6 @@ const drawLines = (context: CanvasRenderingContext2D): void => {
   context.fill();
 };
 
-/**
- * 指板の線を描画します
- *
- * @param {CanvasRenderingContext2D} context - キャンバスの2Dコンテキスト
- * @param {NoteType} note - 描画するノート
- */
-const drawLine = (context: CanvasRenderingContext2D, note: NoteType): void => {
-  // string
-  note.lefts.forEach((left) => {
-    if (left.type === "press") {
-      context.strokeStyle = "#999999";
-      context.lineWidth = 3;
-      const y = 20 + (left.string - 1) * 20;
-      context.beginPath();
-      context.moveTo(10, y);
-      context.lineTo(2410, y);
-      context.stroke();
-    }
-  });
-};
 
 /**
  * ノートを描画します
