@@ -1,5 +1,5 @@
 import { LeftType, SectionType, TrackType } from "@/schemas/trackSchema";
-import { getInterval } from "@/utils/music/theory/core/intervals";
+import { getInterval } from "@/utils/chordUtil";
 
 /**
  * 左手のポジション情報にインターバル情報を追加します。
