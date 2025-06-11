@@ -4,7 +4,7 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "🖥️ Launch CLI (TUI) [F5 Default]",
+            "name": "Rust: Tauri版を起動",
             "cargo": {
                 "args": [
                     "build",
@@ -15,17 +15,7 @@
                     "kind": "bin"
                 }
             },
-            "args": ["--cli"],
-            "cwd": "${workspaceFolder}",
-            "env": {
-                "RUST_LOG": "debug"
-            }
-        },
-        {
-            "type": "node-terminal",
-            "request": "launch",
-            "name": "🚀 Launch Tauri Dev",
-            "command": "cargo tauri dev",
+            "args": [],
             "cwd": "${workspaceFolder}",
             "env": {
                 "RUST_LOG": "debug"
@@ -34,7 +24,27 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "🎮 Launch Demo Mode",
+            "name": "Rust: CUI版を起動",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=rust-tool-template"
+                ],
+                "filter": {
+                    "name": "rust-tool-template",
+                    "kind": "bin"
+                }
+            },
+            "args": ["--cui"],
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "RUST_LOG": "debug"
+            }
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Rust: デモモードを起動",
             "cargo": {
                 "args": [
                     "build",
@@ -51,26 +61,5 @@
                 "RUST_LOG": "debug"
             }
         },
-        {
-            "type": "lldb",
-            "request": "launch",
-            "name": "🌐 Launch GUI (Direct)",
-            "cargo": {
-                "args": [
-                    "build",
-                    "--bin=rust-tool-template",
-                    "--features=gui"
-                ],
-                "filter": {
-                    "name": "rust-tool-template",
-                    "kind": "bin"
-                }
-            },
-            "args": [],
-            "cwd": "${workspaceFolder}",
-            "env": {
-                "RUST_LOG": "debug"
-            }
-        }
     ]
 }

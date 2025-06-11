@@ -24,16 +24,16 @@ class TestArgumentParsing:
         """デフォルト引数で解析される"""
         with patch.object(sys, "argv", ["main.py"]):
             args = parse_arguments()
-            assert args.mode == "gui"
+            assert args.cui is False
             assert args.language is None
             assert args.debug is False
             assert args.fullscreen is False
 
-    def test_モード指定(self):
-        """モードを指定できる"""
-        with patch.object(sys, "argv", ["main.py", "--mode", "cui"]):
+    def test_CUIモード指定(self):
+        """CUIモードを指定できる"""
+        with patch.object(sys, "argv", ["main.py", "--cui"]):
             args = parse_arguments()
-            assert args.mode == "cui"
+            assert args.cui is True
 
     def test_言語指定(self):
         """言語を指定できる"""
@@ -91,7 +91,7 @@ class TestConfigLoading:
         """デフォルト設定が読み込まれる"""
         # モックの引数オブジェクト
         args = Mock()
-        args.mode = None
+        args.cui = False
         args.language = None
         args.debug = False
         args.fullscreen = False
@@ -113,7 +113,7 @@ class TestConfigLoading:
     def test_コマンドライン引数による上書き(self):
         """コマンドライン引数で設定が上書きされる"""
         args = Mock()
-        args.mode = "cui"
+        args.cui = True
         args.language = "ja"
         args.debug = True
         args.fullscreen = True
@@ -139,7 +139,7 @@ class TestConfigLoading:
     def test_保存済み設定読み込み(self):
         """保存済みの設定が読み込まれる"""
         args = Mock()
-        args.mode = None
+        args.cui = False
         args.language = None
         args.debug = False
         args.fullscreen = False
@@ -165,7 +165,7 @@ class TestConfigLoading:
     def test_FPS範囲制限(self):
         """FPS の範囲が制限される"""
         args = Mock()
-        args.mode = None
+        args.cui = False
         args.language = None
         args.debug = False
         args.fullscreen = False
@@ -186,7 +186,7 @@ class TestConfigLoading:
     def test_ウィンドウサイズ最小値制限(self):
         """ウィンドウサイズの最小値が制限される"""
         args = Mock()
-        args.mode = None
+        args.cui = False
         args.language = None
         args.debug = False
         args.fullscreen = False

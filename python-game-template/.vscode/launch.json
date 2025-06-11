@@ -23,7 +23,7 @@
             "env": {
                 "PYTHONPATH": "${workspaceFolder}/src"
             },
-            "args": ["--mode", "cui"]
+            "args": ["--cui"]
         },
         {
             "name": "Python: デバッグモード（英語）",
