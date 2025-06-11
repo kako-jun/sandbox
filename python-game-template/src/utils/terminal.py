@@ -213,10 +213,16 @@ class Screen:
     def __init__(self, terminal: TerminalController):
         """初期化"""
         self.terminal = terminal
-        self.height, self.width = terminal.get_terminal_size()
+        terminal_height, self.width = terminal.get_terminal_size()
+        # 最下行を避けてスクロールを防ぐため、高さを1減らす
+        self.height = terminal_height - 1
         self.buffer: List[List[str]] = [
             [" " for _ in range(self.width)] for _ in range(self.height)
         ]
+        self.previous_buffer: List[List[str]] = [
+            [" " for _ in range(self.width)] for _ in range(self.height)
+        ]
+        self.needs_full_refresh = True
 
     def clear(self) -> None:
         """バッファをクリア"""
@@ -261,11 +267,20 @@ class Screen:
 
     def refresh(self) -> None:
         """画面を更新"""
-        self.terminal.clear_screen()
+        # 各行を正確な位置に描画（最下行は避けてスクロールを防ぐ）
+        for row_idx, row_data in enumerate(self.buffer):
+            # 最下行（ターミナルの最後の行）は描画を避ける
+            if row_idx >= self.height - 1:
+                break
+                
+            # カーソルを該当行の先頭に移動
+            self.terminal.move_cursor(row_idx + 1, 1)
+            # 行全体を出力（end=""で改行を避ける）
+            line = "".join(row_data)
+            print(line, end="", flush=True)
+            
+        # 最後にカーソルを安全な位置（左上）に移動
         self.terminal.move_cursor(1, 1)
-
-        for row_data in self.buffer:
-            print("".join(row_data))
 
     def get_center_position(self) -> Tuple[int, int]:
         """画面中央の位置を取得"""
