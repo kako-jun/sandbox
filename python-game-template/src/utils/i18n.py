@@ -6,7 +6,7 @@
 
 import json
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict, Optional, Union
 
 from game.models import Language
 
@@ -42,13 +42,22 @@ class I18nManager:
             else:
                 self.translations[language.value] = {}
 
-    def set_language(self, language: Language) -> None:
+    def set_language(self, language: Union[Language, str]) -> None:
         """言語を設定
 
         Args:
             language: 設定する言語
         """
-        self.current_language = language
+        if isinstance(language, str):
+            # 文字列の場合、対応するLanguage enumを探す
+            for lang_enum in Language:
+                if lang_enum.value == language:
+                    self.current_language = lang_enum
+                    return
+            # 見つからない場合はデフォルト言語にフォールバック
+            self.current_language = self.default_language
+        else:
+            self.current_language = language
 
     def get_language(self) -> Language:
         """現在の言語を取得
@@ -69,16 +78,14 @@ class I18nManager:
             翻訳された文字列
         """
         # 現在の言語での翻訳を試行
-        current_lang_translations = self.translations.get(
-            self.current_language.value, {}
-        )
+        current_lang = self.current_language if isinstance(self.current_language, str) else self.current_language.value
+        current_lang_translations = self.translations.get(current_lang, {})
         text = current_lang_translations.get(key)
 
         # 見つからない場合はデフォルト言語を試行
         if text is None:
-            default_lang_translations = self.translations.get(
-                self.default_language.value, {}
-            )
+            default_lang = self.default_language if isinstance(self.default_language, str) else self.default_language.value
+            default_lang_translations = self.translations.get(default_lang, {})
             text = default_lang_translations.get(key)
 
         # それでも見つからない場合はキー自体を返す
@@ -147,7 +154,7 @@ def t(key: str, **kwargs) -> str:
     return get_i18n().translate(key, **kwargs)
 
 
-def set_language(language: Language) -> None:
+def set_language(language: Union[Language, str]) -> None:
     """言語を設定（ショートカット関数）
 
     Args:
