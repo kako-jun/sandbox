@@ -2,6 +2,7 @@
 /target
 Cargo.lock
 **/*.rs.bk
+.rustc_info.json
 
 # OS generated files
 .DS_Store

@@ -32,7 +32,7 @@ def parse_arguments() -> argparse.Namespace:
     )
 
     parser.add_argument(
-        "--mode", choices=["gui", "cui"], default="gui", help="Game mode (default: gui)"
+        "--cui", action="store_true", help="Use CUI mode (default: GUI mode)"
     )
 
     parser.add_argument(
@@ -89,8 +89,8 @@ def load_config(args: argparse.Namespace) -> GameConfig:
         config = GameConfig()
 
     # コマンドライン引数で上書き
-    if args.mode:
-        config.mode = GameMode(args.mode)
+    if args.cui:
+        config.mode = GameMode.CUI
 
     if args.language:
         config.language = Language(args.language)

@@ -2,8 +2,8 @@
   "build": {
     "beforeDevCommand": "",
     "beforeBuildCommand": "",
-    "devPath": "../dist",
-    "distDir": "../dist",
+    "devPath": "dist",
+    "distDir": "dist",
     "withGlobalTauri": false
   },
   "package": {
@@ -17,6 +17,9 @@
         "all": false,
         "open": true
       }
+    },
+    "bundle": {
+      "identifier": "com.kako-jun.rust-tool-template"
     },
     "security": {
       "csp": null

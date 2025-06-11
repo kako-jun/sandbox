@@ -50,21 +50,21 @@ chrono = { version = "0.4", features = ["serde"] }
 [dependencies.tauri]
 version = "1.5"
 features = [
-  "api-all",
-  "updater",
-  "window-all",
   "shell-open"
 ]
 optional = true
 
 [features]
 default = ["gui"]
-gui = ["tauri"]
+gui = ["tauri", "tauri-build"]
 cli-only = []
 
 [dev-dependencies]
 tempfile = "3.8"
 pretty_assertions = "1.4"
+
+[build-dependencies]
+tauri-build = { version = "1.5", features = [], optional = true }
 
 [profile.release]
 strip = true
@@ -72,5 +72,3 @@ lto = true
 codegen-units = 1
 panic = "abort"
 
-[workspace]
-members = ["src-tauri"]
