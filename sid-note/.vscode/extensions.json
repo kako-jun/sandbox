@@ -1,0 +1,21 @@
+{
+  "recommendations": [
+    "dbaeumer.vscode-eslint",
+    "ms-vscode.vscode-typescript-next",
+    "redhat.vscode-yaml",
+    "orta.vscode-jest",
+    "usernamehw.errorlens",
+    "christian-kohler.path-intellisense",
+    "streetsidesoftware.code-spell-checker"
+  ],
+  "unwantedRecommendations": [
+    "bradlc.vscode-tailwindcss",
+    "esbenp.prettier-vscode",
+    "hookyqr.beautify",
+    "ms-vscode.vscode-json",
+    "VisualStudioExptTeam.vscodeintellicode",
+    "formulahendry.auto-rename-tag",
+    "oderwat.indent-rainbow",
+    "yzhang.markdown-all-in-one"
+  ]
+}

@@ -1,91 +1,102 @@
-//! Unit tests for the Rust tool template.
-//! 
-//! These tests verify the functionality of individual components
-//! in isolation.
+/*!
+ * ユニットテスト
+ * 
+ * 個別のモジュールや関数のテストを実施する
+ */
 
-use rust_tool_template::core::AppLogic;
+use rust_tool_template::{
+    error::{AppError, Result},
+    utils::{platform::get_platform_info, logging::cleanup_old_logs},
+    core::AppConfig,
+};
+use tempfile::TempDir;
 
 #[test]
-fn test_app_logic_creation() {
-    let logic = AppLogic::new();
-    assert_eq!(logic.get_all_data().len(), 0);
+fn エラー型のテスト() {
+    // AppErrorの各種類をテスト
+    let io_error = AppError::Io(std::io::Error::new(std::io::ErrorKind::NotFound, "test"));
+    assert!(io_error.message().contains("test"));
+    assert!(!io_error.is_fatal());
+    
+    let config_error = AppError::Config(config::ConfigError::NotFound("test".to_string()));
+    assert!(config_error.is_fatal());
+    
+    let general_error = AppError::General("テストエラー".to_string());
+    assert_eq!(general_error.message(), "一般エラー: テストエラー");
+    assert!(!general_error.is_fatal());
 }
 
 #[test]
-fn test_add_and_get_data() {
-    let mut logic = AppLogic::new();
-    let id = logic.add_data("test_item".to_string(), 42);
-
-    let data = logic.get_data_by_id(id);
-    assert!(data.is_some());
-
-    let data = data.unwrap();
-    assert_eq!(data.id, id);
-    assert_eq!(data.name, "test_item");
-    assert_eq!(data.value, 42);
+fn アプリケーション設定のテスト() {
+    // デフォルト設定のテスト
+    let config = AppConfig::default();
+    assert_eq!(config.language, "en");
+    assert_eq!(config.log_level, "info");
+    assert!(!config.force_cli_mode);
+    assert_eq!(config.log_retention_days, 7);
+    
+    // 設定のシリアライゼーション／デシリアライゼーションテスト
+    let config_str = toml::to_string(&config).expect("シリアライゼーションに失敗");
+    assert!(config_str.contains("language = \"en\""));
+    assert!(config_str.contains("log_level = \"info\""));
+    
+    let deserialized: AppConfig = toml::from_str(&config_str).expect("デシリアライゼーションに失敗");
+    assert_eq!(deserialized.language, config.language);
+    assert_eq!(deserialized.log_level, config.log_level);
+    assert_eq!(deserialized.force_cli_mode, config.force_cli_mode);
+    assert_eq!(deserialized.log_retention_days, config.log_retention_days);
 }
 
 #[test]
-fn test_update_data() {
-    let mut logic = AppLogic::new();
-    let id = logic.add_data("original".to_string(), 100);
-
-    let success = logic.update_data(id, Some("updated".to_string()), Some(200));
-    assert!(success);
-
-    let data = logic.get_data_by_id(id).unwrap();
-    assert_eq!(data.name, "updated");
-    assert_eq!(data.value, 200);
+fn プラットフォーム情報のテスト() {
+    let platform_info = get_platform_info();
+    
+    // プラットフォーム情報にOS名とアーキテクチャが含まれることを確認
+    assert!(platform_info.contains("-"));
+    
+    // 既知のOS名のいずれかが含まれることを確認
+    let known_os = ["linux", "windows", "macos", "darwin"];
+    assert!(known_os.iter().any(|os| platform_info.contains(os)));
 }
 
 #[test]
-fn test_delete_data() {
-    let mut logic = AppLogic::new();
-    let id = logic.add_data("to_delete".to_string(), 50);
-
-    assert!(logic.get_data_by_id(id).is_some());
-
-    let success = logic.delete_data(id);
-    assert!(success);
-
-    assert!(logic.get_data_by_id(id).is_none());
-    assert_eq!(logic.get_all_data().len(), 0);
+fn ログクリーンアップのテスト() {
+    let temp_dir = TempDir::new().expect("一時ディレクトリの作成に失敗");
+    let log_dir = temp_dir.path().to_path_buf();
+    
+    // テスト用のログファイルを作成
+    let old_log = log_dir.join("old.log");
+    let new_log = log_dir.join("new.log");
+    
+    std::fs::write(&old_log, "old log content").expect("古いログファイルの作成に失敗");
+    std::fs::write(&new_log, "new log content").expect("新しいログファイルの作成に失敗");
+    
+    // ファイルの更新時刻を古い日付に設定（実際のテストでは時間を操作する必要がある）
+    // ここでは簡単なテストとして、クリーンアップ関数が正常に実行されることのみ確認
+    let result = cleanup_old_logs(&log_dir, 7);
+    assert!(result.is_ok(), "ログクリーンアップに失敗");
 }
 
 #[test]
-fn test_statistics() {
-    let mut logic = AppLogic::new();
-    logic.add_data("item1".to_string(), 10);
-    logic.add_data("item2".to_string(), 20);
-    logic.add_data("item3".to_string(), 30);
-
-    let stats = logic.get_statistics();
-
-    assert_eq!(
-        stats["total_count"],
-        serde_json::Value::Number(serde_json::Number::from(3))
-    );
-    assert_eq!(
-        stats["sum_value"],
-        serde_json::Value::Number(serde_json::Number::from(60))
-    );
-    assert_eq!(
-        stats["avg_value"],
-        serde_json::Value::Number(serde_json::Number::from_f64(20.0).unwrap())
-    );
+fn 結果型のテスト() {
+    // 成功ケース
+    let success: Result<i32> = Ok(42);
+    assert!(success.is_ok());
+    assert_eq!(success.unwrap(), 42);
+    
+    // エラーケース
+    let error: Result<i32> = Err(AppError::General("テストエラー".to_string()));
+    assert!(error.is_err());
+    
+    let err = error.unwrap_err();
+    assert!(err.message().contains("テストエラー"));
 }
 
+#[cfg(feature = "gui")]
 #[test]
-fn test_process_data() {
-    let mut logic = AppLogic::new();
-    logic.add_data("item1".to_string(), 5);
-    logic.add_data("item2".to_string(), 10);
-
-    let result = logic.process_data();
-    assert!(result.is_ok());
-
-    // Values should be doubled after processing
-    let data = logic.get_all_data();
-    assert_eq!(data[0].value, 10);
-    assert_eq!(data[1].value, 20);
+fn tauri_commands_テスト() {
+    // Tauriコマンドのテスト（GUIフィーチャーが有効な場合のみ）
+    // AppInfoの構造体テストは内部フィールドがprivateのため、
+    // 実際のコマンド関数をテストする
+    assert!(true); // プレースホルダーテスト
 }

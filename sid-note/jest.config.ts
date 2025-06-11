@@ -1,26 +1,36 @@
 import type { Config } from "jest";
+import nextJest from "next/jest.js";
+
+const createJestConfig = nextJest({
+  dir: "./",
+});
 
 const config: Config = {
-  preset: "ts-jest",
-  testEnvironment: "node",
-  moduleFileExtensions: ["ts", "tsx", "js", "jsx", "json", "node"],
-  testMatch: ["**/*.test.ts", "**/*.test.tsx"],
+  testEnvironment: "jsdom",
+  setupFilesAfterEnv: ["<rootDir>/jest.setup.ts"],
   moduleNameMapper: {
     "^@/(.*)$": "<rootDir>/src/$1",
   },
-  moduleDirectories: ["node_modules", "src"],
-  globals: {
-    "ts-jest": {
-      tsconfig: "tsconfig.jest.json",
-      isolatedModules: true,
-    },
-  },
-  transform: {
-    "^.+\\.(ts|tsx)$": "ts-jest",
-  },
-  collectCoverage: true,
+  testMatch: ["**/__tests__/**/*.(ts|tsx|js)", "**/*.(test|spec).(ts|tsx|js)"],
+  collectCoverageFrom: [
+    "src/**/*.{ts,tsx}",
+    "!src/**/*.d.ts",
+    "!src/**/*.stories.{ts,tsx}",
+    "!src/app/layout.tsx",
+    "!src/app/page.tsx",
+  ],
   coverageDirectory: "coverage",
-  coverageReporters: ["text", "lcov", "clover"],
+  coverageReporters: ["text", "lcov", "html"],
+  testPathIgnorePatterns: [
+    "<rootDir>/node_modules/",
+    "<rootDir>/sid-note_old/",
+    "<rootDir>/.next/",
+  ],
+  coveragePathIgnorePatterns: [
+    "<rootDir>/node_modules/",
+    "<rootDir>/sid-note_old/",
+    "<rootDir>/.next/",
+  ],
   coverageThreshold: {
     global: {
       branches: 80,
@@ -29,8 +39,8 @@ const config: Config = {
       statements: 80,
     },
   },
-  verbose: true,
   testTimeout: 10000,
+  verbose: true,
 };
 
-export default config;
+export default createJestConfig(config);

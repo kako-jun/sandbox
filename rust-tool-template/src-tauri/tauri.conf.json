@@ -1,27 +1,70 @@
 {
+  "build": {
+    "beforeDevCommand": "",
+    "beforeBuildCommand": "",
+    "devPath": "../dist",
+    "distDir": "../dist",
+    "withGlobalTauri": false
+  },
   "package": {
     "productName": "rust-tool-template",
-    "version": "0.1.0",
-    "description": "A template for Rust tools with CLI and Tauri support.",
-    "author": "Your Name",
-    "license": "MIT",
-    "tauri": {
-      "bundle": {
-        "identifier": "com.example.rusttooltemplate",
-        "icon": [
-          "icons/icon.png"
-        ],
-        "resources": [],
-        "category": "Utility"
-      },
-      "updater": {
-        "active": false
-      },
-      "tauri": {
-        "allowlist": {
-          "all": true
-        }
+    "version": "0.1.0"
+  },
+  "tauri": {
+    "allowlist": {
+      "all": false,
+      "shell": {
+        "all": false,
+        "open": true
       }
-    }
+    },
+    "bundle": {
+      "active": true,
+      "category": "DeveloperTool",
+      "copyright": "",
+      "deb": {
+        "depends": []
+      },
+      "externalBin": [],
+      "icon": [
+        "icons/32x32.png",
+        "icons/128x128.png",
+        "icons/128x128@2x.png",
+        "icons/icon.icns",
+        "icons/icon.ico"
+      ],
+      "identifier": "com.kako-jun.rust-tool-template",
+      "longDescription": "",
+      "macOS": {
+        "entitlements": null,
+        "exceptionDomain": "",
+        "frameworks": [],
+        "providerShortName": null,
+        "signingIdentity": null
+      },
+      "resources": [],
+      "shortDescription": "",
+      "targets": "all",
+      "windows": {
+        "certificateThumbprint": null,
+        "digestAlgorithm": "sha256",
+        "timestampUrl": ""
+      }
+    },
+    "security": {
+      "csp": null
+    },
+    "updater": {
+      "active": false
+    },
+    "windows": [
+      {
+        "fullscreen": false,
+        "resizable": true,
+        "title": "rust-tool-template",
+        "width": 800,
+        "height": 600
+      }
+    ]
   }
 }

@@ -2,42 +2,34 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Rust CLI",
             "type": "lldb",
             "request": "launch",
-            "program": "${workspaceFolder}/target/debug/rust-tool-template",
-            "args": [],
+            "name": "Launch CLI",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=rust-tool-template"
+                ],
+                "filter": {
+                    "name": "rust-tool-template",
+                    "kind": "bin"
+                }
+            },
+            "args": ["--cli"],
             "cwd": "${workspaceFolder}",
-            "sourceLanguages": ["rust"],
-            "preLaunchTask": "cargo build --features web",
             "env": {
-                "RUST_LOG": "debug",
-                "RUST_BACKTRACE": "1"
-            }
-        },
-        {
-            "name": "Tauri Dev",
-            "type": "lldb",
-            "request": "launch",
-            "program": "${workspaceFolder}/src-tauri/target/debug/rust-tool-template-app",
-            "args": [],
-            "cwd": "${workspaceFolder}/src-tauri",
-            "sourceLanguages": ["rust"],
-            "preLaunchTask": "cargo build -p rust-tool-template-app",
-            "env": {
-                "RUST_LOG": "debug",
-                "RUST_BACKTRACE": "1"
+                "RUST_LOG": "debug"
             }
         },
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug Rust Tool Template",
+            "name": "Launch GUI (Tauri)",
             "cargo": {
                 "args": [
                     "build",
                     "--bin=rust-tool-template",
-                    "--package=rust-tool-template"
+                    "--features=gui"
                 ],
                 "filter": {
                     "name": "rust-tool-template",
@@ -47,7 +39,18 @@
             "args": [],
             "cwd": "${workspaceFolder}",
             "env": {
-                "RUST_BACKTRACE": "1"
+                "RUST_LOG": "debug"
+            }
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Launch Tauri Dev",
+            "program": "cargo",
+            "args": ["tauri", "dev"],
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "RUST_LOG": "debug"
             }
         }
     ]

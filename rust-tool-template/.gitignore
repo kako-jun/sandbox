@@ -1,39 +1,37 @@
-# ビルド成果物
-/target/
-**/*.rs.bk
+# Rust
+/target
 Cargo.lock
+**/*.rs.bk
 
-# IDE設定
-.idea/
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE
 .vscode/
+.idea/
 *.swp
 *.swo
 *~
 
-# ログファイル
-*.log
+# Logs
 logs/
+*.log
 
-# 設定ファイル
-config.json
-.env
-.env.local
+# Config
+config/
+settings.toml
 
-# 一時ファイル
-*.tmp
-*.temp
-.DS_Store
-Thumbs.db
+# Tauri
+src-tauri/target
 
-# テストカバレッジ
+# Build artifacts
+dist/
+
+# Test artifacts
 coverage/
-*.profraw
-
-# 依存関係
-node_modules/
-vendor/
-
-# その他
-*.bak
-*.backup
-*.orig 

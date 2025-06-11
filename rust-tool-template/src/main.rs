@@ -1,84 +1,118 @@
-//! Rust Tool Template
-//! 
-//! A command-line tool template with CLI, TUI, and API server capabilities.
-//! This is the main entry point for the application.
+/*!
+ * メインエントリーポイント
+ * 
+ * CLIオプションに基づいてCLIまたはGUIモードを起動する
+ */
 
-use rust_tool_template::api;
-use tracing::{info, warn, error};
-use rust_tool_template::config::Config;
-use rust_tool_template::core::App;
-use rust_tool_template::logging::Logger;
-use std::path::PathBuf;
+use clap::{Arg, ArgAction, Command};
+use rust_tool_template::{
+    cli::CliApp,
+    core::AppCore,
+    error::Result,
+    utils::{cleanup_old_logs, get_log_dir},
+};
 
-/// アプリケーションのエントリーポイント
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // ロガーを初期化
-    let log_file = PathBuf::from("app.log");
-    Logger::init(log_file, log::LevelFilter::Info)?;
+fn main() -> Result<()> {
+    // CLIオプションを解析
+    let matches = Command::new(env!("CARGO_PKG_NAME"))
+        .version(env!("CARGO_PKG_VERSION"))
+        .about(env!("CARGO_PKG_DESCRIPTION"))
+        .author("kako-jun")
+        .arg(
+            Arg::new("cli")
+                .long("cli")
+                .short('c')
+                .help("Force CLI mode instead of GUI")
+                .action(ArgAction::SetTrue),
+        )
+        .arg(
+            Arg::new("language")
+                .long("lang")
+                .short('l')
+                .help("Set language (en, ja)")
+                .value_name("LANG"),
+        )
+        .arg(
+            Arg::new("log-level")
+                .long("log-level")
+                .help("Set log level (debug, info, warn, error)")
+                .value_name("LEVEL"),
+        )
+        .arg(
+            Arg::new("demo")
+                .long("demo")
+                .help("Run demo mode (shows functionality without TUI)")
+                .action(ArgAction::SetTrue),
+        )
+        .get_matches();
 
-    // 設定を読み込む
-    let config = Config::default();
+    // アプリケーションコアを初期化
+    let mut app_core = AppCore::new()?;
 
-    // アプリケーションを作成
-    let app = App::new(config);
-
-    // アプリケーションを初期化
-    app.init()?;
-
-    // コマンドラインインターフェースを実行
-    if let Err(e) = rust_tool_template::cli::run().await {
-        eprintln!("エラー: {}", e);
-        std::process::exit(1);
+    // コマンドライン引数から設定を更新
+    if let Some(language) = matches.get_one::<String>("language") {
+        app_core.set_language(language.clone())?;
     }
 
-    // アプリケーションを実行
-    app.run()?;
+    if let Some(log_level) = matches.get_one::<String>("log-level") {
+        app_core.set_log_level(log_level.clone())?;
+    }
 
-    // アプリケーションを終了
-    app.shutdown()?;
+    // 古いログファイルをクリーンアップ
+    let log_dir = get_log_dir()?;
+    if let Err(e) = cleanup_old_logs(&log_dir, app_core.config().log_retention_days) {
+        tracing::warn!("ログクリーンアップエラー: {}", e);
+    }
 
+    // デモモードかどうかをチェック
+    if matches.get_flag("demo") {
+        println!("=== Rust Tool Template Demo ===");
+        println!();
+        println!("アプリケーション情報:");
+        println!("{}", app_core.get_app_info());
+        println!();
+        println!("メインコンテンツ: {}", app_core.get_main_content());
+        println!();
+        println!("設定:");
+        let config = app_core.config();
+        println!("  言語: {}", config.language);
+        println!("  ログレベル: {}", config.log_level);
+        println!("  CLIモード強制: {}", config.force_cli_mode);
+        println!("  ログ保持日数: {}", config.log_retention_days);
+        println!();
+        println!("✅ アプリケーションは正常に動作しています！");
+        println!();
+        println!("次のコマンドで実際のインターフェースを試すことができます:");
+        println!("  cargo run -- --cli    # TUIインターフェース");
+        println!("  cargo tauri dev       # GUIインターフェース");
+        return Ok(());
+    }
+
+    // CLIモードかGUIモードかを決定
+    let force_cli = matches.get_flag("cli") || app_core.config().force_cli_mode;
+
+    if force_cli || !cfg!(feature = "gui") {
+        // CLIモードで起動
+        tracing::info!("CLIモードで起動します");
+        let mut cli_app = CliApp::new(app_core)?;
+        cli_app.run()?;
+    } else {
+        // GUIモード（Tauri）で起動
+        #[cfg(feature = "gui")]
+        {
+            tracing::info!("GUIモードで起動します（Tauriを使用してください）");
+            println!("GUI mode: Please use 'cargo tauri dev' or 'cargo tauri build' to run in GUI mode");
+            return Ok(());
+        }
+        
+        #[cfg(not(feature = "gui"))]
+        {
+            tracing::warn!("GUIフィーチャーが無効です。CLIモードで起動します");
+            let mut cli_app = CliApp::new(app_core)?;
+            cli_app.run()?;
+        }
+    }
+
+    tracing::info!("アプリケーションが正常に終了しました");
     Ok(())
-}
-
-#[allow(dead_code)]
-async fn start_embedded_api_server() -> Option<tokio::task::JoinHandle<()>> {
-    // Try to start API server on available port
-    let ports = [3030, 3031, 3032, 3033, 3034];
-
-    for &port in &ports {
-        match try_start_api_server(port).await {
-            Ok(handle) => {
-                info!("Embedded API server started on port {}", port);
-                return Some(handle);
-            }
-            Err(e) => {
-                warn!("Failed to start API server on port {}: {}", port, e);
-            }
-        }
-    }
-
-    warn!("Could not start embedded API server on any available port");
-    None
-}
-
-#[allow(dead_code)]
-async fn try_start_api_server(
-    port: u16,
-) -> Result<tokio::task::JoinHandle<()>, Box<dyn std::error::Error + Send + Sync>> {
-    // Check if port is available
-    let listener = tokio::net::TcpListener::bind(format!("127.0.0.1:{}", port)).await?;
-    drop(listener); // Release the port for the actual server
-
-    // Start the API server in a background task
-    let handle = tokio::spawn(async move {
-        if let Err(e) = api::start_server(port).await {
-            error!("API server error on port {}: {}", port, e);
-        }
-    });
-
-    // Give the server a moment to start
-    tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
-
-    Ok(handle)
 }
