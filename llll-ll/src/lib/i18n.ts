@@ -1,0 +1,62 @@
+import { Language } from '@/types';
+
+export const translations = {
+  en: {
+    welcome: 'Welcome to llll-ll',
+    intro: 'Hi! I\'m kako-jun, a game and app developer based in Kanazawa. I create digital experiences that blend nostalgia with modern technology.',
+    aboutTitle: 'About Me',
+    projectsTitle: 'My Projects',
+    sortNewest: 'Newest First',
+    sortOldest: 'Oldest First',
+    searchPlaceholder: 'Search projects...',
+    filterAll: 'All',
+    filterFree: 'Free',
+    filterPaid: 'Paid',
+    viewDemo: 'View Demo',
+    viewCode: 'View Code',
+    viewBlog: 'Read Blog',
+    support: 'Support',
+    madeWith: 'Made with',
+    loading: 'Loading...',
+  },
+  zh: {
+    welcome: '欢迎来到 llll-ll',
+    intro: '你好！我是kako-jun，居住在金泽的游戏和应用程序开发者。我创造融合怀旧与现代技术的数字体验。',
+    aboutTitle: '关于我',
+    projectsTitle: '我的项目',
+    sortNewest: '最新优先',
+    sortOldest: '最旧优先',
+    searchPlaceholder: '搜索项目...',
+    filterAll: '全部',
+    filterFree: '免费',
+    filterPaid: '付费',
+    viewDemo: '查看演示',
+    viewCode: '查看代码',
+    viewBlog: '阅读博客',
+    support: '支持',
+    madeWith: '制作工具',
+    loading: '加载中...',
+  },
+  ja: {
+    welcome: 'llll-ll へようこそ',
+    intro: 'はじめまして！金沢を拠点とするゲーム・アプリ開発者のkako-junです。ノスタルジーと現代技術を融合したデジタル体験を創造しています。',
+    aboutTitle: '自己紹介',
+    projectsTitle: '制作物',
+    sortNewest: '新しい順',
+    sortOldest: '古い順',
+    searchPlaceholder: 'プロジェクトを検索...',
+    filterAll: 'すべて',
+    filterFree: '無料',
+    filterPaid: '有料',
+    viewDemo: 'デモを見る',
+    viewCode: 'コードを見る',
+    viewBlog: 'ブログを読む',
+    support: 'サポート',
+    madeWith: '使用技術',
+    loading: '読み込み中...',
+  },
+};
+
+export function useTranslation(language: Language) {
+  return translations[language];
+}
