@@ -31,9 +31,9 @@ class TestArgumentParsing:
 
     def test_モード指定(self):
         """モードを指定できる"""
-        with patch.object(sys, "argv", ["main.py", "--mode", "cli"]):
+        with patch.object(sys, "argv", ["main.py", "--mode", "cui"]):
             args = parse_arguments()
-            assert args.mode == "cli"
+            assert args.mode == "cui"
 
     def test_言語指定(self):
         """言語を指定できる"""
@@ -113,7 +113,7 @@ class TestConfigLoading:
     def test_コマンドライン引数による上書き(self):
         """コマンドライン引数で設定が上書きされる"""
         args = Mock()
-        args.mode = "cli"
+        args.mode = "cui"
         args.language = "ja"
         args.debug = True
         args.fullscreen = True
@@ -128,7 +128,7 @@ class TestConfigLoading:
 
             config = load_config(args)
 
-            assert config.mode == GameMode.CLI
+            assert config.mode == GameMode.CUI
             assert config.language == Language.JAPANESE
             assert config.debug is True
             assert config.fullscreen is True
@@ -148,7 +148,7 @@ class TestConfigLoading:
         args.height = None
 
         # 保存済み設定をモック
-        saved_config = GameConfig(mode=GameMode.CLI, language=Language.JAPANESE, fps=45)
+        saved_config = GameConfig(mode=GameMode.CUI, language=Language.JAPANESE, fps=45)
 
         with patch("main.ConfigManager") as mock_config_manager:
             mock_manager = Mock()
@@ -158,7 +158,7 @@ class TestConfigLoading:
             config = load_config(args)
 
             # 保存済み設定が使用される
-            assert config.mode == GameMode.CLI
+            assert config.mode == GameMode.CUI
             assert config.language == Language.JAPANESE
             assert config.fps == 45
 

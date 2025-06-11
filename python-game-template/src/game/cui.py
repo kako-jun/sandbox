@@ -1,7 +1,7 @@
 """
 CUI版ゲーム実装
 
-クロスプラットフォーム対応のターミナル制御を使用したCLI版のゲーム
+クロスプラットフォーム対応のターミナル制御を使用したCUI版のゲーム
 """
 
 import sys
@@ -13,8 +13,8 @@ from game.core import GameEngine
 from game.models import GameConfig, GameMode, InputEvent
 
 
-class CLIRenderer:
-    """CLI版のレンダラー"""
+class CUIRenderer:
+    """CUI版のレンダラー"""
 
     def __init__(self, terminal: TerminalController):
         """初期化
@@ -68,8 +68,8 @@ class CLIRenderer:
         self.screen.refresh()
 
 
-class CLIInputHandler:
-    """CLI版の入力処理"""
+class CUIInputHandler:
+    """CUI版の入力処理"""
 
     def __init__(self, terminal: TerminalController):
         """初期化
@@ -121,8 +121,8 @@ class CLIInputHandler:
         return events
 
 
-class CLIApp:
-    """CLI版ゲームアプリケーション"""
+class CUIApp:
+    """CUI版ゲームアプリケーション"""
 
     def __init__(self, config: Optional[GameConfig] = None):
         """初期化
@@ -131,35 +131,24 @@ class CLIApp:
             config: ゲーム設定
         """
         if config is None:
-            config = GameConfig(mode=GameMode.CLI)
+            config = GameConfig(mode=GameMode.CUI)
 
         self.config = config
         self.engine = GameEngine(config)
         self.terminal = TerminalController()
-        self.renderer = CLIRenderer(self.terminal)
-        self.input_handler = CLIInputHandler(self.terminal)
+        self.renderer = CUIRenderer(self.terminal)
+        self.input_handler = CUIInputHandler(self.terminal)
 
         self.last_frame_time = time.time()
         self.last_game_info = ""  # 前回のゲーム情報をキャッシュ
 
     def run(self) -> None:
         """ゲームを実行"""
-        import signal
-        
-        def signal_handler(signum, frame):
-            self.engine.stop()
-            
-        # Ctrl+C のハンドラーを設定
-        signal.signal(signal.SIGINT, signal_handler)
         
         try:
             with self.terminal:  # コンテキストマネージャーで自動クリーンアップ
                 self.terminal.hide_cursor()
                 self.engine.start()
-                
-                # 開始メッセージを表示
-                print("\nCLI Game Started! Press Ctrl+C to quit or wait 10 seconds for auto-exit.", flush=True)
-                time.sleep(2)  # メッセージを見せる時間
                 
                 # 最初に一度だけ画面をクリア
                 self.terminal.clear_screen()
@@ -189,7 +178,7 @@ class CLIApp:
                     # 描画
                     self._render()
 
-                    # フレーム制御（CLI版では低めのFPSで十分）
+                    # フレーム制御（CUI版では低めのFPSで十分）
                     self._limit_fps(10)
 
         except KeyboardInterrupt:
@@ -198,9 +187,14 @@ class CLIApp:
         except Exception as e:
             print(f"\nGame error: {e}")
         finally:
-            self.terminal.show_cursor()
-            self.terminal.reset_color()
-            print("Game ended.", flush=True)
+            # ターミナル状態を完全にリセット
+            try:
+                self.terminal.reset_terminal()
+                print("Game ended.")
+            except Exception:
+                # 最低限のリセット処理
+                print("\033[0m\033[?25h\033[?1049l\033[?1000l\033[r\033[H\033[2J\033[3J")
+                print("Game ended.")
 
     def _render(self) -> None:
         """描画処理"""

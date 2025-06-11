@@ -4,7 +4,6 @@ PyGame版ゲーム実装
 PyGameを使用したGUI版のゲーム表示・操作
 """
 
-import sys
 from typing import Optional
 
 import pygame

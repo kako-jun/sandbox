@@ -29,9 +29,9 @@ class TestGameEngine:
 
     def test_設定付き初期化(self):
         """設定を指定してゲームエンジンを初期化できる"""
-        config = GameConfig(mode=GameMode.CLI, fps=30)
+        config = GameConfig(mode=GameMode.CUI, fps=30)
         engine = GameEngine(config)
-        assert engine.data.config.mode == GameMode.CLI
+        assert engine.data.config.mode == GameMode.CUI
         assert engine.data.config.fps == 30
 
     def test_ゲーム開始(self):

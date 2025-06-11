@@ -74,6 +74,20 @@ strict_equality = true
 module = "src.*"
 mypy_path = "src"
 
+[[tool.mypy.overrides]]
+module = "pygame.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "keyboard.*"
+ignore_missing_imports = true
+
+[tool.pyright]
+include = ["src"]
+exclude = ["tests"]
+venvPath = "."
+venv = ".venv"
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
@@ -98,3 +112,15 @@ exclude_lines = [
     "class .*\\bProtocol\\):",
     "@(abc\\.)?abstractmethod",
 ]
+
+[tool.pylint]
+load-plugins = "pylint.extensions.no_self_use"
+extension-pkg-whitelist = "pygame"
+
+[tool.pylint."MESSAGES CONTROL"]
+disable = "C0114,C0115,C0116,R0903,R0913,R0914,R0915,R0912,R0902,W0703,E1101,E1120,E1136,W0611"
+
+[tool.pylint.SIMILARITIES]
+min-similarity-lines = 4
+ignore-comments = "yes"
+ignore-docstrings = "yes"
