@@ -26,7 +26,7 @@ class CLIRenderer:
         self.screen = Screen(terminal)
 
     def clear_screen(self) -> None:
-        """画面をクリア"""
+        """バッファをクリア（実際の画面はクリアしない）"""
         self.screen.clear()
 
     def draw_centered_text(self, text: str, y_offset: int = 0) -> None:
@@ -140,6 +140,7 @@ class CLIApp:
         self.input_handler = CLIInputHandler(self.terminal)
 
         self.last_frame_time = time.time()
+        self.last_game_info = ""  # 前回のゲーム情報をキャッシュ
 
     def run(self) -> None:
         """ゲームを実行"""
@@ -159,6 +160,9 @@ class CLIApp:
                 # 開始メッセージを表示
                 print("\nCLI Game Started! Press Ctrl+C to quit or wait 10 seconds for auto-exit.", flush=True)
                 time.sleep(2)  # メッセージを見せる時間
+                
+                # 最初に一度だけ画面をクリア
+                self.terminal.clear_screen()
                 
                 start_time = time.time()
                 auto_quit_seconds = 10
@@ -186,7 +190,7 @@ class CLIApp:
                     self._render()
 
                     # フレーム制御（CLI版では低めのFPSで十分）
-                    self._limit_fps(30)
+                    self._limit_fps(10)
 
         except KeyboardInterrupt:
             # Ctrl+C での終了
@@ -200,46 +204,55 @@ class CLIApp:
 
     def _render(self) -> None:
         """描画処理"""
-        self.renderer.clear_screen()
+        # 現在のゲーム情報を取得
+        current_game_info = self.engine.get_game_info()
+        
+        # 内容が変わった場合のみ更新
+        if current_game_info != self.last_game_info:
+            # バッファをクリア（画面はクリアしない）
+            self.renderer.clear_screen()
 
-        # 画面サイズを取得
-        height, width = self.terminal.get_terminal_size()
+            # 画面サイズを取得（実際のバッファサイズを使用）
+            height = self.renderer.screen.height
+            width = self.renderer.screen.width
 
-        # 枠を描画
-        self.renderer.draw_box(0, 0, height - 1, width)
+            # 枠を描画
+            self.renderer.draw_box(0, 0, height, width)
 
-        # メインテキストを中央に表示
-        main_text = self.engine.get_display_text()
-        self.renderer.draw_centered_text(main_text, y_offset=-3)
+            # メインテキストを中央に表示
+            main_text = self.engine.get_display_text()
+            self.renderer.draw_centered_text(main_text, y_offset=-3)
 
-        # プレイヤー情報を表示
-        player_info = self.engine.get_player_info()
-        if len(player_info) <= width - 4:
-            self.renderer.draw_text(2, 2, player_info)
-        else:
-            # 長すぎる場合は短縮
-            short_info = player_info[: width - 7] + "..."
-            self.renderer.draw_text(2, 2, short_info)
+            # プレイヤー情報を表示
+            player_info = self.engine.get_player_info()
+            if len(player_info) <= width - 4:
+                self.renderer.draw_text(2, 2, player_info)
+            else:
+                # 長すぎる場合は短縮
+                short_info = player_info[: width - 7] + "..."
+                self.renderer.draw_text(2, 2, short_info)
 
-        # ゲーム情報を表示
-        game_info = self.engine.get_game_info()
-        if len(game_info) <= width - 4:
-            self.renderer.draw_text(3, 2, game_info)
-        else:
-            # 長すぎる場合は短縮
-            short_info = game_info[: width - 7] + "..."
-            self.renderer.draw_text(3, 2, short_info)
+            # ゲーム情報を表示
+            if len(current_game_info) <= width - 4:
+                self.renderer.draw_text(3, 2, current_game_info)
+            else:
+                # 長すぎる場合は短縮
+                short_info = current_game_info[: width - 7] + "..."
+                self.renderer.draw_text(3, 2, short_info)
 
-        # 操作説明を下部に表示
-        help_lines = ["Controls:", "Q/ESC: Quit", "P/SPACE: Pause/Resume", "R: Restart"]
+            # 操作説明を下部に表示
+            help_lines = ["Controls:", "Q/ESC: Quit", "P/SPACE: Pause/Resume", "R: Restart"]
 
-        start_row = max(5, height - len(help_lines) - 3)
-        for i, line in enumerate(help_lines):
-            if start_row + i < height - 2 and len(line) <= width - 4:
-                self.renderer.draw_text(start_row + i, 2, line)
+            start_row = max(5, height - len(help_lines) - 3)
+            for i, line in enumerate(help_lines):
+                if start_row + i < height - 2 and len(line) <= width - 4:
+                    self.renderer.draw_text(start_row + i, 2, line)
 
-        # 画面更新
-        self.renderer.present()
+            # 画面更新
+            self.renderer.present()
+            
+            # 前回の情報を更新
+            self.last_game_info = current_game_info
 
     def _limit_fps(self, target_fps: int) -> None:
         """FPSを制限
