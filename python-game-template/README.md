@@ -94,6 +94,7 @@ Options:
 - `Q` or `ESC`: Quit
 - `P` or `SPACE`: Pause/Resume
 - `R`: Restart
+- `Ctrl+C`: Force quit
 
 ## Project Structure
 
@@ -196,6 +197,19 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Author
 
 kako-jun
+
+## Known Issues
+
+### CLI Mode Input Detection
+The CLI version has limitations with keyboard input detection in some terminal environments:
+- Terminal input may not be detected properly in automated environments
+- Ctrl+C should always work to exit the application
+- Some special keys may not register correctly depending on terminal type
+
+### Workarounds
+- Use Ctrl+C to reliably exit CLI mode
+- Run with elevated privileges if needed for better keyboard detection
+- Consider using GUI mode for full interactive experience
 
 ## Acknowledgments
 

@@ -4,6 +4,7 @@ CUI版ゲーム実装
 クロスプラットフォーム対応のターミナル制御を使用したCLI版のゲーム
 """
 
+import sys
 import time
 from typing import Optional
 
@@ -142,12 +143,36 @@ class CLIApp:
 
     def run(self) -> None:
         """ゲームを実行"""
+        import signal
+        
+        def signal_handler(signum, frame):
+            self.engine.stop()
+            
+        # Ctrl+C のハンドラーを設定
+        signal.signal(signal.SIGINT, signal_handler)
+        
         try:
             with self.terminal:  # コンテキストマネージャーで自動クリーンアップ
                 self.terminal.hide_cursor()
                 self.engine.start()
+                
+                # 開始メッセージを表示
+                print("\nCLI Game Started! Press Ctrl+C to quit or wait 10 seconds for auto-exit.", flush=True)
+                time.sleep(2)  # メッセージを見せる時間
+                
+                start_time = time.time()
+                auto_quit_seconds = 10
+                frame_count = 0
 
                 while self.engine.is_running():
+                    frame_count += 1
+                    current_time = time.time()
+                    elapsed = current_time - start_time
+                    
+                    # 自動終了チェック（デモ用）
+                    if elapsed > auto_quit_seconds:
+                        print(f"\nAuto-quit after {auto_quit_seconds} seconds (frame {frame_count})", flush=True)
+                        break
                     # 入力処理
                     events = self.input_handler.get_input_events()
                     for event in events:
@@ -165,12 +190,13 @@ class CLIApp:
 
         except KeyboardInterrupt:
             # Ctrl+C での終了
-            pass
+            print("\nGame interrupted by user", flush=True)
         except Exception as e:
             print(f"\nGame error: {e}")
         finally:
             self.terminal.show_cursor()
             self.terminal.reset_color()
+            print("Game ended.", flush=True)
 
     def _render(self) -> None:
         """描画処理"""

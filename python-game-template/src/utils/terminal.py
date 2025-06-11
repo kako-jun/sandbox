@@ -9,6 +9,8 @@ import io
 import os
 import sys
 import time
+import threading
+import queue
 from typing import Dict, List, Optional, Tuple, Union
 
 try:
@@ -31,7 +33,11 @@ class TerminalController:
         """初期化"""
         self.is_windows = os.name == "nt"
         self.original_settings: Optional[List] = None
+        self._input_queue: queue.Queue = queue.Queue()
+        self._input_thread: Optional[threading.Thread] = None
+        self._running = False
         self._init_terminal()
+        self._start_input_thread()
 
     def _init_terminal(self) -> None:
         """ターミナルの初期化"""
@@ -41,6 +47,57 @@ class TerminalController:
                 self.original_settings = termios.tcgetattr(sys.stdin)
             except (termios.error, OSError, io.UnsupportedOperation):
                 self.original_settings = None
+
+    def _start_input_thread(self) -> None:
+        """入力処理用スレッドを開始"""
+        self._running = True
+        self._input_thread = threading.Thread(target=self._input_worker, daemon=True)
+        self._input_thread.start()
+
+    def _input_worker(self) -> None:
+        """入力処理ワーカー（別スレッドで実行）"""
+        while self._running:
+            try:
+                if self.is_windows and msvcrt is not None:
+                    if msvcrt.kbhit():
+                        key = msvcrt.getch().decode("utf-8", errors="ignore")
+                        self._input_queue.put(key)
+                else:
+                    # Unix系での入力処理
+                    try:
+                        # keyboardライブラリを試す
+                        import keyboard
+                        # よく使われるキーをチェック
+                        keys_to_check = ['q', 'esc', 'space', 'r', 'p']
+                        for key_name in keys_to_check:
+                            if keyboard.is_pressed(key_name):
+                                if key_name == 'esc':
+                                    self._input_queue.put('\x1b')
+                                elif key_name == 'space':
+                                    self._input_queue.put(' ')
+                                else:
+                                    self._input_queue.put(key_name)
+                                time.sleep(0.1)  # キーリピートを防ぐ
+                                break
+                    except ImportError:
+                        # keyboardライブラリがない場合、標準的な方法を試す
+                        if sys.stdin.isatty():
+                            try:
+                                if termios is not None and tty is not None:
+                                    old_settings = termios.tcgetattr(sys.stdin)
+                                    tty.setraw(sys.stdin.fileno())
+                                    try:
+                                        import select
+                                        if select.select([sys.stdin], [], [], 0.1)[0]:
+                                            key = sys.stdin.read(1)
+                                            self._input_queue.put(key)
+                                    finally:
+                                        termios.tcsetattr(sys.stdin, termios.TCSADRAIN, old_settings)
+                            except (termios.error, OSError, IOError):
+                                pass
+                time.sleep(0.05)  # CPU使用率を下げる
+            except Exception:
+                pass  # エラーを無視して継続
 
     def clear_screen(self) -> None:
         """画面をクリア"""
@@ -99,33 +156,11 @@ class TerminalController:
 
     def get_key_press(self) -> Optional[str]:
         """キー入力を取得（ノンブロッキング）"""
-        if self.is_windows and msvcrt is not None:
-            if msvcrt.kbhit():
-                key = msvcrt.getch().decode("utf-8", errors="ignore")
-                return key
+        try:
+            # キューから入力を取得（ノンブロッキング）
+            return self._input_queue.get_nowait()
+        except queue.Empty:
             return None
-        else:
-            # Unix系の場合
-            if termios is None or tty is None:
-                return None
-
-            try:
-                # ノンブロッキングモードに設定
-                old_settings = termios.tcgetattr(sys.stdin)
-                tty.setraw(sys.stdin.fileno())
-
-                # 入力があるかチェック
-                import select
-
-                if select.select([sys.stdin], [], [], 0) == ([sys.stdin], [], []):
-                    key = sys.stdin.read(1)
-                    termios.tcsetattr(sys.stdin, termios.TCSADRAIN, old_settings)
-                    return key
-                else:
-                    termios.tcsetattr(sys.stdin, termios.TCSADRAIN, old_settings)
-                    return None
-            except (termios.error, ImportError):
-                return None
 
     def wait_for_key(self) -> str:
         """キー入力を待機"""
@@ -146,6 +181,11 @@ class TerminalController:
 
     def cleanup(self) -> None:
         """終了処理"""
+        # 入力スレッドを停止
+        self._running = False
+        if self._input_thread and self._input_thread.is_alive():
+            self._input_thread.join(timeout=1.0)
+        
         self.show_cursor()
         self.reset_color()
         if (
