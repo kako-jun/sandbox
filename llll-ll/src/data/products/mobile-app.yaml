@@ -1,0 +1,24 @@
+id: "mobile-app-1"
+title:
+  en: "Task Manager Pro"
+  zh: "任务管理专业版"
+  ja: "タスクマネージャー Pro"
+description:
+  en: "A minimalist task management app with focus on productivity. Features include dark mode, sync across devices, and customizable workflows."
+  zh: "专注于生产力的极简任务管理应用。功能包括深色模式、设备间同步和可定制的工作流程。"
+  ja: "生産性に焦点を当てたミニマリストなタスク管理アプリ。ダークモード、デバイス間同期、カスタマイズ可能なワークフローなどの機能を備えています。"
+tags:
+  - "React Native"
+  - "TypeScript"
+  - "Mobile"
+  - "Productivity"
+  - "Paid"
+images:
+  - "/images/task-manager/screenshot1.png"
+  - "/images/task-manager/screenshot2.png"
+demoUrl: "https://apps.apple.com/app/task-manager-pro"
+repositoryUrl: "https://github.com/kako-jun/task-manager-pro"
+blogUrl: "https://note.com/kako-jun/n/task-manager-development"
+createdAt: "2023-03-20T00:00:00Z"
+updatedAt: "2024-11-15T00:00:00Z"
+featured: false
