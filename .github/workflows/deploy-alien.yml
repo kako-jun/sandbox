@@ -1,10 +1,12 @@
-name: Build and Deploy to GitHub Pages
+name: Build and Deploy Alien Game
 
 on:
   push:
     branches: [ main ]
+    paths: [ 'alien/**' ]
   pull_request:
     branches: [ main ]
+    paths: [ 'alien/**' ]
 
 jobs:
   build-and-deploy:
@@ -30,6 +32,7 @@ jobs:
       working-directory: ./alien
       run: |
         poetry install --no-root
+        poetry add pygbag
     
     - name: Build web app
       working-directory: ./alien
