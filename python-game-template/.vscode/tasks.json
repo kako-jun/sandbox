@@ -2,23 +2,95 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "start-flask",
+            "label": "Poetry: Install Dependencies",
             "type": "shell",
-            "command": "${workspaceFolder}/.venv/bin/python -m src.web.app",
-            "isBackground": true,
-            "problemMatcher": {
-                "pattern": {
-                    "regexp": "^.*$",
-                    "file": 1,
-                    "location": 2,
-                    "message": 3
-                },
-                "background": {
-                    "activeOnStart": true,
-                    "beginsPattern": "^\\s* \\* Running on .*:\\d+",
-                    "endsPattern": "^\\s* \\* Running on .*:\\d+"
-                }
-            }
+            "command": "poetry install",
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Run: PyGame版ゲーム",
+            "type": "shell",
+            "command": "poetry run python src/main.py",
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Run: CUI版ゲーム",
+            "type": "shell",
+            "command": "poetry run python src/main.py --mode cli",
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Test: Run All Tests",
+            "type": "shell",
+            "command": "poetry run pytest",
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Format: Black",
+            "type": "shell",
+            "command": "poetry run black src tests",
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Lint: Flake8",
+            "type": "shell",
+            "command": "poetry run flake8 src tests",
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Type Check: MyPy",
+            "type": "shell",
+            "command": "poetry run mypy src",
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": []
         }
     ]
 }

@@ -1,191 +1,193 @@
-from pydantic import BaseModel, Field, field_validator
-from typing import List, Optional, Dict, Union
+"""
+ゲームの共通データモデル
+
+Pydanticを使用してデータの型安全性を確保し、
+dictアクセスによる例外を防ぐ
+"""
+
 from enum import Enum
+from typing import List, Optional, Union
 
-
-class Direction(str, Enum):
-    """移動方向を表す列挙型"""
-
-    UP = "up"
-    DOWN = "down"
-    LEFT = "left"
-    RIGHT = "right"
-
-
-class CellType(str, Enum):
-    EMPTY = "empty"
-    SNAKE = "snake"
-    FOOD = "food"
-    WALL = "wall"
+from pydantic import BaseModel, Field
 
 
 class GameMode(str, Enum):
-    """ゲームモードを表す列挙型"""
+    """ゲームモード"""
 
-    CLASSIC = "classic"
-    TIME_ATTACK = "time_attack"
-    SURVIVAL = "survival"
-    PUZZLE = "puzzle"
+    CLI = "cli"
+    GUI = "gui"
 
 
-class Difficulty(str, Enum):
-    """難易度を表す列挙型"""
+class Language(str, Enum):
+    """言語設定"""
 
-    EASY = "easy"
-    NORMAL = "normal"
-    HARD = "hard"
+    ENGLISH = "en"
+    JAPANESE = "ja"
+
+
+class LogLevel(str, Enum):
+    """ログレベル"""
+
+    DEBUG = "DEBUG"
+    INFO = "INFO"
+    WARNING = "WARNING"
+    ERROR = "ERROR"
+    CRITICAL = "CRITICAL"
 
 
 class Position(BaseModel):
-    """位置を表すモデル"""
+    """位置情報"""
 
-    x: int = Field(ge=0)
-    y: int = Field(ge=0)
+    x: int = Field(ge=0, description="X座標")
+    y: int = Field(ge=0, description="Y座標")
 
-
-class Player(BaseModel):
-    """プレイヤーを表すモデル"""
-
-    id: str
-    name: str
-    score: int = 0
-    position: Position
-    direction: Direction = Direction.RIGHT
-    is_alive: bool = True
-    snake_body: List[Position] = Field(default_factory=list)  # SnakeGameで使用
-
-    @field_validator("name")
-    @classmethod
-    def validate_name(cls, v):
-        if not v:
-            raise ValueError("プレイヤー名は空にできません")
-        return v
+    def __str__(self) -> str:
+        return f"({self.x}, {self.y})"
 
 
-class GameState(BaseModel):
-    """ゲーム状態を表すモデル"""
+class Size(BaseModel):
+    """サイズ情報"""
 
-    config: "GameConfig"
-    snake: List[Position]
-    food: Position
-    score: int = Field(default=0, ge=0)
-    game_over: bool = Field(default=False)
-    time_remaining: int = Field(default=300, ge=0)
-    current_direction: Direction = Field(default=Direction.RIGHT)
+    width: int = Field(gt=0, description="幅")
+    height: int = Field(gt=0, description="高さ")
 
-    # SnakeGameクラスで使用される追加フィールド（オプション）
-    players: Optional[Dict[int, Player]] = None
-    current_player_id: Optional[int] = None
-    food_position: Optional[Position] = None
-    board_width: Optional[int] = None
-    board_height: Optional[int] = None
-    tick_count: Optional[int] = None
-    difficulty: Optional[Difficulty] = None
-    game_mode: Optional[GameMode] = None
+    def __str__(self) -> str:
+        return f"{self.width}x{self.height}"
 
-    @property
-    def time_limit(self) -> int:
-        """設定からtime_limitを取得"""
-        return self.config.time_limit if self.config else 300
 
-    @field_validator("snake")
-    @classmethod
-    def validate_snake(cls, v: List[Position]) -> List[Position]:
-        """蛇の位置が有効かチェック"""
-        if not v:
-            raise ValueError("Snake must have at least one segment")
+class Color(BaseModel):
+    """色情報"""
 
-        # 蛇の体が重なっていないかチェック
-        positions = set()
-        for pos in v:
-            if (pos.x, pos.y) in positions:
-                raise ValueError("Snake segments cannot overlap")
-            positions.add((pos.x, pos.y))
+    r: int = Field(ge=0, le=255, description="赤成分")
+    g: int = Field(ge=0, le=255, description="緑成分")
+    b: int = Field(ge=0, le=255, description="青成分")
+    a: int = Field(ge=0, le=255, default=255, description="アルファ成分")
 
-        return v
+    def to_tuple(self) -> tuple[int, int, int, int]:
+        """タプル形式で返す"""
+        return (self.r, self.g, self.b, self.a)
 
-    @field_validator("food")
-    @classmethod
-    def validate_food(cls, v: Position, info) -> Position:
-        """食べ物の位置が有効かチェック"""
-        # info.data を使用して他のフィールドにアクセス
-        if "snake" in info.data:
-            # 食べ物が蛇の体と重なっていないかチェック
-            for pos in info.data["snake"]:
-                if pos.x == v.x and pos.y == v.y:
-                    raise ValueError("Food cannot overlap with snake")
-
-        # 食べ物がボード内にあるかチェック
-        if "config" in info.data:
-            if v.x >= info.data["config"].board_width or v.y >= info.data["config"].board_height:
-                raise ValueError("Food must be within board boundaries")
-
-        return v
+    def to_rgb_tuple(self) -> tuple[int, int, int]:
+        """RGB タプル形式で返す"""
+        return (self.r, self.g, self.b)
 
 
 class GameConfig(BaseModel):
-    """ゲームの設定を表すモデル"""
+    """ゲーム設定"""
 
-    board_width: int = Field(default=20, ge=5, le=50)
-    board_height: int = Field(default=20, ge=5, le=50)
-    initial_speed: float = Field(default=1.0, ge=0.1, le=5.0)
-    speed_increase: float = Field(default=0.1, ge=0.0, le=1.0)
-    food_value: int = Field(default=10, ge=1, le=100)
-    time_limit: int = Field(default=300, ge=60, le=3600)
-    difficulty: Difficulty = Difficulty.NORMAL
-    game_mode: GameMode = GameMode.CLASSIC
+    mode: GameMode = GameMode.GUI
+    language: Language = Language.ENGLISH
+    debug: bool = False
+    fullscreen: bool = False
+    fps: int = Field(default=60, ge=1, le=120, description="フレームレート")
+    window_size: Size = Size(width=800, height=600)
+    volume: float = Field(default=0.8, ge=0.0, le=1.0, description="音量")
 
-    # 後方互換性のためのプロパティ
-    @property
-    def width(self) -> int:
-        return self.board_width
+    class Config:
+        """Pydantic設定"""
 
-    @property
-    def height(self) -> int:
-        return self.board_height
-
-    @field_validator("board_width", "board_height")
-    @classmethod
-    def validate_board_size(cls, v):
-        if v < 5:
-            raise ValueError("ボードサイズは5以上である必要があります")
-        return v
-
-    @field_validator("time_limit")
-    @classmethod
-    def validate_time_limit(cls, v):
-        if v < 60:
-            raise ValueError("制限時間は60秒以上である必要があります")
-        return v
+        use_enum_values = True
 
 
-class GameAction(BaseModel):
-    """ゲームアクションを表すモデル"""
+class GameState(str, Enum):
+    """ゲーム状態"""
 
-    player_id: Union[str, int]
-    action_type: str
-    direction: Optional[Direction] = None
-
-    @field_validator("player_id")
-    @classmethod
-    def validate_player_id(cls, v):
-        if v is None or v == "":
-            raise ValueError("プレイヤーIDは空にできません")
-        return str(v)  # 常に文字列として保存
+    MENU = "menu"
+    PLAYING = "playing"
+    PAUSED = "paused"
+    GAME_OVER = "game_over"
+    QUIT = "quit"
 
 
-class GameBoard(BaseModel):
-    """ゲームボードを表すモデル"""
+class InputEvent(BaseModel):
+    """入力イベント"""
 
-    width: int
-    height: int
-    cells: List[List[CellType]]
+    event_type: str = Field(description="イベントタイプ")
+    key: Optional[str] = Field(default=None, description="押されたキー")
+    mouse_pos: Optional[Position] = Field(default=None, description="マウス位置")
+    timestamp: float = Field(description="イベント発生時刻")
 
-    def get_cell(self, pos: Position) -> CellType:
-        if 0 <= pos.x < self.width and 0 <= pos.y < self.height:
-            return self.cells[pos.y][pos.x]
-        return CellType.WALL
 
-    def set_cell(self, pos: Position, cell_type: CellType):
-        if 0 <= pos.x < self.width and 0 <= pos.y < self.height:
-            self.cells[pos.y][pos.x] = cell_type
+class GameObject(BaseModel):
+    """ゲームオブジェクトの基底クラス"""
+
+    id: str = Field(description="オブジェクトID")
+    position: Position = Field(default_factory=lambda: Position(x=0, y=0))
+    size: Size = Field(default_factory=lambda: Size(width=32, height=32))
+    visible: bool = Field(default=True, description="表示フラグ")
+    active: bool = Field(default=True, description="アクティブフラグ")
+
+    def get_bounds(self) -> tuple[int, int, int, int]:
+        """境界ボックスを取得 (x, y, width, height)"""
+        return (self.position.x, self.position.y, self.size.width, self.size.height)
+
+    def is_colliding_with(self, other: "GameObject") -> bool:
+        """他のオブジェクトとの衝突判定"""
+        x1, y1, w1, h1 = self.get_bounds()
+        x2, y2, w2, h2 = other.get_bounds()
+
+        return x1 < x2 + w2 and x1 + w1 > x2 and y1 < y2 + h2 and y1 + h1 > y2
+
+
+class Player(GameObject):
+    """プレイヤーオブジェクト"""
+
+    name: str = Field(default="Player", description="プレイヤー名")
+    score: int = Field(default=0, ge=0, description="スコア")
+    lives: int = Field(default=3, ge=0, description="ライフ数")
+    level: int = Field(default=1, ge=1, description="レベル")
+
+
+class GameScene(BaseModel):
+    """ゲームシーン"""
+
+    name: str = Field(description="シーン名")
+    objects: List[GameObject] = Field(default_factory=list, description="オブジェクトリスト")
+    background_color: Color = Field(
+        default_factory=lambda: Color(r=0, g=0, b=0), description="背景色"
+    )
+
+    def add_object(self, obj: GameObject) -> None:
+        """オブジェクトを追加"""
+        self.objects.append(obj)
+
+    def remove_object(self, obj_id: str) -> bool:
+        """オブジェクトを削除"""
+        for i, obj in enumerate(self.objects):
+            if obj.id == obj_id:
+                self.objects.pop(i)
+                return True
+        return False
+
+    def get_object(self, obj_id: str) -> Optional[GameObject]:
+        """オブジェクトを取得"""
+        for obj in self.objects:
+            if obj.id == obj_id:
+                return obj
+        return None
+
+    def get_active_objects(self) -> List[GameObject]:
+        """アクティブなオブジェクトのみを取得"""
+        return [obj for obj in self.objects if obj.active]
+
+
+class GameData(BaseModel):
+    """ゲーム全体のデータ"""
+
+    config: GameConfig = Field(default_factory=GameConfig)
+    current_state: GameState = GameState.MENU
+    current_scene: Optional[GameScene] = None
+    player: Optional[Player] = None
+    high_scores: List[int] = Field(default_factory=list, description="ハイスコアリスト")
+    play_time: float = Field(default=0.0, ge=0.0, description="プレイ時間（秒）")
+
+    def add_high_score(self, score: int) -> None:
+        """ハイスコアを追加"""
+        self.high_scores.append(score)
+        self.high_scores.sort(reverse=True)
+        # トップ10のみ保持
+        self.high_scores = self.high_scores[:10]
+
+    def is_high_score(self, score: int) -> bool:
+        """ハイスコアかどうか判定"""
+        return len(self.high_scores) < 10 or score > min(self.high_scores)

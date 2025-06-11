@@ -1,47 +1,100 @@
 [tool.poetry]
 name = "python-game-template"
 version = "0.1.0"
-description = "A flexible and extensible game template with CLI and Web interfaces"
-authors = ["Your Name <your.email@example.com>"]
+description = "A template for creating Python games with both CLI and GUI versions"
+authors = ["kako-jun <kako.jun.42@gmail.com>"]
+license = "MIT"
 readme = "README.md"
 packages = [{include = "src"}]
 
 [tool.poetry.dependencies]
-python = ">=3.9,<4.0"
-fastapi = ">=0.68.0"
-uvicorn = ">=0.15.0"
-rich = ">=10.0.0"
-python-dotenv = ">=0.19.0"
-pydantic = ">=1.8.0"
-requests = ">=2.26.0"
-typing-extensions = ">=4.0.0"
-psutil = "^5.9.0"
-jinja2 = "^3.0.0"
+python = "^3.11"
+pygame = "^2.5.2"
+pydantic = "^2.5.0"
+pydantic-settings = "^2.1.0"
+click = "^8.1.7"
+rich = "^13.7.0"
+keyboard = "^0.13.5"
 
 [tool.poetry.group.dev.dependencies]
-pytest = ">=6.0.0"
-pytest-cov = "^2.12.1"
-httpx = "^0.28.1"
-mypy = "^1.16.0"
+pytest = "^7.4.3"
+pytest-cov = "^4.1.0"
+pytest-asyncio = "^0.21.1"
+black = "^23.11.0"
+flake8 = "^6.1.0"
+mypy = "^1.7.1"
+isort = "^5.12.0"
+pre-commit = "^3.6.0"
+
+[tool.poetry.scripts]
+game = "src.main:main"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
+[tool.black]
+line-length = 88
+target-version = ['py311']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 88
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+
+[[tool.mypy.overrides]]
+module = "src.*"
+mypy_path = "src"
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
-addopts = "-v --cov=src"
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "--cov=src --cov-report=html --cov-report=term-missing"
 
 [tool.coverage.run]
 source = ["src"]
-omit = ["tests/*"]
+omit = ["tests/*", "src/__pycache__/*"]
 
 [tool.coverage.report]
 exclude_lines = [
     "pragma: no cover",
     "def __repr__",
-    "if __name__ == .__main__.:",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
     "raise NotImplementedError",
-    "if TYPE_CHECKING:",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
 ]
