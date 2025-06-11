@@ -74,8 +74,25 @@ cargo tauri build
 
 ### VS Code統合
 
-- **F5**: デバッガー付きでCLIモードを起動
-- **Ctrl+Shift+P** → "Tasks: Run Task" → "Tauri: dev": GUIモードを起動
+#### キーボードショートカット
+- **F5**: Tauri開発サーバーを起動（デフォルト）
+- **Ctrl+F5**: デモモードを実行
+- **Shift+F5**: CLI/TUIモードを実行
+
+#### デバッグ設定（F5メニュー）
+- 🚀 **Launch Tauri Dev (F5 Default)**: メインのTauri開発サーバー
+- 🖥️ **Launch CLI (TUI)**: ターミナルベースインターフェース（デバッガー付き）
+- 🎮 **Launch Demo Mode**: クイックデモ（デバッガー付き）
+- 🌐 **Launch GUI (Direct)**: 直接GUI起動（デバッガー付き）
+
+#### タスク（Ctrl+Shift+P → "Tasks: Run Task"）
+- 🚀 **Tauri: dev (Default)**: 開発サーバー起動
+- 🎮 **Run Demo Mode**: デモモード実行
+- 🖥️ **Run CLI (TUI)**: CLIモード実行
+- 🔨 **Cargo: build**: 標準ビルド
+- 🧪 **Cargo: test**: テスト実行
+- 📎 **Cargo: clippy**: リンティング
+- 📦 **Tauri: build**: プロダクションビルド
 
 ### プロジェクト構造
 

@@ -74,8 +74,25 @@ This project includes a complete DevContainer setup for consistent development e
 
 ### VS Code Integration
 
-- **F5**: Launch CLI mode with debugger
-- **Ctrl+Shift+P** → "Tasks: Run Task" → "Tauri: dev": Launch GUI mode
+#### Keyboard Shortcuts
+- **F5**: Launch Tauri development server (Default)
+- **Ctrl+F5**: Run Demo Mode  
+- **Shift+F5**: Run CLI/TUI Mode
+
+#### Debug Configurations (F5 Menu)
+- 🚀 **Launch Tauri Dev (F5 Default)**: Main Tauri development server
+- 🖥️ **Launch CLI (TUI)**: Terminal-based interface with debugger
+- 🎮 **Launch Demo Mode**: Quick demo with debugger
+- 🌐 **Launch GUI (Direct)**: Direct GUI launch with debugger
+
+#### Tasks (Ctrl+Shift+P → "Tasks: Run Task")
+- 🚀 **Tauri: dev (Default)**: Launch development server
+- 🎮 **Run Demo Mode**: Demo mode execution
+- 🖥️ **Run CLI (TUI)**: CLI mode execution
+- 🔨 **Cargo: build**: Standard build
+- 🧪 **Cargo: test**: Run tests
+- 📎 **Cargo: clippy**: Linting
+- 📦 **Tauri: build**: Production build
 
 ### Project Structure
 

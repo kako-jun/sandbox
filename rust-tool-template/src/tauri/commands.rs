@@ -24,7 +24,7 @@ pub struct AppInfo {
 /// # Returns
 /// アプリケーション情報
 #[tauri::command]
-pub fn get_app_info(app_core: State<AppCore>) -> AppInfo {
+pub fn get_app_info(_app_core: State<AppCore>) -> AppInfo {
     AppInfo {
         name: env!("CARGO_PKG_NAME").to_string(),
         version: env!("CARGO_PKG_VERSION").to_string(),
@@ -65,7 +65,7 @@ pub fn get_config(app_core: State<AppCore>) -> AppConfig {
 /// # Returns
 /// 処理結果のメッセージ
 #[tauri::command]
-pub fn set_language(language: String, app_core: State<AppCore>) -> Result<String, String> {
+pub fn set_language(language: String, _app_core: State<AppCore>) -> Result<String, String> {
     // 注意: Stateは内部的にmutableではないため、実際の実装では
     // Arc<Mutex<AppCore>>を使用するか、別のアプローチが必要
     // ここでは簡単な例として記載
@@ -81,7 +81,7 @@ pub fn set_language(language: String, app_core: State<AppCore>) -> Result<String
 /// # Returns
 /// 処理結果のメッセージ
 #[tauri::command]
-pub fn set_log_level(log_level: String, app_core: State<AppCore>) -> Result<String, String> {
+pub fn set_log_level(log_level: String, _app_core: State<AppCore>) -> Result<String, String> {
     Ok(format!("Log level set to: {}", log_level))
 }
 
@@ -94,6 +94,6 @@ pub fn set_log_level(log_level: String, app_core: State<AppCore>) -> Result<Stri
 /// # Returns
 /// 処理結果のメッセージ
 #[tauri::command]
-pub fn set_force_cli_mode(force_cli: bool, app_core: State<AppCore>) -> Result<String, String> {
+pub fn set_force_cli_mode(force_cli: bool, _app_core: State<AppCore>) -> Result<String, String> {
     Ok(format!("Force CLI mode set to: {}", force_cli))
 }
