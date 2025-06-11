@@ -164,9 +164,11 @@ def run_game(config: GameConfig) -> int:
 
     try:
         logger.info(t("message_game_started"))
-        logger.info(f"Mode: {config.mode.value}, Language: {config.language.value}")
+        mode_str = config.mode if isinstance(config.mode, str) else config.mode.value
+        lang_str = config.language if isinstance(config.language, str) else config.language.value
+        logger.info(f"Mode: {mode_str}, Language: {lang_str}")
 
-        if config.mode == GameMode.GUI:
+        if (isinstance(config.mode, str) and config.mode == "gui") or config.mode == GameMode.GUI:
             app = PyGameApp(config)
         else:
             app = CLIApp(config)
