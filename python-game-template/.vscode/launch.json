@@ -2,51 +2,64 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: API",
+            "name": "Python: PyGame版ゲーム起動",
             "type": "python",
             "request": "launch",
-            "module": "src.api.main",
-            "justMyCode": true,
-            "python": "${command:python.interpreterPath}",
+            "program": "${workspaceFolder}/src/main.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
             "env": {
-                "PYTHONPATH": "${workspaceFolder}"
+                "PYTHONPATH": "${workspaceFolder}/src"
             },
-            "console": "integratedTerminal"
+            "args": []
         },
         {
-            "name": "Python: CLI",
+            "name": "Python: CUI版ゲーム起動",
             "type": "python",
             "request": "launch",
-            "module": "src.cli.main",
-            "justMyCode": true,
-            "python": "${command:python.interpreterPath}",
+            "program": "${workspaceFolder}/src/main.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
             "env": {
-                "PYTHONPATH": "${workspaceFolder}"
+                "PYTHONPATH": "${workspaceFolder}/src"
             },
-            "console": "integratedTerminal"
+            "args": ["--mode", "cli"]
         },
         {
-            "name": "Python: Web",
+            "name": "Python: デバッグモード（英語）",
             "type": "python",
             "request": "launch",
-            "module": "src.web.app",
-            "justMyCode": true,
-            "python": "${command:python.interpreterPath}",
+            "program": "${workspaceFolder}/src/main.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
             "env": {
-                "PYTHONPATH": "${workspaceFolder}"
+                "PYTHONPATH": "${workspaceFolder}/src"
             },
-            "console": "integratedTerminal"
+            "args": ["--debug", "--language", "en"]
         },
         {
-            "name": "JavaScript: Debug Web App",
-            "type": "chrome",
+            "name": "Python: デバッグモード（日本語）",
+            "type": "python",
             "request": "launch",
-            "url": "http://localhost:5000",
-            "webRoot": "${workspaceFolder}/src/web/static",
-            "preLaunchTask": "start-flask",
-            "sourceMapPathOverrides": {
-                "webpack:///src/*": "${webRoot}/*"
-            }
+            "program": "${workspaceFolder}/src/main.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/src"
+            },
+            "args": ["--debug", "--language", "ja"]
+        },
+        {
+            "name": "Python: テスト実行",
+            "type": "python",
+            "request": "launch",
+            "module": "pytest",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/src"
+            },
+            "args": ["tests/", "-v"]
         }
     ]
 }

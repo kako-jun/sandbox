@@ -1,17 +1,53 @@
 {
-  "welcome": "Python Game",
-  "score": "Score: {score}",
-  "game_over": "Game Over!",
-  "player": "Player",
-  "difficulty": "Difficulty",
-  "enter_player_name": "Enter your name",
-  "select_difficulty": "Select difficulty",
-  "select_game_mode": "Select game mode",
-  "custom_settings": "Do you want to customize game settings?",
-  "board_width": "Enter board width",
-  "board_height": "Enter board height",
-  "time_limit": "Enter time limit (seconds)",
-  "usage": "Python Game CLI",
-  "help": "Use arrow keys to move, 'q' to quit, 'r' to reset",
-  "error": "Error: {error}"
+  "app_title": "Python Game Template",
+  "game_state_menu": "MENU",
+  "game_state_playing": "PLAYING",
+  "game_state_paused": "PAUSED", 
+  "game_state_game_over": "GAME OVER",
+  "game_state_quit": "QUIT",
+  
+  "controls_title": "Controls:",
+  "controls_quit": "Q/ESC: Quit",
+  "controls_pause": "P/SPACE: Pause/Resume", 
+  "controls_restart": "R: Restart",
+  "controls_help": "ESC: Quit | SPACE: Pause/Resume | R: Restart",
+  
+  "player_info": "Player: {name} | Score: {score} | Lives: {lives} | Level: {level}",
+  "game_info": "State: {state} | Time: {time}s | FPS: {fps}",
+  "fps_display": "FPS: {fps}",
+  
+  "error_pygame_init": "Failed to initialize PyGame",
+  "error_terminal_init": "Failed to initialize terminal",
+  "error_config_load": "Failed to load configuration",
+  "error_config_save": "Failed to save configuration",
+  "error_save_load": "Failed to load save data",
+  "error_save_save": "Failed to save game data",
+  
+  "message_game_started": "Game started",
+  "message_game_paused": "Game paused",
+  "message_game_resumed": "Game resumed", 
+  "message_game_restarted": "Game restarted",
+  "message_game_quit": "Game quit",
+  
+  "log_level_debug": "DEBUG",
+  "log_level_info": "INFO",
+  "log_level_warning": "WARNING",
+  "log_level_error": "ERROR",
+  "log_level_critical": "CRITICAL",
+  
+  "config_language": "Language",
+  "config_mode": "Mode",
+  "config_debug": "Debug Mode",
+  "config_fullscreen": "Fullscreen",
+  "config_fps": "FPS",
+  "config_volume": "Volume",
+  
+  "mode_gui": "GUI",
+  "mode_cli": "CLI",
+  
+  "language_english": "English",
+  "language_japanese": "Japanese",
+  
+  "no_player": "No Player",
+  "unknown": "Unknown"
 }

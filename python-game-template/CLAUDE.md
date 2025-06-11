@@ -1,67 +1,63 @@
-# CLAUDE.md
+# Python Game Template プロジェクト仕様
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+## プロジェクト概要
+Pythonでゲームを作っていくための雛形になるプロジェクトを作りたい。
 
-## Development Commands
+## 機能要件
 
-**Dependencies & Environment:**
-```bash
-poetry install                    # Install dependencies
-poetry shell                     # Activate virtual environment
-```
+### CUI版
+- 端末内でncursesライクな見た目
+- 標準出力をスクロールせずに操作できる
+- クロスプラットフォーム対応のため、ncursesを直接使わずクロスプラットフォームなncursesライクを探すか自作
 
-**Run Applications:**
-```bash
-# API server (port 10400)
-poetry run uvicorn src.api.main:app --reload
+### GUI版
+- PyGameで作成
+- 将来的にはWebアプリ化したい（JavaScriptやCSSは不要）
 
-# Web server (port 10500)  
-poetry run python -m src.web.main
+### 共通仕様
+- CUI版とGUI版でゲームのコア部分は共通化
+- 基本はPyGame版
+- 引数ありで実行するとCUI版になるなど、同じmain.pyで起動し分ける
 
-# CLI game
-poetry run python -m src.cli.main start --width 20 --height 20
-```
+## 技術要件
 
-**Testing:**
-```bash
-poetry run pytest                 # Run all tests
-poetry run pytest tests/game/     # Run specific test directory
-poetry run pytest --cov=src --cov-report=term-missing  # With coverage
-poetry run mypy src/              # Type checking
-```
+### 開発環境
+- pipでなくpoetryで管理
+- プロジェクト内に.venvを作る
+- devcontainer対応
+- 自動テスト対応
+- .githubでのciも実装
+- .vscodeを作りF5で実行できるように（CLIとPyGameの起動し分け）
 
-## Architecture Overview
+### 作者情報
+- 作者名: kako-jun
+- ライセンス: MIT
 
-This is a multi-interface Python game template implementing a Snake game with three distinct interfaces:
+### エラー制御・型安全性
+- エラー発生時にアプリが落ちるのを防ぐためのエラー制御
+- 型ヒントを付ける
+- Pydanticのスキーマを多用し、dictでなくclassを中心に情報管理
 
-**Core Game Architecture:**
-- `src/game/core.py` - Contains two game classes:
-  - `SnakeGame` - Full-featured game with multiplayer support, callbacks, and board management
-  - `Game` - Simplified game class used by API/web interfaces
-- `src/game/models.py` - Pydantic models for game state, configuration, and data structures
+### ログ・永続化
+- ログは永続化、日付でのローテーション
+- Dockerコンテナが肥大化しないよう、compose.yamlにもログローテーション
+- ユーザーホーム内やアプリのディレクトリ内にログ配置（.gitignore対象）
+- 設定画面での設定内容を永続化（ログと同じ場所）
+- 常にCUIで起動する設定も可能（引数が優先）
 
-**Interface Layers:**
-- **API** (`src/api/`) - FastAPI REST API server with game endpoints
-- **Web** (`src/web/`) - FastAPI web server with HTML templates and static files  
-- **CLI** (`src/cli/`) - Rich-based command line interface with interactive display
+### 国際化
+- デフォルトは英語表示
+- 日本語での表示も可能
+- 設定の永続化、引数での指定が優先
 
-**Supporting Systems:**
-- `src/utils/i18n.py` - Multi-language support (English/Japanese)
-- `src/utils/logging.py` - Centralized logging configuration
-- `src/utils/performance.py` - Performance monitoring utilities
-- `src/utils/security.py` - Security validation functions
+### ドキュメント・テスト
+- ソースコードには日本語コメントを充実
+- 関数にも日本語コメント
+- 自動テスト項目を充実（テスト名は日本語）
+- READMEは英語、別途日本語READMEも作成
+- テスト結果のバッジを表示
 
-**Key Integration Points:**
-- Games are managed as in-memory instances keyed by player name/ID
-- State synchronization between interfaces happens through the core game classes
-- API and web interfaces use the simplified `Game` class
-- CLI interface uses the full-featured `SnakeGame` class
-
-**Data Flow:**
-- Game state flows: Core models → Game classes → Interface endpoints → Client responses
-- Configuration flows: Command line args/API requests → `GameConfig` → Game initialization
-- User actions flow: Interface input → Game action processing → State updates → Response
-
-## Language & Localization
-
-The codebase supports Japanese and English through `src/locales/` JSON files and the i18n utility system.
+### サンプル実装
+- このテンプレートを元に複数のゲームを作っていく予定
+- サンプルゲームは実装不要
+- 画面の中央に"hoge"とだけ表示

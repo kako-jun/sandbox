@@ -1,48 +1,34 @@
-FROM python:3.12-slim
+FROM mcr.microsoft.com/vscode/devcontainers/python:3.11
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    curl \
-    git \
-    sudo \
-    && rm -rf /var/lib/apt/lists/*
+# システムの依存関係をインストール
+RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
+    && apt-get -y install --no-install-recommends \
+        git \
+        build-essential \
+        libsdl2-dev \
+        libsdl2-image-dev \
+        libsdl2-mixer-dev \
+        libsdl2-ttf-dev \
+        libfreetype6-dev \
+        libportmidi-dev \
+        libjpeg-dev \
+        python3-dev \
+        python3-numpy \
+        cython3 \
+    && apt-get autoremove -y && apt-get clean -y
 
-# Create a non-root user
-ARG USERNAME=vscode
-ARG USER_UID=1000
-ARG USER_GID=$USER_UID
+# ユーザーをvscodに切り替え
+USER vscode
 
-RUN groupadd --gid $USER_GID $USERNAME \
-    && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME \
-    && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
-    && chmod 0440 /etc/sudoers.d/$USERNAME
+# Poetryのインストール
+RUN curl -sSL https://install.python-poetry.org | python3 -
+ENV PATH="/home/vscode/.local/bin:$PATH"
 
-# Set up the working directory
+# 作業ディレクトリの設定
 WORKDIR /workspace
 
-# Install Poetry
-RUN curl -sSL https://install.python-poetry.org | python3 -
-
-# Add Poetry to PATH
-ENV PATH="${PATH}:/root/.local/bin"
-
-# Copy poetry configuration files
-COPY pyproject.toml .
-COPY poetry.lock* ./
-
-# Configure Poetry
-RUN poetry config virtualenvs.in-project true
-
-# Install dependencies
-RUN poetry install --no-interaction --no-ansi
-
-# Set environment variables
-ENV PYTHONPATH=/workspace
-ENV PYTHONUNBUFFERED=1
-
-# Switch to non-root user
-USER $USERNAME
-
-# Default command
-CMD ["python", "-m", "src.cli.main"]
+# ログローテーション設定（コンテナ内のログ制限）
+RUN echo "*.* /dev/stdout" > /etc/rsyslog.d/50-default.conf \
+    && echo "\$ModLoad imuxsock" >> /etc/rsyslog.conf \
+    && echo "\$SystemLogRateLimitInterval 1" >> /etc/rsyslog.conf \
+    && echo "\$SystemLogRateLimitBurst 50" >> /etc/rsyslog.conf

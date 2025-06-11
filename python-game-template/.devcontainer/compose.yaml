@@ -1,22 +1,23 @@
 version: '3.8'
 
 services:
-  app:
+  python-game-template:
     build:
       context: ..
       dockerfile: .devcontainer/Dockerfile
-    command: sleep infinity
     volumes:
       - ..:/workspace:cached
-      - ../logs:/workspace/logs
+    command: sleep infinity
     environment:
-      - PYTHONUNBUFFERED=1
-      - PYTHONPATH=/workspace
-    ports:
-      - "5000:5000"  # Web interface
-      - "8000:8000"  # API server
+      - PYTHONPATH=/workspace/src
     logging:
       driver: "json-file"
       options:
         max-size: "10m"
-        max-file: "5" 
+        max-file: "3"
+    networks:
+      - game-network
+
+networks:
+  game-network:
+    driver: bridge
