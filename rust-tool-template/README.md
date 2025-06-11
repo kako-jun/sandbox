@@ -1,181 +1,168 @@
 # Rust Tool Template
 
-[![Tests](https://github.com/yourusername/rust-tool-template/actions/workflows/tests.yml/badge.svg)](https://github.com/yourusername/rust-tool-template/actions/workflows/tests.yml)
-[![codecov](https://codecov.io/gh/yourusername/rust-tool-template/branch/main/graph/badge.svg)](https://codecov.io/gh/yourusername/rust-tool-template)
-[![Rust Version](https://img.shields.io/badge/rust-1.70.0+-blue.svg)](https://www.rust-lang.org)
+[![CI](https://github.com/kako-jun/rust-tool-template/actions/workflows/ci.yml/badge.svg)](https://github.com/kako-jun/rust-tool-template/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A comprehensive template for Rust applications with the following features:
+A template for creating Rust CLI/GUI applications with Tauri and TUI support.
 
-- Command-line interface with subcommand support
-- Text-based user interface (TUI)
-- Internationalization (i18n) support
-- Logging system (with rotation and container support)
-- Platform-specific features
-- API server functionality
-- Configuration management
-- Error handling
+## Features
 
-## Requirements
+- **Dual Interface**: Support both CLI (TUI-based) and GUI (Tauri-based) modes
+- **Cross-platform**: Works on Linux, Windows, and macOS
+- **Internationalization**: English and Japanese language support
+- **Configuration Management**: Persistent settings with TOML format
+- **Logging System**: Structured logging with daily rotation
+- **Error Handling**: Comprehensive error management
+- **Development Ready**: DevContainer, VS Code, and CI/CD configured
 
-- Rust 1.70.0 or higher
-- Cargo
-- Other dependencies (see Cargo.toml)
+## Getting Started
 
-## Installation
+### Prerequisites
 
+- Rust 1.60+
+- Node.js 18+ (for Tauri GUI mode)
+- System dependencies for GUI development (see DevContainer setup)
+
+### Installation
+
+1. Clone this repository:
 ```bash
-# Clone the repository
-git clone https://github.com/yourusername/rust-tool-template.git
+git clone https://github.com/kako-jun/rust-tool-template.git
 cd rust-tool-template
-
-# Build
-cargo build --release
-
-# Install (optional)
-cargo install --path .
 ```
 
-## Usage
-
-### Command-line Interface
-
+2. Build the project:
 ```bash
-# Show help
-rust-tool-template --help
-
-# Show configuration
-rust-tool-template config show
-
-# Change configuration
-rust-tool-template config set <key> <value>
-
-# Start API server
-rust-tool-template api start
-
-# Stop API server
-rust-tool-template api stop
+cargo build
 ```
 
-### API Server
+### Usage
 
-The API server provides the following endpoints:
+#### CLI Mode (Default)
+```bash
+# Run in CLI mode
+cargo run -- --cli
 
-- `GET /api/hello`: Health check
-- `POST /api/echo`: Echo endpoint
-
-## Logging System
-
-- Logs are output to the standard directory for each OS by default.
-- Log files are rotated (default: daily, max 10 files) to prevent excessive growth.
-- In Docker or container environments, console output is automatically minimized to reduce log size.
-- The following environment variables can be used to control behavior:
-
-| Environment Variable | Description                          | Default Value |
-|----------------------|--------------------------------------|---------------|
-| LOG_ROTATION         | Log rotation interval (DAILY, etc.)  | DAILY         |
-| LOG_MAX_FILES        | Number of log files to retain        | 10            |
-| LOG_BUFFER_SIZE      | Log buffer size (bytes)              | 8192          |
-| RUST_LOG             | Log level (info, debug, etc.)        | info          |
-
-#### Docker Usage Example
-
-```dockerfile
-FROM rust:1.70 as builder
-WORKDIR /usr/src/app
-COPY . .
-RUN cargo build --release
-
-FROM debian:bullseye-slim
-COPY --from=builder /usr/src/app/target/release/myapp /usr/local/bin/myapp
-ENV LOG_ROTATION=HOURLY
-ENV LOG_MAX_FILES=5
-ENV LOG_BUFFER_SIZE=16384
-ENV RUST_LOG=info
-CMD ["myapp"]
+# Or force CLI mode
+cargo run -- --cli --lang ja --log-level debug
 ```
+
+#### GUI Mode (Tauri)
+```bash
+# Development mode
+cargo tauri dev
+
+# Build for production
+cargo tauri build
+```
+
+#### Command Line Options
+
+- `--cli`, `-c`: Force CLI mode instead of GUI
+- `--lang <LANG>`, `-l <LANG>`: Set language (en, ja)
+- `--log-level <LEVEL>`: Set log level (debug, info, warn, error)
 
 ## Development
 
-### Testing
+### DevContainer Setup
 
-```bash
-# Run all tests
-cargo test
+This project includes a complete DevContainer setup for consistent development environment:
 
-# Show detailed test output
-cargo test -- --nocapture
+1. Open in VS Code
+2. Install the "Dev Containers" extension
+3. Open Command Palette and select "Dev Containers: Reopen in Container"
 
-# Run specific test
-cargo test <test_name>
+### VS Code Integration
 
-# Generate test coverage
-cargo tarpaulin
-```
+- **F5**: Launch CLI mode with debugger
+- **Ctrl+Shift+P** → "Tasks: Run Task" → "Tauri: dev": Launch GUI mode
 
-### Linting
-
-```bash
-# Check code quality
-cargo clippy
-
-# Format code
-cargo fmt
-```
-
-## Project Structure
+### Project Structure
 
 ```
 src/
-├── api.rs      # API server functionality
-├── cli.rs      # Command-line interface
-├── config.rs   # Configuration management
-├── core.rs     # Core business logic
-├── error.rs    # Error handling
-├── i18n.rs     # Internationalization support
-├── lib.rs      # Library entry point
-├── logging.rs  # Logging system
-├── main.rs     # Application entry point
-├── platform.rs # Platform-specific features
-└── utils.rs    # Utility functions
+├── core/           # Shared application logic
+├── cli/            # TUI-based CLI interface
+├── tauri/          # Tauri GUI commands
+├── utils/          # Utility modules (logging, i18n, platform)
+├── error.rs        # Error handling
+├── lib.rs          # Library root
+└── main.rs         # Application entry point
+
+locales/            # Internationalization files
+├── en/messages.ftl # English messages
+└── ja/messages.ftl # Japanese messages
+
+tests/              # Test files
+├── integration_tests.rs
+└── unit_tests.rs
+
+.devcontainer/      # DevContainer configuration
+.github/workflows/  # CI/CD workflows
+.vscode/           # VS Code settings
 ```
 
-## Key Dependencies
+### Architecture
 
-- [tracing](https://crates.io/crates/tracing)
-- [tracing-subscriber](https://crates.io/crates/tracing-subscriber)
-- [tracing-appender](https://crates.io/crates/tracing-appender)
-- [tempfile](https://crates.io/crates/tempfile)
-- [clap](https://github.com/clap-rs/clap)
-- [actix-web](https://actix.rs/)
-- [serde](https://serde.rs/)
-- [tokio](https://tokio.rs/)
+The application follows a modular architecture:
 
-## License
+- **Core Module**: Contains shared business logic between CLI and GUI
+- **CLI Module**: Implements TUI-based interface using ratatui
+- **Tauri Module**: Provides commands for GUI frontend
+- **Utils Module**: Platform-specific utilities, logging, and i18n
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+### Configuration
+
+Application settings are stored in:
+- **Linux**: `~/.config/rust-tool-template/settings.toml`
+- **Windows**: `%APPDATA%/kako-jun/rust-tool-template/config/settings.toml`
+- **macOS**: `~/Library/Application Support/com.kako-jun.rust-tool-template/settings.toml`
+
+Logs are stored in:
+- **Linux**: `~/.local/share/rust-tool-template/logs/`
+- **Windows**: `%APPDATA%/kako-jun/rust-tool-template/data/logs/`
+- **macOS**: `~/Library/Application Support/com.kako-jun.rust-tool-template/logs/`
+
+## Testing
+
+Run all tests:
+```bash
+cargo test
+```
+
+Run specific test:
+```bash
+cargo test unit_tests
+cargo test integration_tests
+```
+
+## Internationalization
+
+The application supports multiple languages using Fluent:
+
+- Add new language files in `locales/<lang>/messages.ftl`
+- Update the i18n module to load the new language
+- Use the `get_localized_text()` function to retrieve translated strings
 
 ## Contributing
 
-1. Fork this repository
-2. Create a new branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Create a Pull Request
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests for new functionality
+5. Run `cargo clippy` and `cargo fmt`
+6. Submit a pull request
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## Author
 
-Your Name <your.email@example.com>
+- **kako-jun** - [GitHub](https://github.com/kako-jun)
 
 ## Acknowledgments
 
-- [Rust](https://www.rust-lang.org/)
-- [Cargo](https://doc.rust-lang.org/cargo/)
-- [Clap](https://github.com/clap-rs/clap)
-- [Actix Web](https://actix.rs/)
-- [Serde](https://serde.rs/)
-- [Tokio](https://tokio.rs/)
-- [tracing](https://crates.io/crates/tracing)
-- [tracing-subscriber](https://crates.io/crates/tracing-subscriber)
-- [tracing-appender](https://crates.io/crates/tracing-appender)
-- [tempfile](https://crates.io/crates/tempfile)
+- [Tauri](https://tauri.app/) for the GUI framework
+- [ratatui](https://github.com/ratatui-org/ratatui) for the TUI interface
+- [Fluent](https://projectfluent.org/) for internationalization

@@ -1,178 +1,178 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+このファイルは Claude Code (claude.ai/code) がこのリポジトリのコードを操作する際のガイダンスを提供します。
 
-## Project Background & Vision
+## プロジェクトの背景と目標
 
-**Sid Note** is a bass fretboard visualization web application. The name combines "Sid Vicious", "Death Note", and musical notes.
+**Sid Note** はベースフレットボード可視化Webアプリケーションです。名前は「Sid Vicious」「Death Note」「音符」を組み合わせています。
 
-### Problem Statement
-- Bass chord charts don't show unique fingering positions (octave/string variations)
-- TAB notation shows fingering but can't express muting techniques (right hand, left hand, fingers, palm)
-- Existing fretboard diagrams are static images (Photoshop-created), difficult to modify
+### 課題設定
+- ベースコード表には独特な指使いのポジション（オクターブ/弦のバリエーション）が表示されない
+- TAB記譜は指使いを示すが、ミュート技法（右手、左手、指、パーム）を表現できない
+- 既存のフレットボード図は静的画像（Photoshop作成）で、修正が困難
 
-### Solution
-- Canvas-generated fretboard diagrams showing fingering and muting suggestions with reasoning
-- Currently personal use (embedded in TSX)
-- Future: Web API returning canvas images for blog embedding
+### ソリューション
+- フィンガリングとミュート提案を理由とともに表示するCanvas生成フレットボード図
+- 現在は個人使用（TSXに埋め込み）
+- 将来：ブログ埋め込み用のCanvas画像を返すWeb API
 
-### Current Status
-- **sid-note_old**: Working reference implementation (ideal state)
-- **Current version**: Degraded after AI refactoring, needs restoration
+### 現在の状況
+- **sid-note_old**: 動作する参照実装（理想的な状態）
+- **現在のバージョン**: AIリファクタリング後に劣化、復旧が必要
 
-### Refactoring Goals
-1. **Restore functionality**: No feature degradation from sid-note_old
-2. **Revert styling**: Remove Tailwind CSS, return to inline styles
-3. **Preserve structure**: Keep utils/ directory organization and core/ naming
-4. **Maintain tests**: Preserve valuable test cases (handles complex musical chords)
-5. **Japanese notation**: Support ♭ (flat) and ＃ (sharp) characters
+### リファクタリング目標
+1. **機能復旧**: sid-note_oldから機能劣化なし
+2. **スタイル復旧**: Tailwind CSSを削除し、インラインスタイルに戻す
+3. **構造保持**: utils/ディレクトリ構成とcore/命名を維持
+4. **テスト維持**: 貴重なテストケース（複雑な音楽コードを処理）を保持
+5. **日本語記譜**: ♭（フラット）と＃（シャープ）文字をサポート
 
-## Development Commands
+## 開発コマンド
 
 ```bash
-# Development server
+# 開発サーバー
 npm run dev
 
-# Production build
+# プロダクションビルド
 npm run build
 
-# Type checking
+# 型チェック
 npm run type-check
 
-# Linting
+# リンティング
 npm run lint
 
-# Run all tests
+# 全テスト実行
 npm run test
 
-# Run specific test file
+# 特定のテストファイル実行
 npm run test -- path/to/test.test.ts
 
-# Run tests in watch mode
+# ウォッチモードでテスト実行
 npm run test -- --watch
 ```
 
-## Project Architecture
+## プロジェクトアーキテクチャ
 
-### Component Organization
+### コンポーネント構成
 
-The project uses a strict CSR/SSR component separation:
+プロジェクトでは厳密なCSR/SSRコンポーネント分離を使用：
 
-- `src/components/ssr/` - Server-side rendered components (static content)
-- `src/components/csr/` - Client-side rendered components (interactive features)
+- `src/components/ssr/` - サーバーサイドレンダリングコンポーネント（静的コンテンツ）
+- `src/components/csr/` - クライアントサイドレンダリングコンポーネント（インタラクティブ機能）
 
-This separation is architectural - SSR components handle data presentation while CSR components handle user interactions like audio playback and dynamic UI.
+この分離は建築的なもので、SSRコンポーネントはデータ表示を扱い、CSRコンポーネントは音声再生や動的UIなどのユーザーインタラクションを扱います。
 
-### Music Theory Library
+### 音楽理論ライブラリ
 
-Located in `src/utils/music/theory/`, this is a comprehensive music theory implementation using a "default + delta" design pattern:
+`src/utils/music/theory/`に配置されたこのライブラリは、「デフォルト + デルタ」設計パターンを使用した包括的な音楽理論実装です：
 
-- **Core modules** (`core/`): Notes, intervals, chords, scales, pitch, frequency, notation
-- **Harmony modules** (`harmony/`): Functional harmony analysis and chord progressions
-- **Audio modules** (`audio/`): Sound generation and playback management
+- **コアモジュール** (`core/`): 音符、インターバル、コード、スケール、ピッチ、周波数、記譜
+- **ハーモニーモジュール** (`harmony/`): 機能和声分析とコード進行
+- **オーディオモジュール** (`audio/`): 音生成と再生管理
 
-The chord system implements the "default + delta" pattern where chords start with a major triad (1, 3, 5) and apply modifications (e.g., 'm' changes 3 to ♭3).
+コードシステムは「デフォルト + デルタ」パターンを実装し、コードはメジャートライアド（1, 3, 5）から開始し、修正を適用します（例：'m'は3を♭3に変更）。
 
-### Data Management
+### データ管理
 
-- **YAML + Zod validation**: Track data stored in `public/track/` as YAML files
-- **Schema validation**: `src/schemas/` contains Zod schemas for type-safe data validation
-- **Loaders**: `src/utils/loader/` handles data loading and validation
+- **YAML + Zod バリデーション**: トラックデータは`public/track/`にYAMLファイルとして保存
+- **スキーマバリデーション**: `src/schemas/`には型安全なデータバリデーション用のZodスキーマ
+- **ローダー**: `src/utils/loader/`がデータ読み込みとバリデーションを処理
 
-### Track Data Structure
+### トラックデータ構造
 
-Each track contains:
-- Metadata (title, artist, key, tempo, time signature)
-- Sections (intro, verse, chorus, etc.)
-- Notes with fingering instructions (finger, string, fret positions)
-- Chord segments with harmonic analysis
+各トラックには以下が含まれます：
+- メタデータ（タイトル、アーティスト、キー、テンポ、拍子記号）
+- セクション（イントロ、ヴァース、コーラスなど）
+- フィンガリング指示付きの音符（指、弦、フレットポジション）
+- 和声分析付きのコードセグメント
 
-## Key Technical Patterns
+## 主要な技術パターン
 
-### TypeScript Configuration
+### TypeScript設定
 
-- Strict mode enabled with additional checks (`noUnusedLocals`, `noImplicitReturns`)
-- Path mapping: `@/*` maps to `src/*`
-- ESLint enforces explicit function return types and no-any policies
+- 追加チェックを有効にした厳密モード（`noUnusedLocals`, `noImplicitReturns`）
+- パスマッピング: `@/*` は `src/*` にマップ
+- ESLintは明示的な関数戻り値型とno-anyポリシーを強制
 
-### Testing Strategy
+### テスト戦略
 
-- Jest with ts-jest preset
-- Coverage thresholds set to 80% across all metrics
-- Test files follow `*.test.ts` pattern
-- Music theory modules have comprehensive unit tests
+- ts-jestプリセットのJest
+- カバレッジ閾値は全メトリクスで80%に設定
+- テストファイルは`*.test.ts`パターンに従う
+- 音楽理論モジュールには包括的なユニットテスト
 
-### File Naming Conventions
+### ファイル命名規則
 
-- React components: PascalCase (e.g., `ChordSegment.tsx`)
-- Utilities: camelCase (e.g., `chordUtil.ts`)
-- Test files: `*.test.ts` suffix
-- Schema files: `*Schema.ts` suffix
+- Reactコンポーネント: PascalCase（例：`ChordSegment.tsx`）
+- ユーティリティ: camelCase（例：`chordUtil.ts`）
+- テストファイル: `*.test.ts`サフィックス
+- スキーマファイル: `*Schema.ts`サフィックス
 
-## Music Theory Library Specifications
+## 音楽理論ライブラリ仕様
 
-### Design Philosophy
-- **Custom implementation**: No external music theory libraries (for Japanese language support)
-- **Bass-focused**: 4-string bass primary, 6-string bass future support (no guitar support needed)
-- **Reusable**: Future NPM package candidate
+### 設計哲学
+- **カスタム実装**: 外部音楽理論ライブラリなし（日本語言語サポートのため）
+- **ベース中心**: 4弦ベースが主、6弦ベースは将来サポート（ギターサポートは不要）
+- **再利用可能**: 将来のNPMパッケージ候補
 
-### Notation Standards
-- **Input normalization**: Accept b, #, ♯, ♭ → normalize to ♭, ＃ internally
-- **Interval notation**: ♭3, ＃5 format
-- **Pitch notation**: C3, D♭4 format  
-- **Enharmonic notation**: C＃/D♭3 format (not C＃3/D♭3)
-- **Roman numerals**: Ⅶ format (not VII)
-- **Internal unit**: Fret numbers (semitones) for calculations
+### 記譜標準
+- **入力正規化**: b, #, ♯, ♭を受け入れ → 内部で♭, ＃に正規化
+- **インターバル記譜**: ♭3, ＃5形式
+- **ピッチ記譜**: C3, D♭4形式  
+- **異名同音記譜**: C＃/D♭3形式（C＃3/D♭3ではない）
+- **ローマ数字**: Ⅶ形式（VIIではない）
+- **内部単位**: 計算にはフレット数（半音）を使用
 
-### Key Functions Required
-- Normalization (♭, ＃)
-- Note/octave parsing (regex)
-- Interval/pitch/chord/key/scale/cadence conversions
-- Functional harmony analysis
-- Chord voicing generation
+### 必要な主要機能
+- 正規化（♭, ＃）
+- 音符/オクターブ解析（正規表現）
+- インターバル/ピッチ/コード/キー/スケール/カデンツ変換
+- 機能和声分析
+- コードボイシング生成
 
-### Reference Implementation
-- **sid-note_old**: Correct behavior reference
-- **Current tests**: Valuable test cases to preserve
-- **Test expectations**: May need updates for new internal units
+### 参照実装
+- **sid-note_old**: 正しい動作の参照
+- **現在のテスト**: 保持すべき貴重なテストケース
+- **テスト期待値**: 新しい内部単位に対して更新が必要な可能性
 
-## Music Theory Implementation Notes
+## 音楽理論実装ノート
 
-When working with the music theory modules:
+音楽理論モジュールを扱う際は：
 
-- Chord parsing uses regex patterns to extract musical information
-- Interval calculations are semitone-based
-- Note names support both sharp (#) and flat (♭) notations
-- Audio generation uses Web Audio API for precise frequency control
+- コード解析は正規表現パターンを使用して音楽情報を抽出
+- インターバル計算は半音ベース
+- 音名はシャープ（#）とフラット（♭）両方の記譜をサポート
+- 音声生成は正確な周波数制御にWeb Audio APIを使用
 
-## Development Workflow
+## 開発ワークフロー
 
-1. Always run type checking before committing: `npm run type-check`
-2. Lint code: `npm run lint`
-3. Run tests to ensure music theory accuracy: `npm run test`
-4. Use the existing component patterns when adding new features
-5. Follow the CSR/SSR separation for new components
+1. コミット前に必ず型チェック実行: `npm run type-check`
+2. コードリント: `npm run lint`
+3. 音楽理論の正確性を確保するためテスト実行: `npm run test`
+4. 新機能追加時は既存のコンポーネントパターンを使用
+5. 新コンポーネントではCSR/SSR分離に従う
 
-## Refactoring Principles
+## リファクタリング原則
 
-### Priority Order
-1. **sid-note_old as truth**: When uncertain, sid-note_old behavior is correct
-2. **No functional regression**: All features must work as before
-3. **Preserve valuable tests**: Test cases handle complex musical scenarios
-4. **Internal structure improvement**: Better organization without external changes
+### 優先順序
+1. **sid-note_oldが真実**: 不確実な場合、sid-note_oldの動作が正しい
+2. **機能退行なし**: 全機能は以前と同様に動作する必要
+3. **貴重なテスト保持**: テストケースは複雑な音楽シナリオを処理
+4. **内部構造改善**: 外部変更なしでより良い組織化
 
-### Approach
-- Remove Tailwind CSS completely, revert to inline styles
-- Fix broken utils/ functions while preserving directory structure
-- Update test expectations if internal units change
-- Maintain CSR/SSR component separation
-- Keep core/ naming and organization
+### アプローチ
+- Tailwind CSSを完全に削除し、インラインスタイルに戻す
+- ディレクトリ構造を保持しながら壊れたutils/機能を修正
+- 内部単位が変更された場合はテスト期待値を更新
+- CSR/SSRコンポーネント分離を維持
+- core/命名と組織化を維持
 
-## Work History
+## 作業履歴
 
-### 2025/6/10 - Debug Execution Fix
-- Next.js 14.1.0 → 15.3.2 upgrade
-- React 18 → 19 upgrade  
-- Fixed params Promise type compatibility
-- Removed unused variables and import errors
-- Successfully restored build and dev server functionality
+### 2025/6/10 - デバッグ実行修正
+- Next.js 14.1.0 → 15.3.2 アップグレード
+- React 18 → 19 アップグレード  
+- paramsのPromise型互換性を修正
+- 未使用変数とインポートエラーを削除
+- ビルドと開発サーバーの機能を正常に復旧

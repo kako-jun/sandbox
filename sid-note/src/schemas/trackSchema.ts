@@ -35,6 +35,8 @@ export const NoteSchema = z.object({
     "triplet_8th",
     "triplet_16th",
   ]),
+  beat: z.number().nullable().optional(),
+  dynamics: z.string().nullable().optional(),
   remarks: z.array(z.string()).nullable().optional(),
   tags: z
     .array(z.enum(["easy", "hard"]))
@@ -48,6 +50,8 @@ export type NoteType = z.infer<typeof NoteSchema>;
 export const ChordSegmentSchema = z.object({
   chord: z.string(),
   on: z.string().nullable().optional(),
+  beat: z.number().nullable().optional(),
+  bassNote: z.string().nullable().optional(),
   remarks: z.array(z.string()).nullable().optional(),
   key: z.string().nullable().optional(),
   notes: z.array(NoteSchema),

@@ -1,60 +1,23 @@
-# Docker Compose file for rust-tool-template development environment
-# Note: version field is deprecated in newer Docker Compose versions
+version: '3.8'
 
 services:
-  rust-tool-template:
+  app:
     build: 
-      context: ..
-      dockerfile: .devcontainer/Dockerfile
-    container_name: rust-tool-template
-    restart: unless-stopped
-    environment:
-      - RUST_LOG=rust_tool_template=info
-      - RUST_TOOL_LANG=en
-      - RUST_BACKTRACE=1
+      context: .
+      dockerfile: Dockerfile
     volumes:
-      - ..:/workspace:cached
-      - rust_tool_logs:/workspace/logs
-      - rust_tool_data:/workspace/data
-    # Docker container log rotation settings
+      - ../..:/workspaces:cached
+      - cargo-cache:/usr/local/cargo/registry
+      - target-cache:/workspace/target
+    command: sleep infinity
+    environment:
+      - RUST_LOG=debug
     logging:
       driver: "json-file"
       options:
         max-size: "10m"
-        max-file: "5"
-        compress: "true"
-
-  # Example for running in Japanese
-  rust-tool-template-ja:
-    build: 
-      context: ..
-      dockerfile: .devcontainer/Dockerfile
-    container_name: rust-tool-template-ja
-    restart: unless-stopped
-    environment:
-      - RUST_LOG=rust_tool_template=info
-      - RUST_TOOL_LANG=ja
-      - RUST_BACKTRACE=1
-    volumes:
-      - ..:/workspace:cached
-      - rust_tool_logs_ja:/workspace/logs
-      - rust_tool_data_ja:/workspace/data
-    # Docker container log rotation settings
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "5"
-        compress: "true"
-    profiles:
-      - japanese
+        max-file: "3"
 
 volumes:
-  rust_tool_logs:
-    driver: local
-  rust_tool_data:
-    driver: local
-  rust_tool_logs_ja:
-    driver: local
-  rust_tool_data_ja:
-    driver: local 
+  cargo-cache:
+  target-cache:

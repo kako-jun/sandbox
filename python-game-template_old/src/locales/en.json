@@ -1,0 +1,17 @@
+{
+  "welcome": "Python Game",
+  "score": "Score: {score}",
+  "game_over": "Game Over!",
+  "player": "Player",
+  "difficulty": "Difficulty",
+  "enter_player_name": "Enter your name",
+  "select_difficulty": "Select difficulty",
+  "select_game_mode": "Select game mode",
+  "custom_settings": "Do you want to customize game settings?",
+  "board_width": "Enter board width",
+  "board_height": "Enter board height",
+  "time_limit": "Enter time limit (seconds)",
+  "usage": "Python Game CLI",
+  "help": "Use arrow keys to move, 'q' to quit, 'r' to reset",
+  "error": "Error: {error}"
+}

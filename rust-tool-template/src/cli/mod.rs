@@ -1,452 +1,396 @@
-/// CLIモジュール（TUI/コマンドライン両対応）
-pub mod tui;
+/*!
+ * CLI (Command Line Interface) モジュール
+ * 
+ * TUIベースのコマンドラインインターフェースを提供する
+ */
 
-use crate::core::AppLogic;
-use crate::utils::{
-    explain_log_directories, get_log_directory, get_log_directory_info, get_platform_info, I18n,
+use crate::core::AppCore;
+use crate::error::{AppError, Result};
+use crate::utils::get_localized_text;
+use crossterm::{
+    event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyEventKind},
+    execute,
+    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
-use anyhow::Result;
-use clap::{Arg, Command, Parser, Subcommand};
-use fluent_bundle::FluentArgs;
-use std::io::{self, Write};
-use std::sync::{Arc, Mutex};
-use tracing::{error, info, warn};
-use crate::error::AppError;
+use ratatui::{
+    backend::CrosstermBackend,
+    layout::{Alignment, Constraint, Direction, Layout},
+    style::{Color, Modifier, Style},
+    text::{Line, Span},
+    widgets::{Block, Borders, List, ListItem, ListState, Paragraph},
+    Frame, Terminal,
+};
+use std::io;
 
-/// CLIエントリーポイント関数
-pub async fn run() -> Result<()> {
-    // Initialize internationalization
-    let mut i18n = I18n::new();
-
-    // Check for language environment variable
-    if let Ok(lang) = std::env::var("RUST_TOOL_LANG") {
-        i18n.set_language(&lang);
-    } else if let Ok(lang) = std::env::var("LANG") {
-        if lang.starts_with("ja") {
-            i18n.set_language("ja");
-        }
-    }
-
-    let matches = Command::new("rust-tool-template")
-        .version("0.1.0")
-        .author("kako-jun")
-        .about(&i18n.get("app-description"))
-        .arg(
-            Arg::new("mode")
-                .short('m')
-                .long("mode")
-                .help("Execution mode")
-                .value_parser(["cli", "tui"])
-                .default_value("tui"),
-        )
-        .arg(
-            Arg::new("command")
-                .short('c')
-                .long("command")
-                .help("Command to execute")
-                .value_parser([
-                    "add",
-                    "list",
-                    "process",
-                    "stats",
-                    "interactive-add",
-                    "batch-add",
-                    "log-info",
-                    "platform-info",
-                ]),
-        )
-        .arg(
-            Arg::new("name")
-                .short('n')
-                .long("name")
-                .help("Name for the data entry"),
-        )
-        .arg(
-            Arg::new("value")
-                .short('v')
-                .long("value")
-                .help("Value for the data entry")
-                .value_parser(clap::value_parser!(i32)),
-        )
-        .arg(
-            Arg::new("lang")
-                .short('l')
-                .long("lang")
-                .help("Language (en/ja)")
-                .value_parser(["en", "ja"]),
-        )
-        .get_matches();
-
-    // Update language if specified via command line
-    if let Some(lang) = matches.get_one::<String>("lang") {
-        i18n.set_language(lang);
-    }
-
-    info!("Language set to: {}", i18n.current_language());
-    info!("Log directory: {}", get_log_directory().display());
-    info!("Embedded API server will be available on http://localhost:3030-3034");
-
-    let app_logic = Arc::new(Mutex::new(AppLogic::new()));
-
-    match matches.get_one::<String>("mode").unwrap().as_str() {
-        "tui" => {
-            info!("Starting TUI mode");
-            tui::run_tui(app_logic)?;
-        }
-        "cli" => {
-            info!("Starting CLI mode");
-            if matches.get_one::<String>("command").is_none() {
-                // 引数なしの場合はヘルプメッセージを表示
-                let mut help = String::new();
-                help.push_str(&format!("{}\n\n", i18n.get("app-description")));
-                help.push_str(&i18n.get("usage-examples"));
-                help.push_str("\n\nAvailable Commands:\n");
-                help.push_str("  add             - Add a new data entry\n");
-                help.push_str("  list            - List all data entries\n");
-                help.push_str("  process         - Process all data entries\n");
-                help.push_str("  stats           - Show statistics\n");
-                help.push_str("  interactive-add - Add data interactively\n");
-                help.push_str("  batch-add       - Add multiple data entries\n");
-                help.push_str("  log-info        - Show log directory information\n");
-                help.push_str("  platform-info   - Show platform information\n");
-                help.push_str("\nFor more information, use --help\n");
-                println!("{}", help);
-                return Ok(());
-            }
-            run_cli_mode(&matches, app_logic, &i18n)?;
-        }
-        _ => unreachable!(),
-    }
-
-    Ok(())
+/// CLI アプリケーション構造体
+pub struct CliApp {
+    /// 共通アプリケーションコア
+    app_core: AppCore,
+    /// メニューの状態
+    menu_state: ListState,
+    /// 現在のビュー
+    current_view: AppView,
+    /// 終了フラグ
+    should_quit: bool,
 }
 
-fn run_cli_mode(
-    matches: &clap::ArgMatches,
-    app_logic: Arc<Mutex<AppLogic>>,
-    i18n: &I18n,
-) -> Result<()> {
-    match matches.get_one::<String>("command") {
-        Some(cmd) => match cmd.as_str() {
-            "add" => {
-                let name = matches
-                    .get_one::<String>("name")
-                    .ok_or_else(|| anyhow::anyhow!("{}", i18n.get("name-required")))?;
-                let value = matches
-                    .get_one::<i32>("value")
-                    .ok_or_else(|| anyhow::anyhow!("{}", i18n.get("value-required")))?;
+/// アプリケーションビューの種類
+#[derive(Debug, Clone, PartialEq)]
+pub enum AppView {
+    /// メインメニュー
+    MainMenu,
+    /// メインコンテンツ表示
+    MainContent,
+    /// 設定画面
+    Settings,
+    /// ヘルプ画面
+    Help,
+}
 
-                let mut logic = app_logic.lock().unwrap();
-                let id = logic.add_data(name.clone(), *value);
+/// メニュー項目
+const MENU_ITEMS: &[&str] = &[
+    "main-content",
+    "settings", 
+    "help",
+    "quit"
+];
 
-                let mut args = FluentArgs::new();
-                args.set("id", id);
-                println!("{}", i18n.get_with_args("added-entry", Some(&args)));
-
-                info!(
-                    "Added data entry: name={}, value={}, id={}",
-                    name, value, id
-                );
-            }
-            "list" => {
-                let logic = app_logic.lock().unwrap();
-                let data = logic.get_all_data();
-                if data.is_empty() {
-                    println!("{}", i18n.get("no-data-found"));
-                } else {
-                    println!("{}:", i18n.get("data-entries"));
-                    for entry in data {
-                        println!(
-                            "  ID: {}, Name: {}, Value: {}",
-                            entry.id, entry.name, entry.value
-                        );
+impl CliApp {
+    /// 新しいCliAppインスタンスを作成する
+    /// 
+    /// # Arguments
+    /// * `app_core` - 既に初期化されたアプリケーションコア
+    /// 
+    /// # Returns
+    /// 初期化されたCliAppインスタンス
+    pub fn new(app_core: AppCore) -> Result<Self> {
+        let mut menu_state = ListState::default();
+        menu_state.select(Some(0));
+        
+        Ok(Self {
+            app_core,
+            menu_state,
+            current_view: AppView::MainMenu,
+            should_quit: false,
+        })
+    }
+    
+    /// CLIアプリケーションを実行する
+    /// 
+    /// # Returns
+    /// アプリケーションの実行結果
+    pub fn run(&mut self) -> Result<()> {
+        // ターミナルの初期化
+        enable_raw_mode()?;
+        let mut stdout = io::stdout();
+        execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
+        let backend = CrosstermBackend::new(stdout);
+        let mut terminal = Terminal::new(backend)
+            .map_err(|e| AppError::Tui(format!("ターミナルの初期化エラー: {}", e)))?;
+        
+        // メインループ
+        let result = self.run_app(&mut terminal);
+        
+        // ターミナルの復元
+        disable_raw_mode()?;
+        execute!(
+            terminal.backend_mut(),
+            LeaveAlternateScreen,
+            DisableMouseCapture
+        )?;
+        terminal.show_cursor()
+            .map_err(|e| AppError::Tui(format!("カーソル表示エラー: {}", e)))?;
+        
+        if let Err(err) = result {
+            eprintln!("アプリケーションエラー: {}", err);
+        }
+        
+        Ok(())
+    }
+    
+    /// アプリケーションのメインループ
+    /// 
+    /// # Arguments
+    /// * `terminal` - ターミナルインスタンス
+    /// 
+    /// # Returns
+    /// 実行結果
+    fn run_app<B: ratatui::backend::Backend>(&mut self, terminal: &mut Terminal<B>) -> Result<()> {
+        loop {
+            // 画面を描画
+            terminal.draw(|f| self.ui(f))
+                .map_err(|e| AppError::Tui(format!("描画エラー: {}", e)))?;
+            
+            // イベントを処理
+            if event::poll(std::time::Duration::from_millis(250))
+                .map_err(|e| AppError::Tui(format!("イベントポーリングエラー: {}", e)))? {
+                if let Event::Key(key) = event::read()
+                    .map_err(|e| AppError::Tui(format!("キー読み取りエラー: {}", e)))? {
+                    if key.kind == KeyEventKind::Press {
+                        self.handle_input(key.code)?;
                     }
                 }
-                info!("Listed {} data entries", logic.get_all_data().len());
             }
-            "process" => {
-                let mut logic = app_logic.lock().unwrap();
-                match logic.process_data() {
-                    Ok(result) => {
-                        println!("{}", result);
-                        info!("Data processing completed successfully");
+            
+            // 終了チェック
+            if self.should_quit {
+                break;
+            }
+        }
+        Ok(())
+    }
+    
+    /// ユーザー入力を処理する
+    /// 
+    /// # Arguments
+    /// * `key` - 押されたキー
+    /// 
+    /// # Returns
+    /// 処理結果
+    fn handle_input(&mut self, key: KeyCode) -> Result<()> {
+        match self.current_view {
+            AppView::MainMenu => {
+                match key {
+                    KeyCode::Up => {
+                        let selected = self.menu_state.selected().unwrap_or(0);
+                        let new_index = if selected == 0 {
+                            MENU_ITEMS.len() - 1
+                        } else {
+                            selected - 1
+                        };
+                        self.menu_state.select(Some(new_index));
                     }
-                    Err(e) => {
-                        let mut args = FluentArgs::new();
-                        args.set("error", e.to_string());
-                        eprintln!("{}", i18n.get_with_args("error-processing", Some(&args)));
-                        error!("Data processing failed: {}", e);
+                    KeyCode::Down => {
+                        let selected = self.menu_state.selected().unwrap_or(0);
+                        let new_index = (selected + 1) % MENU_ITEMS.len();
+                        self.menu_state.select(Some(new_index));
                     }
+                    KeyCode::Enter => {
+                        if let Some(selected) = self.menu_state.selected() {
+                            match MENU_ITEMS[selected] {
+                                "main-content" => self.current_view = AppView::MainContent,
+                                "settings" => self.current_view = AppView::Settings,
+                                "help" => self.current_view = AppView::Help,
+                                "quit" => self.should_quit = true,
+                                _ => {}
+                            }
+                        }
+                    }
+                    KeyCode::Char('q') => self.should_quit = true,
+                    _ => {}
                 }
-            }
-            "stats" => {
-                let logic = app_logic.lock().unwrap();
-                let stats = logic.get_statistics();
-                println!("{}:", i18n.get("statistics"));
-                for (key, value) in stats {
-                    println!("  {}: {}", key, value);
-                }
-                info!("Displayed statistics");
-            }
-            "interactive-add" => {
-                handle_interactive_add(&matches, app_logic, i18n)?;
-            }
-            "batch-add" => {
-                handle_batch_add(&matches, app_logic, i18n)?;
-            }
-            "log-info" => {
-                println!("Log Directory Information");
-                println!("========================");
-                println!();
-                println!("{}", get_log_directory_info());
-                println!();
-                println!("{}", explain_log_directories());
-                info!("Displayed log directory information");
-            }
-            "platform-info" => {
-                let platform = get_platform_info();
-                println!("{}", platform.detailed_info());
-                println!();
-                println!("Recommended Locations:");
-                println!("  Log Directory: {}", platform.recommended_log_location());
-                println!("  Config Directory: {}", platform.config_location());
-                println!();
-                println!("Platform-specific Details:");
-                println!(
-                    "  Executable Extension: {}",
-                    if platform.executable_extension().is_empty() {
-                        "none"
-                    } else {
-                        platform.executable_extension()
-                    }
-                );
-                println!("  Path Separator: {}", platform.path_separator());
-                info!("Displayed platform information");
             }
             _ => {
-                let mut args = FluentArgs::new();
-                args.set("command", cmd);
-                eprintln!("{}", i18n.get_with_args("unknown-command", Some(&args)));
-                warn!("Unknown command attempted: {}", cmd);
-            }
-        },
-        None => {
-            // Show usage examples when no command is specified
-            println!("{}", i18n.get("no-command-specified"));
-            println!();
-            println!("{}", i18n.get("usage-title"));
-
-            let program = "rust-tool-template";
-            let mut args = FluentArgs::new();
-            args.set("program", program);
-
-            println!("  {}", i18n.get_with_args("usage-add", Some(&args)));
-            println!("  {}", i18n.get_with_args("usage-list", Some(&args)));
-            println!("  {}", i18n.get_with_args("usage-process", Some(&args)));
-            println!("  {}", i18n.get_with_args("usage-stats", Some(&args)));
-            println!("  {}", i18n.get_with_args("usage-tui", Some(&args)));
-            println!(
-                "  {}",
-                i18n.get_with_args("usage-interactive-add", Some(&args))
-            );
-            println!("  {}", i18n.get_with_args("usage-batch-add", Some(&args)));
-
-            warn!("No command specified by user");
-        }
-    }
-
-    Ok(())
-}
-
-// Interactive add: arguments can be provided or asked interactively
-fn handle_interactive_add(
-    matches: &clap::ArgMatches,
-    app_logic: Arc<Mutex<AppLogic>>,
-    i18n: &I18n,
-) -> Result<()> {
-    println!("{}", i18n.get("interactive-add-title"));
-
-    // Get name from argument or ask interactively
-    let name = match matches.get_one::<String>("name") {
-        Some(name) => {
-            println!("Using provided name: {}", name);
-            name.clone()
-        }
-        None => {
-            print!("Enter name: ");
-            io::stdout().flush()?;
-            let mut input = String::new();
-            io::stdin().read_line(&mut input)?;
-            input.trim().to_string()
-        }
-    };
-
-    // Get value from argument or ask interactively with default
-    let value = match matches.get_one::<i32>("value") {
-        Some(value) => {
-            println!("Using provided value: {}", value);
-            *value
-        }
-        None => {
-            print!("Enter value (default: 100): ");
-            io::stdout().flush()?;
-            let mut input = String::new();
-            io::stdin().read_line(&mut input)?;
-            let trimmed = input.trim();
-            if trimmed.is_empty() {
-                100 // Default value
-            } else {
-                trimmed.parse::<i32>().unwrap_or_else(|_| {
-                    println!("Invalid number, using default: 100");
-                    100
-                })
+                match key {
+                    KeyCode::Esc => self.current_view = AppView::MainMenu,
+                    KeyCode::Char('q') => self.should_quit = true,
+                    _ => {}
+                }
             }
         }
-    };
-
-    // Ask for optional metadata
-    print!("Enter category (optional): ");
-    io::stdout().flush()?;
-    let mut category = String::new();
-    io::stdin().read_line(&mut category)?;
-    let category = category.trim();
-
-    let mut logic = app_logic.lock().unwrap();
-    let id = logic.add_data(name.clone(), value);
-
-    // Add metadata if provided
-    if !category.is_empty() {
-        if let Some(data) = logic.get_all_data().iter().find(|d| d.id == id) {
-            let mut data = data.clone();
-            data.add_metadata("category".to_string(), category.to_string());
-        }
+        Ok(())
     }
-
-    let mut args = FluentArgs::new();
-    args.set("id", id);
-    args.set("name", name.as_str());
-    args.set("value", value);
-    println!(
-        "{}",
-        i18n.get_with_args("interactive-added-entry", Some(&args))
-    );
-
-    info!(
-        "Interactive add completed: name={}, value={}, id={}",
-        name, value, id
-    );
-    Ok(())
-}
-
-// Batch add: uses arguments with defaults for missing values
-fn handle_batch_add(
-    matches: &clap::ArgMatches,
-    app_logic: Arc<Mutex<AppLogic>>,
-    i18n: &I18n,
-) -> Result<()> {
-    println!("{}", i18n.get("batch-add-title"));
-
-    // Use provided name or generate default
-    let base_name = matches
-        .get_one::<String>("name")
-        .cloned()
-        .unwrap_or_else(|| "item".to_string());
-
-    // Use provided value or default
-    let base_value = matches.get_one::<i32>("value").copied().unwrap_or(10);
-
-    println!(
-        "Adding batch entries with base name '{}' and base value {}",
-        base_name, base_value
-    );
-
-    let mut logic = app_logic.lock().unwrap();
-    let mut added_ids = Vec::new();
-
-    // Add 5 entries with incrementing names and values
-    for i in 1..=5 {
-        let name = format!("{}-{}", base_name, i);
-        let value = base_value * i;
-        let id = logic.add_data(name.clone(), value);
-        added_ids.push((id, name.clone(), value));
-        info!(
-            "Batch add entry {}: name={}, value={}, id={}",
-            i, name, value, id
-        );
-    }
-
-    println!("{}", i18n.get("batch-add-completed"));
-    for (id, name, value) in added_ids {
-        println!("  ID: {}, Name: {}, Value: {}", id, name, value);
-    }
-
-    Ok(())
-}
-
-// Helper function to read user input with prompt
-#[allow(dead_code)]
-fn prompt_input(prompt: &str) -> Result<String> {
-    print!("{}", prompt);
-    io::stdout().flush()?;
-    let mut input = String::new();
-    io::stdin().read_line(&mut input)?;
-    Ok(input.trim().to_string())
-}
-
-/// コマンドラインインターフェースの構造体
-#[derive(Parser)]
-#[command(author, version, about, long_about = None)]
-pub struct Cli {
-    /// 実行するコマンド
-    #[command(subcommand)]
-    pub command: Commands,
-}
-
-/// 利用可能なコマンドを表す列挙型
-#[derive(Subcommand)]
-pub enum Commands {
-    /// サーバーを起動
-    Server {
-        /// ポート番号
-        #[clap(short, long, default_value_t = 8080)]
-        port: u16,
-    },
-    /// 設定を表示
-    Config,
-}
-
-/// コマンドラインインターフェースを実行する関数
-pub fn run_cli() -> Result<(), AppError> {
-    let cli = Cli::parse();
     
-    match cli.command {
-        Commands::Server { port } => {
-            info!("サーバーを起動します: ポート {}", port);
-            // サーバー起動のロジックを実装
-            Ok(())
-        }
-        Commands::Config => {
-            info!("設定を表示します");
-            // 設定表示のロジックを実装
-            Ok(())
+    /// UIを描画する
+    /// 
+    /// # Arguments
+    /// * `f` - フレーム
+    fn ui(&mut self, f: &mut Frame) {
+        match self.current_view {
+            AppView::MainMenu => self.draw_menu(f),
+            AppView::MainContent => self.draw_main_content(f),
+            AppView::Settings => self.draw_settings(f),
+            AppView::Help => self.draw_help(f),
         }
     }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_cli_commands() {
-        let args = vec!["app", "server", "--port", "9090"];
-        let cli = Cli::parse_from(args);
+    
+    /// メインメニューを描画する
+    /// 
+    /// # Arguments
+    /// * `f` - フレーム
+    fn draw_menu(&mut self, f: &mut Frame) {
+        let chunks = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints([
+                Constraint::Length(3),
+                Constraint::Min(0),
+                Constraint::Length(3),
+            ])
+            .split(f.size());
         
-        match cli.command {
-            Commands::Server { port } => {
-                assert_eq!(port, 9090);
-            }
-            _ => panic!("Expected server command"),
-        }
+        // タイトル
+        let title = Paragraph::new(get_localized_text("app-title"))
+            .style(Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD))
+            .alignment(Alignment::Center)
+            .block(Block::default().borders(Borders::ALL));
+        f.render_widget(title, chunks[0]);
+        
+        // メニュー項目
+        let menu_items: Vec<ListItem> = MENU_ITEMS
+            .iter()
+            .map(|item| {
+                let content = get_localized_text(item);
+                ListItem::new(content)
+            })
+            .collect();
+        
+        let menu = List::new(menu_items)
+            .block(Block::default().title("Menu").borders(Borders::ALL))
+            .style(Style::default().fg(Color::White))
+            .highlight_style(
+                Style::default()
+                    .bg(Color::Yellow)
+                    .fg(Color::Black)
+                    .add_modifier(Modifier::BOLD)
+            )
+            .highlight_symbol(">> ");
+        
+        f.render_stateful_widget(menu, chunks[1], &mut self.menu_state);
+        
+        // ヘルプテキスト
+        let help_text = Paragraph::new("Use ↑↓ to navigate, Enter to select, 'q' to quit")
+            .style(Style::default().fg(Color::Gray))
+            .alignment(Alignment::Center)
+            .block(Block::default().borders(Borders::ALL));
+        f.render_widget(help_text, chunks[2]);
+    }
+    
+    /// メインコンテンツを描画する
+    /// 
+    /// # Arguments
+    /// * `f` - フレーム
+    fn draw_main_content(&self, f: &mut Frame) {
+        let content = self.app_core.get_main_content();
+        let paragraph = Paragraph::new(content)
+            .style(Style::default().fg(Color::White))
+            .alignment(Alignment::Center)
+            .block(Block::default()
+                .title(get_localized_text("main-content"))
+                .borders(Borders::ALL));
+        
+        let area = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints([Constraint::Min(0)])
+            .split(f.size())[0];
+        
+        f.render_widget(paragraph, area);
+        
+        // 戻るためのヘルプテキスト
+        let help_chunks = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints([Constraint::Min(0), Constraint::Length(3)])
+            .split(f.size());
+        
+        let help = Paragraph::new("Press ESC to return to menu, 'q' to quit")
+            .style(Style::default().fg(Color::Gray))
+            .alignment(Alignment::Center)
+            .block(Block::default().borders(Borders::ALL));
+        f.render_widget(help, help_chunks[1]);
+    }
+    
+    /// 設定画面を描画する
+    /// 
+    /// # Arguments
+    /// * `f` - フレーム
+    fn draw_settings(&self, f: &mut Frame) {
+        let config = self.app_core.config();
+        
+        let settings_text = vec![
+            Line::from(vec![
+                Span::styled(
+                    format!("{}: ", get_localized_text("language")),
+                    Style::default().fg(Color::Yellow)
+                ),
+                Span::styled(
+                    config.language.clone(),
+                    Style::default().fg(Color::White)
+                ),
+            ]),
+            Line::from(vec![
+                Span::styled(
+                    format!("{}: ", get_localized_text("log-level")),
+                    Style::default().fg(Color::Yellow)
+                ),
+                Span::styled(
+                    config.log_level.clone(),
+                    Style::default().fg(Color::White)
+                ),
+            ]),
+            Line::from(vec![
+                Span::styled(
+                    format!("{}: ", get_localized_text("force-cli-mode")),
+                    Style::default().fg(Color::Yellow)
+                ),
+                Span::styled(
+                    if config.force_cli_mode { get_localized_text("yes") } else { get_localized_text("no") },
+                    Style::default().fg(Color::White)
+                ),
+            ]),
+        ];
+        
+        let paragraph = Paragraph::new(settings_text)
+            .block(Block::default()
+                .title(get_localized_text("settings"))
+                .borders(Borders::ALL));
+        
+        let area = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints([Constraint::Min(0)])
+            .split(f.size())[0];
+        
+        f.render_widget(paragraph, area);
+        
+        // 戻るためのヘルプテキスト
+        let help_chunks = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints([Constraint::Min(0), Constraint::Length(3)])
+            .split(f.size());
+        
+        let help = Paragraph::new("Press ESC to return to menu, 'q' to quit")
+            .style(Style::default().fg(Color::Gray))
+            .alignment(Alignment::Center)
+            .block(Block::default().borders(Borders::ALL));
+        f.render_widget(help, help_chunks[1]);
+    }
+    
+    /// ヘルプ画面を描画する
+    /// 
+    /// # Arguments
+    /// * `f` - フレーム
+    fn draw_help(&self, f: &mut Frame) {
+        let help_text = vec![
+            Line::from("Keyboard Shortcuts:"),
+            Line::from(""),
+            Line::from("↑↓ - Navigate menu items"),
+            Line::from("Enter - Select menu item"),
+            Line::from("ESC - Return to main menu"),
+            Line::from("q - Quit application"),
+            Line::from(""),
+            Line::from(get_localized_text("app-description")),
+        ];
+        
+        let paragraph = Paragraph::new(help_text)
+            .block(Block::default()
+                .title(get_localized_text("help"))
+                .borders(Borders::ALL));
+        
+        let area = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints([Constraint::Min(0)])
+            .split(f.size())[0];
+        
+        f.render_widget(paragraph, area);
+        
+        // 戻るためのヘルプテキスト
+        let help_chunks = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints([Constraint::Min(0), Constraint::Length(3)])
+            .split(f.size());
+        
+        let help = Paragraph::new("Press ESC to return to menu, 'q' to quit")
+            .style(Style::default().fg(Color::Gray))
+            .alignment(Alignment::Center)
+            .block(Block::default().borders(Borders::ALL));
+        f.render_widget(help, help_chunks[1]);
     }
 }

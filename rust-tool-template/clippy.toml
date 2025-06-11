@@ -1,61 +1,39 @@
-# Clippy configuration for modern Rust development
+# Clippy configuration
 
-# Set the minimum supported Rust version
-msrv = "1.70.0"
+# Avoid false positives
+avoid-breaking-exported-api = false
 
-# Cognitive complexity threshold
-cognitive-complexity-threshold = 30
-
-# Type complexity threshold
-type-complexity-threshold = 250
-
-# Single char lifetime names threshold
-single-char-lifetime-names-threshold = 4
-
-# Too many arguments threshold
-too-many-arguments-threshold = 7
-
-# Too many lines threshold
+# Set the maximum number of lines a function can have
 too-many-lines-threshold = 100
 
-# Trivial copy pass by reference threshold
-trivial-copy-size-limit = 64
+# Set the maximum number of arguments a function can have  
+too-many-arguments-threshold = 7
 
-# Enum variant name threshold
-enum-variant-name-threshold = 3
+# Set the maximum cognitive complexity for a function
+cognitive-complexity-threshold = 30
 
-# Verbose bit mask threshold
-verbose-bit-mask-threshold = 1
+# Set the maximum cyclomatic complexity for a function
+cyclomatic-complexity-threshold = 25
 
-# Literal representation threshold
-literal-representation-threshold = 16384
+# Allow certain lints that might be too strict for this project
+allow = [
+    "clippy::module_name_repetitions",
+    "clippy::similar_names",
+    "clippy::too_many_lines",
+]
 
-# Maximum allowed size for arrays on the stack
-large-error-threshold = 128
+# Warn on these specific lints
+warn = [
+    "clippy::pedantic",
+    "clippy::nursery",
+    "clippy::cargo",
+]
 
-# Maximum allowed size for copying types
-pass-by-value-size-limit = 256
-
-# Stack size limit for arrays
-array-size-threshold = 512
-
-# Vector initialization with zero elements threshold
-vec-box-size-threshold = 4096
-
-# Allowed script names (for non_ascii_idents lint)
-allowed-scripts = ["Latin"]
-
-# Avoid breaking exported API
-avoid-breaking-exported-api = true
-
-# Check for missing docs in public items
-missing-docs-in-private-items = false
-
-# Allow expect in tests
-allow-expect-in-tests = true
-
-# Allow unwrap in tests
-allow-unwrap-in-tests = true
-
-# Suppress lints in test functions
-suppress-restriction-lint-in-const = true
+# Deny these lints (treat as errors)
+deny = [
+    "clippy::unwrap_used",
+    "clippy::expect_used",
+    "clippy::panic",
+    "clippy::unimplemented",
+    "clippy::todo",
+]

@@ -1,17 +1,30 @@
 {
-  "name": "Rust Tool Template",
-  "dockerComposeFile": "compose.yaml",
-  "service": "rust-tool-template",
-  "workspaceFolder": "/workspace",
-  "customizations": {
-    "vscode": {
-      "extensions": [
-        "rust-lang.rust-analyzer",
-        "vadimcn.vscode-lldb",
-        "serayuzgur.crates",
-        "tamasfe.even-better-toml"
-      ]
-    }
-  },
-  "remoteUser": "root"
+	"name": "Rust Tool Template",
+	"dockerComposeFile": "compose.yaml",
+	"service": "app",
+	"workspaceFolder": "/workspace",
+	"shutdownAction": "stopCompose",
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"rust-lang.rust-analyzer",
+				"vadimcn.vscode-lldb",
+				"tamasfe.even-better-toml",
+				"serayuzgur.crates",
+				"ms-vscode.vscode-json",
+				"ms-vscode.hexeditor",
+				"tauri-apps.tauri-vscode"
+			],
+			"settings": {
+				"rust-analyzer.check.command": "clippy",
+				"rust-analyzer.cargo.features": "all",
+				"files.watcherExclude": {
+					"**/target/**": true
+				}
+			}
+		}
+	},
+	"forwardPorts": [3000, 1420],
+	"postCreateCommand": "cargo build",
+	"remoteUser": "vscode"
 }

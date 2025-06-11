@@ -1,0 +1,17 @@
+{
+  "name": "Rust Tool Template",
+  "dockerComposeFile": "compose.yaml",
+  "service": "rust-tool-template",
+  "workspaceFolder": "/workspace",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "rust-lang.rust-analyzer",
+        "vadimcn.vscode-lldb",
+        "serayuzgur.crates",
+        "tamasfe.even-better-toml"
+      ]
+    }
+  },
+  "remoteUser": "root"
+}

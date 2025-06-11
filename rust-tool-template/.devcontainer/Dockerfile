@@ -1,29 +1,52 @@
-# Development environment for rust-tool-template
-FROM rust:1.75
+# Ubuntu 22.04をベースとする
+FROM ubuntu:22.04
 
-# Install system dependencies
+# タイムゾーンの設定
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=UTC
+
+# 必要なパッケージをインストール
 RUN apt-get update && apt-get install -y \
+    curl \
+    wget \
+    git \
+    build-essential \
     pkg-config \
     libssl-dev \
-    git \
-    curl \
-    build-essential \
+    libgtk-3-dev \
+    libwebkit2gtk-4.0-dev \
+    libappindicator3-dev \
+    librsvg2-dev \
+    libsoup2.4-dev \
+    libjavascriptcoregtk-4.0-dev \
+    sudo \
     && rm -rf /var/lib/apt/lists/*
 
-# Install additional development tools
-RUN cargo install cargo-watch
-RUN cargo install cargo-edit
+# vscodeユーザーを作成
+RUN useradd -m -s /bin/bash vscode && \
+    echo "vscode ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
-# Set working directory
+# Rustのインストール
+USER vscode
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+ENV PATH="/home/vscode/.cargo/bin:${PATH}"
+
+# Rustコンポーネントのインストール
+RUN rustup component add clippy rustfmt
+
+# Node.jsのインストール（Tauriに必要）
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash - && \
+    sudo apt-get install -y nodejs
+
+# Tauri CLIのインストール
+RUN cargo install tauri-cli
+
+# 作業ディレクトリの設定
 WORKDIR /workspace
 
-# Create necessary directories
-RUN mkdir -p /workspace/logs /workspace/data
+# ログローテーション設定
+USER root
+RUN echo "#!/bin/bash\nfind /var/log -name '*.log' -mtime +7 -delete" > /etc/cron.daily/log-cleanup && \
+    chmod +x /etc/cron.daily/log-cleanup
 
-# Environment variables for development
-ENV RUST_LOG=rust_tool_template=debug
-ENV RUST_TOOL_LANG=en
-ENV RUST_BACKTRACE=1
-
-# Default command (can be overridden)
-CMD ["cargo", "run"] 
+USER vscode

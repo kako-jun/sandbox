@@ -1,105 +1,52 @@
-# CLAUDE.md
+# プロジェクト概要
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Rustでアプリを作っていくための雛形になるプロジェクトを作りたい。
 
-## Important: Workspace Package Names
+## 基本要件
 
-This is a Cargo workspace with two packages:
-- **Main package**: `rust-tool-template` (library: `rust_tool_template`)
-- **Tauri package**: `rust-tool-template-app` (in `src-tauri/`)
+- CUIとしても使えて、端末内でncursesライクな見た目となり、標準出力をスクロールせずに操作できる
+- ncursesを使わずRustにベストなクレートがあればそれがいい
+- GUIとしても使えて、Tauriで作る  
+- CUI版とGUI版で、コア部分は共通化する
+- 基本はTauri版。引数ありで実行するとCUI版になるなど、同じコマンドで起動し分ける
+- クロスプラットフォーム
 
-⚠️ **Known Issue**: Tauri package has dependency conflicts with `indexmap` versions. Build main package individually.
+## 開発環境
 
-## Build Commands
+- devcontainer対応
+- 自動テスト対応
+- .githubでのciもする
+- .vsodeを作りF5で実行できるようにする。CLIとしてとTauriとしてを起動し分ける
+- 作者名はkako-jun
+- ライセンスはMIT
 
-```bash
-# Build main package (recommended)
-cargo build -p rust-tool-template                # Debug build
-cargo build -p rust-tool-template --release      # Release build
-cargo build -p rust-tool-template --features web # Build with web features
+## エラー制御
 
-# Run the application
-cargo run -p rust-tool-template                      # Run in default TUI mode
-cargo run -p rust-tool-template -- -m cli           # Run in CLI mode
-cargo run -p rust-tool-template -- -m cli -c list   # Run specific CLI command
+- エラー発生時にアプリが落ちるのを防ぎたいので、エラー制御は必要
 
-# Testing
-cargo test -p rust-tool-template                     # Run all tests
-cargo test -p rust-tool-template unit_tests          # Run unit tests only
-cargo test -p rust-tool-template integration_tests   # Run integration tests only
-cargo test -p rust-tool-template -- --nocapture     # Show print statements during tests
+## ログとファイル管理
 
-# Code quality
-cargo clippy -p rust-tool-template   # Run linter on main package
-cargo fmt                           # Format code
+- ログは永続化したい
+- 肥大化しないように日付でのローテーションが必要
+- Dockerコンテナが肥大化しないよう、compose.yamlにもログローテーションが必要
+- OSごとにログの場所が異なると複雑になるので、ユーザーホーム内やアプリのディレクトリ内などがいい
+- .gitignoreすること
+- 設定画面での設定内容を永続化する必要があるが、その置き場もログと同じ場所が良い
+- 常にCUIで起動する設定があっても良い。引数が優先
 
-# Tauri desktop application (currently has dependency conflicts)
-cargo build -p rust-tool-template-app  # May fail due to indexmap conflict
-# Workaround: Update Tauri version or resolve dependency conflicts
-```
+## 多言語対応
 
-## Architecture Overview
+- デフォルトは英語表示だが、日本語での表示もできるようにしたい
+- それの設定も永続化し、引数で指定するとさらに優先する
 
-This is a multi-interface Rust application with a **layered architecture**:
+## コードとテスト
 
-```
-Interfaces Layer:     CLI/TUI ←→ Web API ←→ Tauri GUI
-                             ↓
-Core Logic Layer:     AppLogic (business logic)
-                             ↓
-Infrastructure:       Config, Logging, I18n, Platform Utils
-```
+- ソースコードには日本語コメントを充実させて。関数にも
+- 自動テスト項目も充実させて。テスト名は日本語で
 
-**Key modules:**
-- `src/core/logic.rs` - Main business logic with CRUD operations and statistics
-- `src/cli/mod.rs` - Command-line interface with argument parsing
-- `src/api/handlers.rs` - HTTP API endpoints
-- `src/tauri/commands.rs` - Desktop app commands
-- `src/i18n.rs` - Internationalization support (English/Japanese)
+## ドキュメント
 
-## Application Modes
-
-The application supports three execution modes:
-1. **TUI Mode** (default): Interactive terminal interface using `ratatui`
-2. **CLI Mode**: Command-line with subcommands (add, list, process, stats)
-3. **API Server Mode**: RESTful HTTP API on ports 3030-3034
-
-## Key Features
-
-- **Multi-platform support**: Windows, macOS, Linux with platform-specific utilities
-- **Internationalization**: Fluent-based i18n with English/Japanese support
-- **Comprehensive logging**: Structured logging with rotation and filtering
-- **Error handling**: Uses `anyhow` for error propagation and `thiserror` for error definitions
-- **Async runtime**: Built on `tokio` for async operations
-
-## Configuration
-
-- **Clippy**: MSRV 1.70.0, complexity threshold 30, 7 function arguments max
-- **Coverage target**: 80% as configured in `codecov.yml`
-- **Feature flags**: `tui` (default), `gui`, `web`
-
-## Development Notes
-
-- **Main entry point**: `src/main.rs` with async main function that calls `rust_tool_template::cli::run().await`
-- **Business logic**: Centralized in `AppLogic` struct in `src/core/logic.rs`
-- **Architecture pattern**: All interfaces (CLI, TUI, API, GUI) delegate to the same core logic
-- **Thread safety**: Uses `Arc<Mutex<AppLogic>>` for shared state across interfaces
-- **Package naming**: Library uses underscores (`rust_tool_template`), package uses hyphens (`rust-tool-template`)
-- **Language setting**: Controlled via `RUST_TOOL_LANG` or `LANG` environment variables
-- **Logging**: Level controlled via `RUST_LOG` environment variable
-
-## VSCode Debug Setup
-
-Three debug configurations are available:
-1. **"Rust CLI"** - Main application (F5 default)
-2. **"Tauri Dev"** - Desktop app (currently broken due to dependency conflict)
-3. **"Debug Rust Tool Template"** - Alternative cargo-based debug
-
-Tasks are configured to build appropriate packages before debugging.
-
-## Testing Strategy
-
-- Unit tests in individual modules using `#[cfg(test)]`
-- Integration tests in `tests/` directory
-- API testing uses mock data and temporary files
-- Async tests use `tokio-test` for proper async testing
+- READMEは英語。それとは別に日本語のREADMEも作る
+- テスト結果のバッジを表示する
+- このテンプレートを元に複数のアプリを作っていく予定なので、充実したサンプル画面を実装しなくていい
+- 画面の中央にhogeとだけ表示して
