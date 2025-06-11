@@ -43,7 +43,7 @@
   "config_volume": "音量",
   
   "mode_gui": "GUI",
-  "mode_cli": "CLI",
+  "mode_cui": "CUI",
   
   "language_english": "英語",
   "language_japanese": "日本語",

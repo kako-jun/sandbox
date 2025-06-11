@@ -1,7 +1,7 @@
 """
 ゲームのコア部分
 
-GUI版とCLI版で共通するゲームロジックを実装
+GUI版とCUI版で共通するゲームロジックを実装
 """
 
 import time
@@ -23,7 +23,7 @@ from game.models import (
 class GameEngine:
     """ゲームエンジンクラス
 
-    GUI版とCLI版で共通するゲームロジックを管理
+    GUI版とCUI版で共通するゲームロジックを管理
     """
 
     def __init__(self, config: Optional[GameConfig] = None):

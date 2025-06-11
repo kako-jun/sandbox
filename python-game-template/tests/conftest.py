@@ -31,7 +31,7 @@ def テンポラリディレクトリ():
 @pytest.fixture
 def テスト用ゲーム設定():
     """テスト用のゲーム設定を作成"""
-    return GameConfig(mode=GameMode.CLI, language=Language.JAPANESE, debug=True, fps=30)
+    return GameConfig(mode=GameMode.CUI, language=Language.JAPANESE, debug=True, fps=30)
 
 
 @pytest.fixture

@@ -5,8 +5,10 @@ ncursesを直接使わずに、WindowsとLinuxの両方で動作する
 ターミナル制御機能を提供する
 """
 
+import atexit
 import io
 import os
+import signal
 import sys
 import time
 import threading
@@ -26,16 +28,86 @@ except ImportError:
     tty = None
 
 
+# グローバルなターミナル状態管理
+_terminal_instances = []
+_cleanup_registered = False
+
+
+def _global_cleanup():
+    """グローバルクリーンアップ関数（atexit/signal用）"""
+    # VSCode統合ターミナル対応
+    is_vscode = os.environ.get('TERM_PROGRAM') == 'vscode'
+    
+    if is_vscode:
+        reset_sequence = (
+            "\033[?1049l"    # 代替画面バッファ無効化
+            "\033[0m"        # 属性リセット
+            "\033[?25h"      # カーソル表示
+            "\033[r"         # スクロール領域リセット
+            "\033[?1000l"    # マウストラッキング無効化
+            "\033[?1006l"    # SGRマウストラッキング無効化
+            "\033[?1015l"    # Urxvtマウストラッキング無効化
+            "\033[?2004l"    # ブラケットペーストモード無効化
+            "\033[H"         # カーソルをホーム位置に移動
+            "\033[2J"        # 画面クリア
+        )
+    else:
+        reset_sequence = (
+            "\033[?1049l"    # 代替画面バッファ無効化
+            "\033[0m"        # 属性リセット
+            "\033[?25h"      # カーソル表示
+            "\033[r"         # スクロール領域リセット
+        )
+    
+    sys.stdout.write(reset_sequence)
+    sys.stdout.flush()
+    sys.stderr.flush()
+    
+    # 全てのターミナルインスタンスをクリーンアップ（ただし重複実行を避ける）
+    instances_copy = _terminal_instances.copy()
+    for terminal in instances_copy:
+        try:
+            terminal._running = False
+            if hasattr(terminal, 'original_settings') and terminal.original_settings:
+                if termios is not None:
+                    termios.tcsetattr(sys.stdin, termios.TCSADRAIN, terminal.original_settings)
+        except Exception:
+            pass
+
+
+def _signal_handler(signum, frame):
+    """シグナルハンドラー"""
+    _global_cleanup()
+    # デフォルトのシグナルハンドラーで終了
+    signal.signal(signum, signal.SIG_DFL)
+    os.kill(os.getpid(), signum)
+
+
 class TerminalController:
     """クロスプラットフォーム対応のターミナル制御クラス"""
 
     def __init__(self) -> None:
         """初期化"""
+        global _cleanup_registered, _terminal_instances
+        
         self.is_windows = os.name == "nt"
         self.original_settings: Optional[List] = None
         self._input_queue: queue.Queue = queue.Queue()
         self._input_thread: Optional[threading.Thread] = None
         self._running = False
+        
+        # グローバルリストに追加
+        _terminal_instances.append(self)
+        
+        # 初回のみクリーンアップ登録
+        if not _cleanup_registered:
+            atexit.register(_global_cleanup)
+            if not self.is_windows:
+                signal.signal(signal.SIGTERM, _signal_handler)
+                signal.signal(signal.SIGINT, _signal_handler)
+                signal.signal(signal.SIGHUP, _signal_handler)
+            _cleanup_registered = True
+        
         self._init_terminal()
         self._start_input_thread()
 
@@ -104,7 +176,8 @@ class TerminalController:
         if self.is_windows:
             os.system("cls")
         else:
-            os.system("clear")
+            # 代替画面バッファを使用してクリア
+            print("\033[?1049h\033[H\033[2J", end="", flush=True)
 
     def move_cursor(self, row: int, col: int) -> None:
         """カーソルを指定位置に移動"""
@@ -153,6 +226,49 @@ class TerminalController:
     def reset_color(self) -> None:
         """色をリセット"""
         print("\033[0m", end="", flush=True)
+    
+    def reset_terminal(self) -> None:
+        """ターミナル状態を完全にリセット"""
+        # VSCode統合ターミナルを検出
+        is_vscode = os.environ.get('TERM_PROGRAM') == 'vscode'
+        
+        if is_vscode:
+            # VSCode統合ターミナル用：より確実なリセット
+            reset_sequence = (
+                "\033[?1049l"    # 代替画面バッファ無効化
+                "\033[0m"        # 属性リセット  
+                "\033[?25h"      # カーソル表示
+                "\033[r"         # スクロール領域リセット
+                "\033[?1000l"    # マウストラッキング無効化
+                "\033[?1006l"    # SGRマウストラッキング無効化
+                "\033[?1015l"    # Urxvtマウストラッキング無効化
+                "\033[?2004l"    # ブラケットペーストモード無効化
+                "\033[H"         # カーソルをホーム位置に移動
+                "\033[2J"        # 画面クリア
+            )
+            print(reset_sequence, end="", flush=True)
+            # 追加で標準出力をフラッシュ
+            sys.stdout.flush()
+            sys.stderr.flush()
+        else:
+            # 通常のターミナル用
+            # 代替画面バッファを無効化して元の画面に戻る
+            print("\033[?1049l", end="", flush=True)
+            
+            # その他の状態をリセット
+            reset_sequence = (
+                "\033[0m"      # 属性リセット
+                "\033[?25h"    # カーソル表示
+                "\033[?1000l"  # マウストラッキング無効化
+                "\033[?1006l"  # SGRマウストラッキング無効化
+                "\033[?1015l"  # Urxvtマウストラッキング無効化
+                "\033[?2004l"  # ブラケットペーストモード無効化
+                "\033[r"       # スクロール領域リセット
+            )
+            print(reset_sequence, end="", flush=True)
+        
+        # 最後に改行を出力して正常な出力位置に戻す
+        print("")
 
     def get_key_press(self) -> Optional[str]:
         """キー入力を取得（ノンブロッキング）"""
@@ -181,13 +297,21 @@ class TerminalController:
 
     def cleanup(self) -> None:
         """終了処理"""
+        global _terminal_instances
+        
+        # 既にクリーンアップ済みの場合は何もしない
+        if not hasattr(self, '_running') or not self._running:
+            return
+        
         # 入力スレッドを停止
         self._running = False
         if self._input_thread and self._input_thread.is_alive():
             self._input_thread.join(timeout=1.0)
         
-        self.show_cursor()
-        self.reset_color()
+        # ターミナル状態を完全にリセット
+        self.reset_terminal()
+        
+        # Unix系の場合、元の設定を復元
         if (
             not self.is_windows
             and self.original_settings is not None
@@ -197,6 +321,12 @@ class TerminalController:
                 termios.tcsetattr(sys.stdin, termios.TCSADRAIN, self.original_settings)
             except termios.error:
                 pass
+        
+        # グローバルリストから削除
+        try:
+            _terminal_instances.remove(self)
+        except ValueError:
+            pass
 
     def __enter__(self):
         """コンテキストマネージャーの開始"""
@@ -205,6 +335,10 @@ class TerminalController:
     def __exit__(self, exc_type, exc_val, exc_tb):
         """コンテキストマネージャーの終了"""
         self.cleanup()
+        # 追加のリセット処理
+        import sys
+        sys.stdout.flush()
+        sys.stderr.flush()
 
 
 class Screen:
@@ -279,8 +413,9 @@ class Screen:
             line = "".join(row_data)
             print(line, end="", flush=True)
             
-        # 最後にカーソルを安全な位置（左上）に移動
-        self.terminal.move_cursor(1, 1)
+        # 最後にカーソルを画面外の安全な位置に移動（スクロールを防ぐ）
+        # ターミナルの最下行ではなく、画面の最下行の次の行（存在しない行）に移動
+        self.terminal.move_cursor(self.height, 1)
 
     def get_center_position(self) -> Tuple[int, int]:
         """画面中央の位置を取得"""

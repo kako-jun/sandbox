@@ -4,17 +4,18 @@
 Pydanticを使用してデータの型安全性を確保し、
 dictアクセスによる例外を防ぐ
 """
+# pylint: disable=E1101,E1120,E1136
 
 from enum import Enum
-from typing import List, Optional, Union
+from typing import List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class GameMode(str, Enum):
     """ゲームモード"""
 
-    CLI = "cli"
+    CUI = "cui"
     GUI = "gui"
 
 
@@ -75,6 +76,8 @@ class Color(BaseModel):
 class GameConfig(BaseModel):
     """ゲーム設定"""
 
+    model_config = ConfigDict(use_enum_values=True)
+
     mode: GameMode = GameMode.GUI
     language: Language = Language.ENGLISH
     debug: bool = False
@@ -82,11 +85,6 @@ class GameConfig(BaseModel):
     fps: int = Field(default=60, ge=1, le=120, description="フレームレート")
     window_size: Size = Size(width=800, height=600)
     volume: float = Field(default=0.8, ge=0.0, le=1.0, description="音量")
-
-    class Config:
-        """Pydantic設定"""
-
-        use_enum_values = True
 
 
 class GameState(str, Enum):
@@ -143,9 +141,7 @@ class GameScene(BaseModel):
 
     name: str = Field(description="シーン名")
     objects: List[GameObject] = Field(default_factory=list, description="オブジェクトリスト")
-    background_color: Color = Field(
-        default_factory=lambda: Color(r=0, g=0, b=0), description="背景色"
-    )
+    background_color: Color = Field(default_factory=lambda: Color(r=0, g=0, b=0), description="背景色")
 
     def add_object(self, obj: GameObject) -> None:
         """オブジェクトを追加"""

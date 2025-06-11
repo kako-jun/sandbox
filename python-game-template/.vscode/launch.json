@@ -2,7 +2,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: PyGame版ゲーム起動",
+            "name": "Python: PyGame版を起動",
             "type": "python",
             "request": "launch",
             "program": "${workspaceFolder}/src/main.py",
@@ -14,7 +14,7 @@
             "args": []
         },
         {
-            "name": "Python: CUI版ゲーム起動",
+            "name": "Python: CUI版を起動",
             "type": "python",
             "request": "launch",
             "program": "${workspaceFolder}/src/main.py",
@@ -23,7 +23,7 @@
             "env": {
                 "PYTHONPATH": "${workspaceFolder}/src"
             },
-            "args": ["--mode", "cli"]
+            "args": ["--mode", "cui"]
         },
         {
             "name": "Python: デバッグモード（英語）",

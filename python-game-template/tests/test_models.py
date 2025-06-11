@@ -114,9 +114,9 @@ class TestGameConfig:
     def test_設定変更(self):
         """設定を変更できる"""
         config = GameConfig(
-            mode=GameMode.CLI, language=Language.JAPANESE, debug=True, fps=30
+            mode=GameMode.CUI, language=Language.JAPANESE, debug=True, fps=30
         )
-        assert config.mode == GameMode.CLI
+        assert config.mode == GameMode.CUI
         assert config.language == Language.JAPANESE
         assert config.debug is True
         assert config.fps == 30

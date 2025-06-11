@@ -193,7 +193,7 @@ class TestStorage:
 
     def test_ConfigManager_設定保存と読み込み(self, テスト用設定マネージャー):
         """設定の保存と読み込みができる"""
-        config = GameConfig(mode=GameMode.CLI, language=Language.JAPANESE)
+        config = GameConfig(mode=GameMode.CUI, language=Language.JAPANESE)
 
         # 保存
         result = テスト用設定マネージャー.save_config(config)
@@ -202,7 +202,7 @@ class TestStorage:
         # 読み込み
         loaded_config = テスト用設定マネージャー.load_config(GameConfig)
         assert loaded_config is not None
-        assert loaded_config.mode == GameMode.CLI
+        assert loaded_config.mode == GameMode.CUI
         assert loaded_config.language == Language.JAPANESE
 
     def test_ConfigManager_存在チェック(self, テスト用設定マネージャー):

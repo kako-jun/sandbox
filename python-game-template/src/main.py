@@ -1,14 +1,14 @@
 """
 メインエントリーポイント
 
-CLI版とGUI版の起動を制御
+CUI版とGUI版の起動を制御
 """
 
 import argparse
 import sys
 from typing import Optional
 
-from game.cli import CLIApp
+from game.cui import CUIApp
 from game.gui import PyGameApp
 from game.models import GameConfig, GameMode, Language
 from utils.error_handler import (
@@ -32,7 +32,7 @@ def parse_arguments() -> argparse.Namespace:
     )
 
     parser.add_argument(
-        "--mode", choices=["gui", "cli"], default="gui", help="Game mode (default: gui)"
+        "--mode", choices=["gui", "cui"], default="gui", help="Game mode (default: gui)"
     )
 
     parser.add_argument(
@@ -171,7 +171,7 @@ def run_game(config: GameConfig) -> int:
         if (isinstance(config.mode, str) and config.mode == "gui") or config.mode == GameMode.GUI:
             app = PyGameApp(config)
         else:
-            app = CLIApp(config)
+            app = CUIApp(config)
 
         app.run()
 
