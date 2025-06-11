@@ -8,6 +8,7 @@ fn main() {
     // アプリケーションコアを初期化
     let app_core = AppCore::new().expect("Failed to initialize app core");
     
+    let context = tauri::generate_context!();
     tauri::Builder::default()
         .manage(app_core)
         .invoke_handler(tauri::generate_handler![
@@ -15,6 +16,6 @@ fn main() {
             set_language,
             get_config
         ])
-        .run(tauri::generate_context!())
+        .run(context)
         .expect("error while running tauri application");
 }

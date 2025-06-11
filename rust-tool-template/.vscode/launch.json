@@ -4,7 +4,7 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Launch CLI",
+            "name": "🖥️ Launch CLI (TUI) [F5 Default]",
             "cargo": {
                 "args": [
                     "build",
@@ -22,9 +22,39 @@
             }
         },
         {
+            "type": "node-terminal",
+            "request": "launch",
+            "name": "🚀 Launch Tauri Dev",
+            "command": "cargo tauri dev",
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "RUST_LOG": "debug"
+            }
+        },
+        {
             "type": "lldb",
             "request": "launch",
-            "name": "Launch GUI (Tauri)",
+            "name": "🎮 Launch Demo Mode",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=rust-tool-template"
+                ],
+                "filter": {
+                    "name": "rust-tool-template",
+                    "kind": "bin"
+                }
+            },
+            "args": ["--demo"],
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "RUST_LOG": "debug"
+            }
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "🌐 Launch GUI (Direct)",
             "cargo": {
                 "args": [
                     "build",
@@ -37,17 +67,6 @@
                 }
             },
             "args": [],
-            "cwd": "${workspaceFolder}",
-            "env": {
-                "RUST_LOG": "debug"
-            }
-        },
-        {
-            "type": "lldb",
-            "request": "launch",
-            "name": "Launch Tauri Dev",
-            "program": "cargo",
-            "args": ["tauri", "dev"],
             "cwd": "${workspaceFolder}",
             "env": {
                 "RUST_LOG": "debug"
