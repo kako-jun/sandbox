@@ -3,29 +3,19 @@
 import { useState, useEffect, useCallback } from "react";
 import { Language } from "@/types";
 
-interface Block {
-  id: number;
-  x: number;
-  y: number;
-  color: string;
-  isClicked: boolean;
-}
-
 interface HeaderProps {
   language: Language;
 }
 
 export default function Header({ language }: HeaderProps) {
-  const [blocks, setBlocks] = useState<Block[]>([]);
-
-  // 統一グリッドシステム：左端からブロック幅で区切る
-  const BLOCK_SIZE = 16; // ブロックの幅
-  const getGridPosition = (x: number, headerWidth: number): number => {
-    const gridIndex = Math.floor(x / BLOCK_SIZE);
-    const maxGridIndex = Math.floor(headerWidth / BLOCK_SIZE) - 1;
-    const clampedIndex = Math.max(0, Math.min(gridIndex, maxGridIndex));
-    return clampedIndex * BLOCK_SIZE;
-  };
+  const BLOCK_SIZE = 16;
+  const GRID_HEIGHT = 4;
+  const MAX_STACK = 3; // 縦3つまで、4つ目で全消し
+  
+  // 2次元配列グリッド [x][y] - true=ブロック有り、false=空
+  const [grid, setGrid] = useState<boolean[][]>([]);
+  const [gridWidth, setGridWidth] = useState(0);
+  const [fallingBlocks, setFallingBlocks] = useState<{id: number, x: number, y: number}[]>([]);
 
   const scrollToTop = () => {
     window.scrollTo({
@@ -34,154 +24,242 @@ export default function Header({ language }: HeaderProps) {
     });
   };
 
-  // ブロック追加のヘルパー関数
-  const addBlockAtPosition = useCallback((x: number) => {
-    console.log("🎮 ブロック追加:", x);
+  // ヘッダー幅に基づいてグリッドを初期化
+  const initializeGrid = useCallback(() => {
     const header = document.getElementById("main-header");
-    if (!header) {
-      console.warn("❌ ヘッダーが見つかりません");
-      return;
-    }
+    if (!header) return;
 
     const headerRect = header.getBoundingClientRect();
+    const newGridWidth = Math.floor(headerRect.width / BLOCK_SIZE);
     
-    // 統一グリッドシステムを使用
-    const snappedX = getGridPosition(x, headerRect.width);
-    
-    console.log(`📍 統一グリッド: クリック${x}px → グリッド${snappedX}px`);
+    if (newGridWidth !== gridWidth) {
+      console.log(`🎮 グリッド初期化: 幅=${newGridWidth}, 高さ=${GRID_HEIGHT}`);
+      
+      // 新しいグリッドを作成
+      const newGrid: boolean[][] = [];
+      for (let x = 0; x < newGridWidth; x++) {
+        newGrid[x] = new Array(GRID_HEIGHT).fill(false);
+      }
+      
+      setGrid(newGrid);
+      setGridWidth(newGridWidth);
+    }
+  }, [gridWidth]);
 
-    const newBlock: Block = {
+  // ブロックを指定位置に追加
+  const addBlockAtColumn = useCallback((column: number) => {
+    console.log(`🎮 ブロック追加: 列=${column}`);
+    
+    // 落下ブロックを作成
+    const newFallingBlock = {
       id: Date.now() + Math.random(),
-      x: snappedX,
-      y: 0, // ヘッダーの上端から開始
-      color: "var(--text-accent)",
-      isClicked: false,
+      x: column,
+      y: -2 // ヘッダーの上端よりさらに上から開始
     };
-
-    console.log("✅ 新ブロック:", newBlock);
-    setBlocks((prev) => {
-      console.log("📊 ブロック数:", prev.length, "→", prev.length + 1);
-      return [...prev, newBlock];
-    });
+    
+    setFallingBlocks(prev => [...prev, newFallingBlock]);
+    console.log(`✅ 落下ブロック追加:`, newFallingBlock);
   }, []);
 
-  useEffect(() => {
-    console.log("🎮 Header useEffect 開始");
-    
-    // 初回は5秒後、その後42秒間隔でブロック生成
-    const addBlock = () => {
-      console.log("🎲 定期ブロック生成");
-      const header = document.getElementById("main-header");
-      if (!header) {
-        console.warn("❌ ヘッダーが見つかりません（定期生成）");
-        return;
-      }
+  // クリック位置からグリッド列を計算
+  const getColumnFromClick = useCallback((clickX: number) => {
+    const column = Math.floor(clickX / BLOCK_SIZE);
+    return Math.max(0, Math.min(column, gridWidth - 1));
+  }, [gridWidth]);
 
-      const headerRect = header.getBoundingClientRect();
-      
-      // 統一グリッドシステムでランダム位置を選択
-      const maxGridIndex = Math.floor(headerRect.width / BLOCK_SIZE) - 1;
-      const randomGridIndex = Math.floor(Math.random() * (maxGridIndex + 1));
-      const randomX = randomGridIndex * BLOCK_SIZE;
-      
-      console.log(`🎲 定期生成位置: インデックス${randomGridIndex}, X座標${randomX}px`);
-      addBlockAtPosition(randomX);
+  // グリッドの指定列で一番下の空き位置を取得
+  const getBottomEmptyRow = useCallback((column: number) => {
+    if (column < 0 || column >= gridWidth) return -1;
+    
+    // Y=0が1段目（下段）、Y=3が4段目（上段）
+    // 下から上へ空きを探す
+    for (let y = 0; y < GRID_HEIGHT; y++) {
+      if (!grid[column]?.[y]) {
+        return y;
+      }
+    }
+    return -1; // 列が満杯
+  }, [grid, gridWidth]);
+
+  // 指定列のブロック数を取得
+  const getStackHeight = useCallback((column: number) => {
+    if (column < 0 || column >= gridWidth) return 0;
+    
+    let count = 0;
+    for (let y = 0; y < GRID_HEIGHT; y++) {
+      if (grid[column]?.[y]) count++;
+    }
+    return count;
+  }, [grid, gridWidth]);
+
+  // 初期化effect
+  useEffect(() => {
+    initializeGrid();
+    
+    const handleResize = () => {
+      initializeGrid();
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [initializeGrid]);
+
+  // ブロック生成タイマー
+  useEffect(() => {
+    if (gridWidth === 0) return;
+
+    const addRandomBlock = () => {
+      const randomColumn = Math.floor(Math.random() * gridWidth);
+      console.log(`🎲 定期ブロック生成: 列=${randomColumn}`);
+      addBlockAtColumn(randomColumn);
     };
 
-    // 初回は5秒後、その後42秒間隔でブロック生成
-    const initialTimer = setTimeout(() => {
-      addBlock();
-      const blockInterval = setInterval(addBlock, 42000); // 10000から42000に変更
-      
-      // クリーンアップ関数に渡すためにintervalIdを保存
-      (initialTimer as any).blockInterval = blockInterval;
-    }, 5000);
+    // 初回4秒後、その後42秒間隔
+    const initialTimer = setTimeout(addRandomBlock, 4000);
+    const blockInterval = setInterval(addRandomBlock, 42000);
 
-    // アニメーション用のタイマー
-    const animateBlocks = () => {
-      setBlocks((prev) => {
+    return () => {
+      clearTimeout(initialTimer);
+      clearInterval(blockInterval);
+    };
+  }, [gridWidth, addBlockAtColumn]);
+
+  // 落下アニメーション
+  useEffect(() => {
+    const animate = () => {
+      setFallingBlocks(prev => {
         const header = document.getElementById("main-header");
         if (!header) return prev;
 
-        const headerRect = header.getBoundingClientRect();
-        const headerHeight = headerRect.height;
-        const baseY = headerHeight - 18; // ヘッダーの下端から少し上
-        
-        // 初回のみヘッダー情報をログ出力
-        if (prev.length === 0 || !(window as any).headerInfoLogged) {
-          console.log(`📏 ヘッダー情報: 高さ=${headerHeight}px, baseY=${baseY}px`);
-          (window as any).headerInfoLogged = true;
-        }
+        const headerHeight = header.getBoundingClientRect().height;
+        const stillFalling: typeof prev = [];
 
-        let newBlocks = prev.map((block) => {
-          // ゆっくり落下させる
-          const newY = block.y + 0.5; // 0.3から0.5に調整（少し速く）
+        prev.forEach(block => {
+          const currentPixelY = block.y * BLOCK_SIZE;
+          const nextPixelY = currentPixelY + 1; // 1px/frame で落下
           
-          // 底に到達したか確認
-          if (newY >= baseY) {
-            // グリッドベースの完全一致判定（同じX座標のブロックのみ）
-            const sameXBlocks = prev.filter(b => 
-              b.id !== block.id && 
-              b.x === block.x && // 完全一致（グリッドなので必ず同じ値）
-              b.y >= baseY - 2 // より厳密な着地済みブロック判定
-            );
-            
-            // 積み上げる高さを計算（一度だけ設定して、後で変更しない）
-            const stackY = baseY - (sameXBlocks.length * 16);
-            
-            console.log(`🏗️ ブロック着地: x=${block.x}, baseY=${baseY}, stackY=${stackY}, 同じX座標ブロック=${sameXBlocks.length}個`);
-            // 着地したブロックは位置を固定（Y座標を確定値に設定）
-            return { ...block, y: stackY };
+          // ヘッダー内に入ったかチェック
+          if (nextPixelY < 0) {
+            // まだヘッダーの上にいる
+            stillFalling.push({
+              ...block,
+              y: nextPixelY / BLOCK_SIZE
+            });
+            return;
           }
           
-          return { ...block, y: newY };
-        });
-
-        // 積み重ね数による全消し判定（4つ積み重なったら全消し）
-        const maxStackHeight = 3; // 最大3つまで積み重ね可能
-        
-        // 各グリッド位置での積み重ね数をチェック
-        const stackCounts = new Map<number, number>();
-        newBlocks.forEach(block => {
-          if (block.y >= baseY - 2) { // より厳密な着地済みブロック判定
-            stackCounts.set(block.x, (stackCounts.get(block.x) || 0) + 1);
+          // 着地位置を事前計算
+          const bottomRow = getBottomEmptyRow(block.x);
+          
+          if (bottomRow === -1) {
+            // 列が満杯 - ブロックを消去
+            console.log(`❌ 列満杯でブロック消去: 列=${block.x}`);
+            return;
+          }
+          
+          // 着地位置のピクセル座標（表示位置と同じ計算）
+          const landingPixelY = headerHeight - BLOCK_SIZE * (bottomRow + 1);
+          
+          // 着地位置に到達したら即座に着地
+          if (nextPixelY >= landingPixelY) {
+            // グリッドに固定
+            setGrid(prevGrid => {
+              const newGrid = prevGrid.map(col => [...col]);
+              if (newGrid[block.x]) {
+                newGrid[block.x][bottomRow] = true;
+              }
+              return newGrid;
+            });
+            console.log(`🏗️ ブロック着地: 列=${block.x}, 行=${bottomRow}`);
+            // 落下中リストから除外（着地完了）
+          } else {
+            // まだ落下中
+            stillFalling.push({
+              ...block,
+              y: nextPixelY / BLOCK_SIZE
+            });
           }
         });
-        
-        // 現在の積み重ね状況をログ出力（デバッグ用）
-        if (stackCounts.size > 0) {
-          console.log(`📊 積み重ね状況:`, Array.from(stackCounts.entries()).map(([x, count]) => `x${x}:${count}個`).join(', '));
-        }
-        
-        // 4つ以上積み重なった箇所があるかチェック
-        const hasOverstack = Array.from(stackCounts.values()).some(count => count > maxStackHeight);
-        if (hasOverstack) {
-          console.log("💥 ブロック全消し - 4個積み重ね達成");
-          newBlocks = [];
-        }
 
-        return newBlocks;
+        return stillFalling;
       });
     };
 
-    const animationInterval = setInterval(animateBlocks, 33); // 30fps（16から33に変更）
+    const animationInterval = setInterval(animate, 33); // 30fps
+    return () => clearInterval(animationInterval);
+  }, [getBottomEmptyRow]);
 
-    return () => {
-      console.log("🧹 Header useEffect クリーンアップ");
-      clearTimeout(initialTimer);
-      if ((initialTimer as any).blockInterval) {
-        clearInterval((initialTimer as any).blockInterval);
+  // 全消し判定
+  useEffect(() => {
+    // 4つ積み重なった列があるかチェック
+    let shouldClear = false;
+    
+    for (let x = 0; x < gridWidth; x++) {
+      const stackHeight = getStackHeight(x);
+      if (stackHeight > MAX_STACK) {
+        shouldClear = true;
+        break;
       }
-      clearInterval(animationInterval);
-    };
-  }, [addBlockAtPosition]); // addBlockAtPositionを依存配列に追加
+    }
 
-  const handleBlockClick = (e: React.MouseEvent, blockId: number) => {
-    e.stopPropagation(); // ヘッダークリックイベントの伝播を停止
-    setBlocks((prev) => prev.filter((block) => block.id !== blockId));
-  };
+    if (shouldClear) {
+      console.log("💥 ブロック全消し - 4個積み重ね達成");
+      setGrid(prev => {
+        const newGrid: boolean[][] = [];
+        for (let x = 0; x < gridWidth; x++) {
+          newGrid[x] = new Array(GRID_HEIGHT).fill(false);
+        }
+        return newGrid;
+      });
+      setFallingBlocks([]); // 落下中のブロックも消去
+    }
+  }, [grid, gridWidth, getStackHeight]);
 
-  // ヘッダーをタップした位置にブロックを生成
+  // ブロッククリック（削除）
+  const handleBlockClick = useCallback((e: React.MouseEvent, column: number, row: number) => {
+    e.stopPropagation();
+    
+    setGrid(prev => {
+      const newGrid = prev.map(col => [...col]);
+      
+      // クリックしたブロックを削除
+      if (newGrid[column]) {
+        newGrid[column][row] = false;
+        console.log(`❌ ブロック削除: 列=${column}, 行=${row}`);
+        
+        // 削除したブロックより上にあるブロックを落下ブロックとして追加
+        const header = document.getElementById("main-header");
+        const headerHeight = header?.getBoundingClientRect().height || 64;
+        
+        const newFallingBlocks: {id: number, x: number, y: number}[] = [];
+        
+        for (let y = row + 1; y < GRID_HEIGHT; y++) {
+          if (newGrid[column][y]) {
+            // 上段のブロックを落下ブロックに変換
+            const currentPixelY = headerHeight - BLOCK_SIZE * (y + 1);
+            const fallingBlock = {
+              id: Date.now() + Math.random() + y,
+              x: column,
+              y: currentPixelY / BLOCK_SIZE // 現在の位置をピクセル座標で
+            };
+            newFallingBlocks.push(fallingBlock);
+            newGrid[column][y] = false; // グリッドから削除
+            console.log(`🔽 落下ブロック化: 列=${column}, 行=${y} → ピクセルY=${currentPixelY}`);
+          }
+        }
+        
+        // 落下ブロックを追加
+        if (newFallingBlocks.length > 0) {
+          setFallingBlocks(prevFalling => [...prevFalling, ...newFallingBlocks]);
+          console.log(`✅ ${newFallingBlocks.length}個のブロックが落下開始`);
+        }
+      }
+      
+      return newGrid;
+    });
+  }, []);
+
+  // ヘッダークリック
   const handleHeaderClick = (e: React.MouseEvent<HTMLElement>) => {
     const header = e.currentTarget;
     const rect = header.getBoundingClientRect();
@@ -193,13 +271,50 @@ export default function Header({ language }: HeaderProps) {
       return;
     }
 
-    // ブロックをクリックした場合は何もしない（ブロック削除処理が優先）
-    if ((e.target as HTMLElement).style.position === "absolute") {
+    // ブロックをクリックした場合は何もしない
+    if ((e.target as HTMLElement).dataset.block === "true") {
       return;
     }
 
-    addBlockAtPosition(x); // グリッドスナップは関数内で処理されるので、そのまま渡す
+    const column = getColumnFromClick(x);
+    addBlockAtColumn(column);
   };
+
+  // グリッドが初期化されていない場合は何も表示しない
+  if (gridWidth === 0) {
+    return (
+      <header
+        id="main-header"
+        style={{
+          position: "sticky",
+          top: 0,
+          zIndex: 50,
+          backgroundColor: "var(--bg-primary)",
+          borderBottom: "1px solid var(--border-color)",
+          padding: "0.5rem 0",
+          transition: "background-color 0.3s ease, border-color 0.3s ease",
+        }}
+      >
+        <div className="container">
+          <div style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
+            <h1
+              onClick={scrollToTop}
+              style={{
+                fontSize: "1.25rem",
+                fontWeight: "bold",
+                color: "var(--text-accent)",
+                margin: 0,
+                cursor: "pointer",
+                userSelect: "none",
+              }}
+            >
+              llll-ll
+            </h1>
+          </div>
+        </div>
+      </header>
+    );
+  }
 
   return (
     <header
@@ -213,18 +328,12 @@ export default function Header({ language }: HeaderProps) {
         borderBottom: "1px solid var(--border-color)",
         padding: "0.5rem 0",
         transition: "background-color 0.3s ease, border-color 0.3s ease",
-        overflow: "hidden", // ブロックがヘッダー外に出ないように
-        cursor: "crosshair", // タップできることを示すカーソル
+        overflow: "hidden",
+        cursor: "crosshair",
       }}
     >
       <div className="container">
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-          }}
-        >
+        <div style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
           <h1
             style={{
               fontSize: "1.25rem",
@@ -240,30 +349,64 @@ export default function Header({ language }: HeaderProps) {
         </div>
       </div>
 
-      {/* 落下ブロック */}
-      {blocks.map((block) => (
-        <div
-          key={block.id}
-          onClick={(e) => handleBlockClick(e, block.id)}
-          style={{
-            position: "absolute",
-            left: `${block.x}px`,
-            top: `${block.y}px`,
-            width: "16px",
-            height: "16px",
-            backgroundColor: block.color,
-            cursor: "pointer",
-            transition: "opacity 0.2s ease",
-            zIndex: 20, // ヘッダーより前面に表示
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.opacity = "0.7";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.opacity = "1";
-          }}
-        />
-      ))}
+      {/* 固定ブロック */}
+      {grid.map((column, x) =>
+        column.map((hasBlock, y) => {
+          if (!hasBlock) return null;
+          
+          const header = document.getElementById("main-header");
+          const headerHeight = header?.getBoundingClientRect().height || 64;
+          // Y=0が1段目（下段）、Y=3が4段目（上段）
+          const pixelY = headerHeight - BLOCK_SIZE * (y + 1);
+          
+          return (
+            <div
+              key={`${x}-${y}`}
+              data-block="true"
+              onClick={(e) => handleBlockClick(e, x, y)}
+              style={{
+                position: "absolute",
+                left: `${x * BLOCK_SIZE}px`,
+                top: `${pixelY}px`,
+                width: `${BLOCK_SIZE}px`,
+                height: `${BLOCK_SIZE}px`,
+                backgroundColor: "var(--text-accent)",
+                cursor: "pointer",
+                transition: "opacity 0.2s ease",
+                zIndex: 20,
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.opacity = "0.7";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.opacity = "1";
+              }}
+            />
+          );
+        })
+      )}
+
+      {/* 落下中ブロック */}
+      {fallingBlocks.map((block) => {
+        const header = document.getElementById("main-header");
+        const headerHeight = header?.getBoundingClientRect().height || 64;
+        const pixelY = block.y * BLOCK_SIZE; // ヘッダーの上端を基準に
+        
+        return (
+          <div
+            key={block.id}
+            style={{
+              position: "absolute",
+              left: `${block.x * BLOCK_SIZE}px`,
+              top: `${pixelY}px`,
+              width: `${BLOCK_SIZE}px`,
+              height: `${BLOCK_SIZE}px`,
+              backgroundColor: "var(--text-accent)",
+              zIndex: 19,
+            }}
+          />
+        );
+      })}
     </header>
   );
 }

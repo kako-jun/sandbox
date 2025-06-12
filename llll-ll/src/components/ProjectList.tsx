@@ -67,7 +67,8 @@ export default function ProjectList({ products, language }: ProjectListProps) {
 
   useEffect(() => {
     const handleScroll = () => {
-      if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 1500) { // 1000から1500に増加してより早く読み込み
+      if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 1500) {
+        // 1000から1500に増加してより早く読み込み
         if (visibleCount < filteredProducts.length) {
           loadMore();
         }
