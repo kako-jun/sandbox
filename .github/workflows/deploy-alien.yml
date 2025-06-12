@@ -2,47 +2,57 @@ name: Build and Deploy Alien Game
 
 on:
   push:
-    branches: [ main ]
-    paths: [ 'alien/**' ]
+    branches: [main]
+    paths: ["alien/**"]
   pull_request:
-    branches: [ main ]
-    paths: [ 'alien/**' ]
+    branches: [main]
+    paths: ["alien/**"]
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    
+    timeout-minutes: 30 # ジョブ全体のタイムアウトを30分に設定
+
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-    
-    - name: Setup Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.10'
-    
-    - name: Install Poetry
-      uses: snok/install-poetry@v1
-      with:
-        version: latest
-        virtualenvs-create: true
-        virtualenvs-in-project: true
-    
-    - name: Install dependencies
-      working-directory: ./alien
-      run: |
-        poetry install --no-root
-        poetry add pygbag
-    
-    - name: Build web app
-      working-directory: ./alien
-      run: |
-        poetry run python -m pygbag --width 800 --height 600 --no_opt main.py
-    
-    - name: Deploy to GitHub Pages
-      if: github.ref == 'refs/heads/main'
-      uses: peaceiris/actions-gh-pages@v3
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./alien/build/web
-        destination_dir: alien
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: latest
+          virtualenvs-create: true
+          virtualenvs-in-project: false # CI/CDでは外部に仮想環境を作成
+          virtualenvs-path: ~/.virtualenvs # 明示的にパスを指定
+
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pypoetry
+          key: ${{ runner.os }}-poetry-${{ hashFiles('alien/poetry.lock') }}
+
+      - name: Install dependencies
+        working-directory: ./alien
+        timeout-minutes: 10
+        run: |
+          poetry install --no-root
+          poetry add pygbag
+
+      - name: Build web app
+        working-directory: ./alien
+        timeout-minutes: 15
+        run: |
+          poetry run python -m pygbag --width 800 --height 600 --name alien --optimize main.py
+
+      - name: Deploy to GitHub Pages
+        if: github.ref == 'refs/heads/main'
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./alien/build/web
+          destination_dir: alien
