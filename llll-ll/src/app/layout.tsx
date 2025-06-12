@@ -70,17 +70,35 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ja">
+    <html lang="ja" data-theme="light">
       <head>
         <link rel="icon" href="/favicon.ico" sizes="32x32" />
         <link rel="apple-touch-icon" href="/favicon.ico" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
-        {/* 重要なアイコンをプリロード */}
-        <link rel="preload" href="/icons/github.svg" as="image" type="image/svg+xml" />
-        <link rel="preload" href="/icons/note.svg" as="image" type="image/svg+xml" />
-        <link rel="preload" href="/icons/zenn.svg" as="image" type="image/svg+xml" />
+        {/* テーマ初期化スクリプト - FOUCを防ぐため最優先で実行 */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  const savedTheme = localStorage.getItem('theme');
+                  const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                  const theme = savedTheme || systemTheme;
+                  
+                  // 既存の属性を更新（ハイドレーション対応）
+                  if (document.documentElement.getAttribute('data-theme') !== theme) {
+                    document.documentElement.setAttribute('data-theme', theme);
+                  }
+                } catch (e) {
+                  // エラー時はデフォルト値を維持
+                  console.warn('Theme initialization failed:', e);
+                }
+              })();
+            `,
+          }}
+        />
         {/* Structured Data */}
         <script
           type="application/ld+json"
@@ -106,7 +124,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           }}
         />
       </head>
-      <body data-theme="light">{children}</body>
+      <body>{children}</body>
     </html>
   );
 }

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;700&family=Noto+Sans+SC:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;700&family=Noto+Sans+JP:wght@400;700&family=Noto+Sans+SC:wght@400;700&display=swap');
 
 :root {
   --bg-primary: #ffffff;
@@ -6,7 +6,7 @@
   --bg-accent: #e9ecef;
   --text-primary: #000000;
   --text-secondary: #6c757d;
-  --text-accent: #28a745;
+  --text-accent: #218838; /* 元の#28a745より少し暗い緑 */
   --border-color: #dee2e6;
   --link-color: #007bff;
   --link-hover: #0056b3;
@@ -14,7 +14,7 @@
   /* Additional variables for components */
   --text-color: #000000;
   --background-color: #ffffff;
-  --primary-color: #28a745;
+  --primary-color: #218838; /* 元の#28a745より少し暗い緑 */
   --accent-color: #dc3545;
   --muted-text: #6c757d;
   --input-background: #f8f9fa;
@@ -30,7 +30,7 @@
   --bg-accent: #2d2d2d;
   --text-primary: #ffffff;
   --text-secondary: #b0b0b0;
-  --text-accent: #4ade80;
+  --text-accent: #34d058; /* 元の#4ade80より少し暗い緑 */
   --border-color: #404040;
   --link-color: #60a5fa;
   --link-hover: #3b82f6;
@@ -38,13 +38,25 @@
   /* Additional variables for components */
   --text-color: #ffffff;
   --background-color: #121212;
-  --primary-color: #4ade80;
+  --primary-color: #34d058; /* 元の#4ade80より少し暗い緑 */
   --accent-color: #ef4444;
   --muted-text: #b0b0b0;
   --input-background: #1e1e1e;
   --hover-background: #2d2d2d;
   --hover-color: rgba(255,255,255,0.1);
   --icon-filter: invert(1);
+}
+
+/* HTML要素のデフォルト設定（ハイドレーションエラー防止） */
+html {
+  background: #ffffff;
+  color: #000000;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+html[data-theme="dark"] {
+  background: #121212;
+  color: #ffffff;
 }
 
 * {
@@ -55,20 +67,61 @@
 
 /* Critical CSS - Above the fold optimization */
 html {
+  background: #ffffff;
+  color: #000000;
+  transition: background-color 0.3s ease, color 0.3s ease;
   font-display: swap; /* フォント読み込み最適化 */
   scroll-behavior: smooth;
   line-height: 1.6;
-  font-family: 'Noto Sans', 'Noto Sans SC', sans-serif;
+  font-family: 'Noto Sans', sans-serif;
+}
+
+/* 言語別フォント指定 */
+html[lang="ja"] {
+  font-family: 'Noto Sans JP', 'Noto Sans', sans-serif;
+}
+
+html[lang="zh"] {
+  font-family: 'Noto Sans SC', 'Noto Sans', sans-serif;
+}
+
+html[lang="en"] {
+  font-family: 'Noto Sans', sans-serif;
+}
+
+html[data-theme="dark"] {
+  background: #121212;
+  color: #ffffff;
 }
 
 body {
-  background-color: var(--bg-primary, #ffffff);
-  color: var(--text-primary, #000000);
-  font-family: 'Noto Sans', 'Noto Sans SC', sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: inherit; /* htmlから継承 */
   line-height: 1.6;
   font-size: 16px;
   overflow-x: hidden;
   transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* システムダークモード時の初期表示 */
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme]) {
+    background: #121212;
+    color: #ffffff;
+  }
+}
+
+/* ライトテーマ明示設定 */
+html[data-theme="light"] {
+  background: #ffffff;
+  color: #000000;
+}
+
+/* ダークテーマ明示設定 */  
+html[data-theme="dark"] {
+  background: #121212;
+  color: #ffffff;
 }
 
 .container {

@@ -56,6 +56,19 @@ export default function ProjectModal({ product, language, onClose }: ProjectModa
                   src={product.images[currentImageIndex]}
                   alt={`${product.title[language]} - Image ${currentImageIndex + 1}`}
                   className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.style.display = "none";
+                    const placeholder = document.createElement("div");
+                    placeholder.className = "w-full h-full flex items-center justify-center";
+                    placeholder.style.cssText = `
+                      background: var(--input-background);
+                      color: var(--muted-text);
+                      font-size: 1rem;
+                      text-align: center;
+                    `;
+                    placeholder.textContent = "画像を読み込めませんでした";
+                    e.currentTarget.parentNode?.appendChild(placeholder);
+                  }}
                 />
 
                 {/* 画像ナビゲーションボタン */}
@@ -90,7 +103,24 @@ export default function ProjectModal({ product, language, onClose }: ProjectModa
                         index === currentImageIndex ? "border-text-accent" : "border-border-color"
                       }`}
                     >
-                      <img src={image} alt={`Thumbnail ${index + 1}`} className="w-full h-full object-cover" />
+                      <img
+                        src={image}
+                        alt={`Thumbnail ${index + 1}`}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.style.display = "none";
+                          const placeholder = document.createElement("div");
+                          placeholder.className = "w-full h-full flex items-center justify-center";
+                          placeholder.style.cssText = `
+                            background: var(--input-background);
+                            color: var(--muted-text);
+                            font-size: 0.6rem;
+                            text-align: center;
+                          `;
+                          placeholder.textContent = "×";
+                          e.currentTarget.parentNode?.appendChild(placeholder);
+                        }}
+                      />
                     </button>
                   ))}
                 </div>

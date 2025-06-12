@@ -27,6 +27,9 @@ export function useTheme() {
   };
   const updateDocumentTheme = (newTheme: Theme) => {
     document.documentElement.setAttribute("data-theme", newTheme);
+    // html要素の背景色も即座に更新
+    document.documentElement.style.background = newTheme === "dark" ? "#121212" : "#ffffff";
+    document.documentElement.style.color = newTheme === "dark" ? "#ffffff" : "#000000";
   };
 
   return { theme, toggleTheme };

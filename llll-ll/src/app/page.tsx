@@ -40,7 +40,13 @@ export default function HomePage() {
         <>
           <Header language={selectedLanguage} />
 
-          <main>
+          <main
+            style={{
+              backgroundColor: "var(--background-color)",
+              minHeight: "calc(100vh - 200px)", // ヘッダー・フッターを除いた高さ
+              transition: "background-color 0.3s ease",
+            }}
+          >
             <IntroSection language={selectedLanguage} />
             <ImageDisplay language={selectedLanguage} />
 

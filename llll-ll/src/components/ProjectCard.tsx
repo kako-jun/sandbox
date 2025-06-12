@@ -69,6 +69,23 @@ export default function ProjectCard({ product, language, onSelect }: ProjectCard
                   objectFit: "cover",
                 }}
                 loading="lazy"
+                onError={(e) => {
+                  e.currentTarget.style.display = "none";
+                  const placeholder = document.createElement("div");
+                  placeholder.style.cssText = `
+                    width: 100%;
+                    height: 100%;
+                    background: var(--input-background);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    color: var(--muted-text);
+                    font-size: 0.7rem;
+                    text-align: center;
+                  `;
+                  placeholder.textContent = "画像なし";
+                  e.currentTarget.parentNode?.appendChild(placeholder);
+                }}
               />
             </div>
           )}
@@ -204,6 +221,23 @@ export default function ProjectCard({ product, language, onSelect }: ProjectCard
                         }}
                         controls
                         muted
+                        onError={(e) => {
+                          e.currentTarget.style.display = "none";
+                          const placeholder = document.createElement("div");
+                          placeholder.style.cssText = `
+                            width: 100%;
+                            height: 100%;
+                            background: var(--input-background);
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            color: var(--muted-text);
+                            font-size: 0.7rem;
+                            text-align: center;
+                          `;
+                          placeholder.textContent = "動画読み込み\nエラー";
+                          e.currentTarget.parentNode?.appendChild(placeholder);
+                        }}
                       />
                     )}
                   </div>
@@ -231,6 +265,23 @@ export default function ProjectCard({ product, language, onSelect }: ProjectCard
                         objectFit: "cover",
                       }}
                       loading="lazy"
+                      onError={(e) => {
+                        e.currentTarget.style.display = "none";
+                        const placeholder = document.createElement("div");
+                        placeholder.style.cssText = `
+                          width: 100%;
+                          height: 100%;
+                          background: var(--input-background);
+                          display: flex;
+                          align-items: center;
+                          justify-content: center;
+                          color: var(--muted-text);
+                          font-size: 0.7rem;
+                          text-align: center;
+                        `;
+                        placeholder.textContent = "アニメーション\n読み込みエラー";
+                        e.currentTarget.parentNode?.appendChild(placeholder);
+                      }}
                     />
                   </div>
                 ))}
@@ -256,6 +307,23 @@ export default function ProjectCard({ product, language, onSelect }: ProjectCard
                       objectFit: "cover",
                     }}
                     loading="lazy"
+                    onError={(e) => {
+                      e.currentTarget.style.display = "none";
+                      const placeholder = document.createElement("div");
+                      placeholder.style.cssText = `
+                        width: 100%;
+                        height: 100%;
+                        background: var(--input-background);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        color: var(--muted-text);
+                        font-size: 0.7rem;
+                        text-align: center;
+                      `;
+                      placeholder.textContent = "画像なし";
+                      e.currentTarget.parentNode?.appendChild(placeholder);
+                    }}
                   />
                 </div>
               ))}

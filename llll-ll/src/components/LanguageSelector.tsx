@@ -14,6 +14,13 @@ export default function LanguageSelector({ onLanguageSelect, selectedLanguage }:
   const { theme, toggleTheme } = useTheme();
   const [currentLang, setCurrentLang] = useState<Language>("en"); // 表示用の言語状態
 
+  // 言語選択時にHTMLのlang属性も更新
+  const handleLanguageSelect = (lang: Language) => {
+    onLanguageSelect(lang);
+    document.documentElement.lang = lang;
+    setCurrentLang(lang);
+  };
+
   // 言語が既に選択されている場合は、コンパクトな表示
   if (selectedLanguage) {
     return (
@@ -42,7 +49,7 @@ export default function LanguageSelector({ onLanguageSelect, selectedLanguage }:
               }}
             >
               <button
-                onClick={() => onLanguageSelect("en")}
+                onClick={() => handleLanguageSelect("en")}
                 style={{
                   background: "none",
                   border: "none",
@@ -60,7 +67,7 @@ export default function LanguageSelector({ onLanguageSelect, selectedLanguage }:
               <span style={{ color: "var(--muted-text)" }}>|</span>
 
               <button
-                onClick={() => onLanguageSelect("ja")}
+                onClick={() => handleLanguageSelect("ja")}
                 style={{
                   background: "none",
                   border: "none",
@@ -78,7 +85,7 @@ export default function LanguageSelector({ onLanguageSelect, selectedLanguage }:
               <span style={{ color: "var(--muted-text)" }}>|</span>
 
               <button
-                onClick={() => onLanguageSelect("zh")}
+                onClick={() => handleLanguageSelect("zh")}
                 style={{
                   background: "none",
                   border: "none",
@@ -286,7 +293,7 @@ export default function LanguageSelector({ onLanguageSelect, selectedLanguage }:
 
           <div style={{ marginBottom: "2rem" }}>
             <button
-              onClick={() => onLanguageSelect(currentLang)}
+              onClick={() => handleLanguageSelect(currentLang)}
               style={{
                 backgroundColor: "var(--primary-color)",
                 color: "#ffffff",
@@ -327,8 +334,10 @@ export default function LanguageSelector({ onLanguageSelect, selectedLanguage }:
               style={{
                 width: "120px",
                 height: "120px",
-                border: "2px solid var(--border-color)",
-                borderRadius: "8px",
+                border: "none", // 枠を完全に削除
+                borderRadius: "0", // 角丸も削除
+                opacity: "0.7", // 明るさを減らす
+                filter: "brightness(0.8)", // さらに明度を下げる
               }}
             />
           </div>
