@@ -2,7 +2,7 @@ import { Language } from "@/types";
 
 export const translations = {
   en: {
-    welcome: "Welcome to llll-ll",
+    welcome: "Welcome to",
     intro:
       "Hi! I'm kako-jun, based in Kanazawa. I create digital experiences that blend nostalgia with modern technology.",
     aboutTitle: "About Me",
@@ -28,7 +28,7 @@ export const translations = {
     forMobileDevices: "Scan QR code for mobile access",
   },
   zh: {
-    welcome: "欢迎来到 llll-ll",
+    welcome: "欢迎来到",
     intro: "你好！我是kako-jun，居住在金泽。我创造融合怀旧与现代技术的数字体验。",
     aboutTitle: "关于我",
     projectsTitle: "作ったもの",
@@ -53,7 +53,7 @@ export const translations = {
     forMobileDevices: "扫描二维码访问手机版",
   },
   ja: {
-    welcome: "llll-ll へようこそ",
+    welcome: "へようこそ",
     intro: "はじめまして！金沢を拠点とするkako-junです。ノスタルジーと現代技術を融合したデジタル体験を創造しています。",
     aboutTitle: "このサイトについて",
     projectsTitle: "作ったもの",
@@ -72,7 +72,7 @@ export const translations = {
     clearFilters: "クリア",
     noResults: "見つかりませんでした。",
     loadMore: "もっと見る",
-    redDoorMessage: "せっかくだから、俺はこの赤の扉を選ぶぜ……ッ！",
+    redDoorMessage: "せっかくだから、オレはこの赤の扉を選ぶぜ！",
     showAbout: "このサイトについて",
     hideAbout: "閉じる",
     forMobileDevices: "QRコードでスマホアクセス",

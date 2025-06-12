@@ -104,12 +104,14 @@ export default function ProjectList({ products, language }: ProjectListProps) {
                 left: "0.75rem",
                 top: "50%",
                 transform: "translateY(-50%)",
-                fontSize: "1rem",
                 color: "var(--muted-text)",
                 pointerEvents: "none",
               }}
             >
-              🔍
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <path d="m21 21-4.35-4.35"></path>
+              </svg>
             </div>
             <input
               type="text"
@@ -118,7 +120,7 @@ export default function ProjectList({ products, language }: ProjectListProps) {
               onChange={(e) => setSearchTerm(e.target.value)}
               style={{
                 width: "100%",
-                padding: "0.75rem 1rem 0.75rem 2.5rem",
+                padding: "0.75rem 2.5rem 0.75rem 2.5rem",
                 backgroundColor: "var(--input-background)",
                 color: "var(--text-color)",
                 border: "1px solid var(--border-color)",
@@ -127,6 +129,42 @@ export default function ProjectList({ products, language }: ProjectListProps) {
                 fontFamily: "inherit",
               }}
             />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm("")}
+                style={{
+                  position: "absolute",
+                  right: "0.5rem",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  background: "none",
+                  border: "none",
+                  color: "var(--muted-text)",
+                  cursor: "pointer",
+                  fontSize: "1.2rem",
+                  lineHeight: "1",
+                  padding: "0.5rem",
+                  borderRadius: "2px",
+                  transition: "all 0.2s ease",
+                  minWidth: "2rem",
+                  minHeight: "2rem",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.color = "var(--text-color)";
+                  e.currentTarget.style.backgroundColor = "var(--hover-background)";
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.color = "var(--muted-text)";
+                  e.currentTarget.style.backgroundColor = "transparent";
+                }}
+                title="検索をクリア"
+              >
+                ×
+              </button>
+            )}
           </div>
 
           {/* タグクラウド */}
@@ -283,7 +321,12 @@ export default function ProjectList({ products, language }: ProjectListProps) {
               padding: "3rem 0",
             }}
           >
-            <div style={{ fontSize: "2rem", marginBottom: "1rem" }}>🔍</div>
+            <div style={{ marginBottom: "1rem", display: "flex", justifyContent: "center" }}>
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <circle cx="11" cy="11" r="8"></circle>
+                <path d="m21 21-4.35-4.35"></path>
+              </svg>
+            </div>
             <p>{t.noResults}</p>
           </div>
         ) : (

@@ -130,7 +130,7 @@ export default function BackgroundDots() {
             height: `${dot.size}px`,
             backgroundColor: "var(--primary-color)",
             opacity: dot.opacity,
-            borderRadius: "50%",
+            borderRadius: "0px",
             animation: `float-${dot.id} ${dot.duration}s cubic-bezier(0.4, 0, 0.6, 1) infinite`,
             animationDelay: `${dot.delay}s`,
             pointerEvents: "none",
