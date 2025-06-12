@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import ArrowIcon from "./ArrowIcon";
 
 export default function ScrollToTop() {
   const [isVisible, setIsVisible] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
 
   // スクロール位置を監視
   useEffect(() => {
@@ -31,41 +33,57 @@ export default function ScrollToTop() {
   if (!isVisible) {
     return null;
   }
-
   return (
     <button
       onClick={scrollToTop}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       style={{
         position: "fixed",
         bottom: "2rem",
         right: "2rem",
-        width: "50px",
-        height: "50px",
+        width: "52px",
+        height: "52px",
         backgroundColor: "var(--primary-color)",
         color: "#ffffff",
         border: "none",
-        borderRadius: "50%",
+        borderRadius: isHovered ? "2px" : "12px", // ホバー時をより角ばらせる
         cursor: "pointer",
         fontSize: "1.2rem",
-        boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-        transition: "all 0.3s ease",
+        boxShadow: isHovered ? "0 8px 24px rgba(0,0,0,0.25)" : "0 4px 12px rgba(0,0,0,0.15)",
+        transform: isHovered ? "scale(1.1) translateY(-2px)" : "scale(1) translateY(0)",
+        transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
         zIndex: 1000,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
         fontWeight: "bold",
+        backdropFilter: "blur(10px)",
+        animation: "fadeInUp 0.5s ease-out",
       }}
-      onMouseOver={(e) => {
-        e.currentTarget.style.transform = "scale(1.1)";
-        e.currentTarget.style.boxShadow = "0 6px 16px rgba(0,0,0,0.2)";
+      onMouseDown={(e) => {
+        e.currentTarget.style.transform = "scale(0.95) translateY(0)";
       }}
-      onMouseOut={(e) => {
-        e.currentTarget.style.transform = "scale(1)";
-        e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.15)";
+      onMouseUp={(e) => {
+        e.currentTarget.style.transform = isHovered ? "scale(1.1) translateY(-2px)" : "scale(1) translateY(0)";
       }}
       title="ページトップに戻る"
     >
-      ↑
+      <ArrowIcon direction="up" size={20} strokeWidth={2.5} />
+
+      {/* CSS アニメーション */}
+      <style jsx>{`
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+      `}</style>
     </button>
   );
 }

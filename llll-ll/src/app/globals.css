@@ -1,5 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;700&family=Noto+Sans+SC:wght@400;700&display=swap');
 
 :root {
   --bg-primary: #ffffff;
@@ -54,14 +53,18 @@
   box-sizing: border-box;
 }
 
+/* Critical CSS - Above the fold optimization */
 html {
+  font-display: swap; /* フォント読み込み最適化 */
   scroll-behavior: smooth;
+  line-height: 1.6;
+  font-family: 'Noto Sans', 'Noto Sans SC', sans-serif;
 }
 
 body {
-  font-family: 'Noto Sans', 'Noto Sans SC', sans-serif;
   background-color: var(--bg-primary);
   color: var(--text-primary);
+  font-family: 'Noto Sans', 'Noto Sans SC', sans-serif;
   line-height: 1.6;
   font-size: 16px;
   overflow-x: hidden;

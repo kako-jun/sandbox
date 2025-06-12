@@ -1,0 +1,18 @@
+{
+  "folders": [
+    {
+      "path": "."
+    }
+  ],
+  "settings": {
+    "typescript.preferences.includePackageJsonAutoImports": "auto",
+    "eslint.workingDirectories": ["."],
+    "files.exclude": {
+      "**/.next": true,
+      "**/node_modules": true
+    }
+  },
+  "extensions": {
+    "recommendations": ["bradlc.vscode-tailwindcss", "ms-vscode.vscode-typescript-next", "esbenp.prettier-vscode"]
+  }
+}

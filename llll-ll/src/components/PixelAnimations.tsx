@@ -1,112 +1,130 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-
-export function FloatingSlime() {
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-
-  useEffect(() => {
-    const animate = () => {
-      setPosition({
-        x: Math.sin(Date.now() * 0.001) * 10,
-        y: Math.cos(Date.now() * 0.0008) * 5,
-      });
-    };
-
-    const interval = setInterval(animate, 50);
-    return () => clearInterval(interval);
-  }, []);
-
-  return (
-    <div 
-      className="fixed bottom-4 right-4 text-2xl z-10 pointer-events-none"
-      style={{
-        transform: `translate(${position.x}px, ${position.y}px)`,
-        transition: 'transform 0.1s ease-out',
-      }}
-    >
-      🟢
-    </div>
-  );
-}
-
-export function FloatingCat() {
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-
-  useEffect(() => {
-    const animate = () => {
-      setPosition({
-        x: Math.cos(Date.now() * 0.0012) * 8,
-        y: Math.sin(Date.now() * 0.001) * 6,
-      });
-    };
-
-    const interval = setInterval(animate, 60);
-    return () => clearInterval(interval);
-  }, []);
-
-  return (
-    <div 
-      className="fixed bottom-4 left-4 text-2xl z-10 pointer-events-none"
-      style={{
-        transform: `translate(${position.x}px, ${position.y}px)`,
-        transition: 'transform 0.1s ease-out',
-      }}
-    >
-      🐱
-    </div>
-  );
-}
+import { useEffect, useState } from "react";
 
 export function TetrisBlock() {
-  const [blocks, setBlocks] = useState<Array<{ id: number; x: number; y: number; color: string }>>([]);
+  const [blocks, setBlocks] = useState<Array<{ id: number; x: number; y: number; opacity: number }>>([]);
 
   useEffect(() => {
-    const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'];
-    
-    const addBlock = () => {
-      const newBlock = {
-        id: Date.now(),
-        x: Math.random() * (window.innerWidth - 20),
-        y: -20,
-        color: colors[Math.floor(Math.random() * colors.length)],
+    // ヘッダーの位置を取得する関数
+    const getHeaderPosition = () => {
+      const header = document.getElementById("main-header");
+      if (!header) {
+        // ヘッダーが見つからない場合のログを削除
+        return {
+          top: 0,
+          left: window.innerWidth * 0.1, // 画面幅の10%位置
+          right: window.innerWidth * 0.9, // 画面幅の90%位置
+          bottom: 60,
+          centerY: 30,
+        };
+      }
+
+      const rect = header.getBoundingClientRect();
+      const scrollY = window.scrollY;
+
+      return {
+        top: rect.top + scrollY,
+        left: rect.left,
+        right: rect.right,
+        bottom: rect.bottom + scrollY,
+        centerY: rect.top + scrollY + rect.height / 2,
       };
-      
-      setBlocks(prev => [...prev, newBlock]);
     };
 
-    const interval = setInterval(addBlock, 3000);
+    const addBlock = () => {
+      const headerPos = getHeaderPosition();
+
+      // ヘッダーの幅に基づいてブロック生成範囲を決定
+      // ヘッダーの中央部分により狭い範囲で生成
+      const headerWidth = headerPos.right - headerPos.left;
+      const blockArea = {
+        minX: headerPos.left + headerWidth * 0.2, // ヘッダーの20%位置から
+        maxX: headerPos.right - headerWidth * 0.2, // ヘッダーの80%位置まで
+      };
+
+      const newBlock = {
+        id: Date.now() + Math.random(),
+        x: blockArea.minX + Math.random() * (blockArea.maxX - blockArea.minX),
+        y: -20, // 画面上部から開始
+        opacity: 0.9 + Math.random() * 0.1,
+      };
+
+      setBlocks((prev) => [...prev, newBlock]);
+    };
+
+    // 1.5秒間隔でブロックを生成（少し頻度を上げる）
+    const interval = setInterval(addBlock, 1500);
     return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
     const animate = () => {
-      setBlocks(prev => 
-        prev.map(block => ({
-          ...block,
-          y: block.y + 2,
-        })).filter(block => block.y < window.innerHeight)
-      );
+      setBlocks((prev) => {
+        const header = document.getElementById("main-header");
+        let targetY = 60; // デフォルト値
+
+        if (header) {
+          const rect = header.getBoundingClientRect();
+          targetY = rect.bottom + window.scrollY - 10; // ヘッダーの下端から10px上
+        }
+
+        return prev
+          .map((block) => {
+            const newY = block.y + 2; // 落下速度を少し上げる
+
+            // ターゲットY座標に到達したら積み上げ処理
+            if (newY >= targetY - 5) {
+              // 同じX座標付近で既に積み上がっているブロックを検索
+              const nearbyBlocks = prev.filter(
+                (otherBlock) =>
+                  otherBlock.id !== block.id &&
+                  Math.abs(otherBlock.x - block.x) <= 20 &&
+                  Math.abs(otherBlock.y - targetY) <= 30
+              );
+
+              // 積み上げ高さを計算
+              const stackHeight = nearbyBlocks.length;
+              const finalY = targetY - stackHeight * 14; // 14pxずつ上に積み上げ
+
+              return {
+                ...block,
+                y: finalY,
+              };
+            }
+
+            return { ...block, y: newY };
+          })
+          .filter((block) => block.y > -50 && block.y < window.innerHeight + 100);
+      });
     };
 
-    const animationInterval = setInterval(animate, 50);
+    const animationInterval = setInterval(animate, 60); // より滑らかなアニメーション
     return () => clearInterval(animationInterval);
   }, []);
 
   return (
     <>
-      {blocks.map(block => (
+      {blocks.map((block) => (
         <div
           key={block.id}
-          className="fixed w-4 h-4 pixel-border pointer-events-none z-0"
+          className="fixed pointer-events-none"
           style={{
             left: block.x,
             top: block.y,
-            backgroundColor: block.color,
-            opacity: 0.6,
+            width: "12px",
+            height: "12px",
+            backgroundColor: "#ffffff",
+            border: "1px solid #e0e0e0",
+            opacity: block.opacity,
+            zIndex: 1000, // ヘッダーより前面に表示
+            boxShadow: "0 1px 2px rgba(0,0,0,0.1)",
           }}
         />
       ))}
     </>
   );
 }
+
+// デフォルトエクスポート
+export default TetrisBlock;

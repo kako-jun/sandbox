@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Language } from "@/types";
 import { useTranslation } from "@/lib/i18n";
+import ArrowIcon from "./ArrowIcon";
 
 interface IntroSectionProps {
   language: Language;
@@ -37,9 +38,22 @@ export default function IntroSection({ language }: IntroSectionProps) {
               fontSize: "1rem",
               cursor: "pointer",
               fontFamily: language === "zh" ? "'Noto Sans SC', sans-serif" : "inherit",
+              display: "flex",
+              alignItems: "center",
+              gap: "0.5rem",
+              margin: "0 auto",
             }}
           >
             {isExpanded ? t.hideAbout : t.showAbout}
+            <ArrowIcon
+              direction={isExpanded ? "up" : "down"}
+              size={16}
+              strokeWidth={2}
+              style={{
+                transition: "transform 0.3s ease",
+                transform: isExpanded ? "rotate(0deg)" : "rotate(0deg)",
+              }}
+            />
           </button>
         </div>
 
