@@ -15,15 +15,22 @@ from game.models import Color, GameConfig, GameMode, InputEvent, Position, Size
 class PyGameRenderer:
     """PyGameベースのレンダラー"""
 
-    def __init__(self, config: GameConfig):
+    def __init__(self, config: GameConfig, engine: Optional[GameEngine] = None):
         """初期化
 
         Args:
             config: ゲーム設定
+            engine: ゲームエンジン（アニメーション用）
         """
         self.config = config
+        self.engine = engine
         self.screen: Optional[pygame.Surface] = None
         self.clock = pygame.time.Clock()
+        
+        # フォントキャッシュを初期化
+        self._font_cache = {}
+        self._japanese_font_name = None
+        self._font_logged = False
 
         self._init_pygame()
 
@@ -43,6 +50,68 @@ class PyGameRenderer:
 
         # フォントを初期化
         pygame.font.init()
+        
+        # 日本語フォントを検出してキャッシュ
+        self._initialize_japanese_font()
+
+    def _initialize_japanese_font(self) -> None:
+        """日本語フォントを初期化してキャッシュ"""
+        font_candidates = [
+            "msgothic",      # MS Gothic
+            "msuigothic",    # MS UI Gothic
+            "consolas",      # Consolas
+            "couriernew",    # Courier New
+        ]
+        
+        available_fonts = pygame.font.get_fonts()
+        
+        # 候補フォントを順番に試す
+        for font_name in font_candidates:
+            if font_name in available_fonts:
+                try:
+                    test_font = pygame.font.SysFont(font_name, 20)
+                    test_surface = test_font.render("あいう", True, (255, 255, 255))
+                    if test_surface.get_width() > 0:
+                        self._japanese_font_name = font_name
+                        # 初回のみログ出力
+                        if not hasattr(self, '_font_logged'):
+                            print(f"[GUI] Japanese font detected: {font_name}")
+                            self._font_logged = True
+                        return
+                except Exception:
+                    continue
+        
+        self._japanese_font_name = None
+        # 初回のみログ出力
+        if not hasattr(self, '_font_logged'):
+            print("[GUI] No Japanese font found, using default font")
+            self._font_logged = True
+
+    def _get_font(self, size: int, use_japanese: bool = False) -> pygame.font.Font:
+        """フォントをキャッシュから取得
+
+        Args:
+            size: フォントサイズ
+            use_japanese: 日本語フォントを使用するかどうか
+
+        Returns:
+            フォント
+        """
+        cache_key = (size, use_japanese)
+        
+        if cache_key not in self._font_cache:
+            if use_japanese and self._japanese_font_name:
+                try:
+                    font = pygame.font.SysFont(self._japanese_font_name, size)
+                    self._font_cache[cache_key] = font
+                except Exception:
+                    font = pygame.font.Font(None, size)
+                    self._font_cache[cache_key] = font
+            else:
+                font = pygame.font.Font(None, size)
+                self._font_cache[cache_key] = font
+                
+        return self._font_cache[cache_key]
 
     def clear_screen(self, color: Color) -> None:
         """画面をクリア
@@ -71,7 +140,12 @@ class PyGameRenderer:
         if not self.screen:
             return
 
-        font = pygame.font.Font(None, font_size)
+        # 日本語文字が含まれているかチェック
+        has_japanese = any(ord(char) > 127 for char in text)
+        
+        # キャッシュされたフォントを使用
+        font = self._get_font(font_size, use_japanese=has_japanese)
+        
         text_surface = font.render(text, True, color.to_rgb_tuple())
         self.screen.blit(text_surface, (position.x, position.y))
 
@@ -93,7 +167,12 @@ class PyGameRenderer:
         if not self.screen:
             return
 
-        font = pygame.font.Font(None, font_size)
+        # 日本語文字が含まれているかチェック
+        has_japanese = any(ord(char) > 127 for char in text)
+        
+        # キャッシュされたフォントを使用
+        font = self._get_font(font_size, use_japanese=has_japanese)
+        
         text_surface = font.render(text, True, color.to_rgb_tuple())
         text_rect = text_surface.get_rect()
 
@@ -101,6 +180,12 @@ class PyGameRenderer:
         screen_rect = self.screen.get_rect()
         text_rect.centerx = screen_rect.centerx
         text_rect.centery = screen_rect.centery + y_offset
+
+        # アニメーションオフセットを適用
+        if self.engine and hasattr(self.engine, "animation_time"):
+            import math
+            offset_x = int(math.sin(self.engine.animation_time * 2) * 10)
+            text_rect.centerx += offset_x
 
         self.screen.blit(text_surface, text_rect)
 
@@ -124,6 +209,47 @@ class PyGameRenderer:
             pygame.draw.rect(self.screen, color.to_rgb_tuple(), rect)
         else:
             pygame.draw.rect(self.screen, color.to_rgb_tuple(), rect, 2)
+
+    def draw_image(self, image_path: str, position: Position) -> bool:
+        """画像を描画
+
+        Args:
+            image_path: 画像ファイルパス
+            position: 描画位置
+
+        Returns:
+            描画に成功したかどうか
+        """
+        if not self.screen:
+            return False
+
+        try:
+            image_surface = pygame.image.load(image_path)
+            self.screen.blit(image_surface, (position.x, position.y))
+            return True
+        except Exception:
+            # 画像が読み込めない場合は代替表示
+            font = self._get_font(24, use_japanese=False)
+            text_surface = font.render("[IMG]", True, (255, 255, 255))
+            self.screen.blit(text_surface, (position.x, position.y))
+            return False
+
+    def draw_shape_circle(self, position: Position, radius: int, color: Color, filled: bool = True) -> None:
+        """円を描画
+
+        Args:
+            position: 中心位置
+            radius: 半径
+            color: 色
+            filled: 塗りつぶすかどうか
+        """
+        if not self.screen:
+            return
+
+        if filled:
+            pygame.draw.circle(self.screen, color.to_rgb_tuple(), (position.x, position.y), radius)
+        else:
+            pygame.draw.circle(self.screen, color.to_rgb_tuple(), (position.x, position.y), radius, 2)
 
     def present(self) -> None:
         """画面を更新"""
@@ -190,6 +316,12 @@ class PyGameInputHandler:
                             event_type="restart", key=key_name, timestamp=current_time
                         )
                     )
+                elif event.key == pygame.K_m:
+                    events.append(
+                        InputEvent(
+                            event_type="music_toggle", key=key_name, timestamp=current_time
+                        )
+                    )
                 else:
                     events.append(
                         InputEvent(
@@ -223,7 +355,7 @@ class PyGameApp:
 
         self.config = config
         self.engine = GameEngine(config)
-        self.renderer = PyGameRenderer(config)
+        self.renderer = PyGameRenderer(config, self.engine)
         self.input_handler = PyGameInputHandler()
 
     def run(self) -> None:
@@ -276,8 +408,53 @@ class PyGameApp:
             fps_text, Position(x=10, y=60), Color(r=255, g=255, b=0), font_size=16  # 黄色
         )
 
+        # 音楽状態表示
+        music_status = self.engine.get_music_status()
+        music_text = f"Music: {music_status}"
+        self.renderer.draw_text(
+            music_text, Position(x=10, y=80), Color(r=0, g=255, b=255), font_size=16  # シアン
+        )
+
+        # 図形サンプル表示
+        shape_sample = self.engine.get_shape_sample()
+        self.renderer.draw_text(
+            shape_sample, Position(x=10, y=100), Color(r=255, g=128, b=0), font_size=16  # オレンジ
+        )
+
+        # 画像サンプル表示
+        image_path = "assets/images/test_icon.png"
+        image_loaded = self.renderer.draw_image(image_path, Position(x=10, y=120))
+        if image_loaded:
+            image_text = "Image: Loaded successfully"
+        else:
+            image_text = "Image: Failed to load (showing fallback)"
+        self.renderer.draw_text(
+            image_text, Position(x=50, y=125), Color(r=128, g=255, b=128), font_size=16  # 薄緑
+        )
+
+        # 色付き円（カラーブロックの代替）
+        rgb_color = self.engine.get_color_block_sample()
+        self.renderer.draw_shape_circle(
+            Position(x=30, y=150), 
+            15, 
+            Color(r=rgb_color[0], g=rgb_color[1], b=rgb_color[2])
+        )
+        color_text = f"Color Circle: RGB({rgb_color[0]}, {rgb_color[1]}, {rgb_color[2]})"
+        self.renderer.draw_text(
+            color_text, Position(x=60, y=145), Color(r=200, g=200, b=200), font_size=16  # グレー
+        )
+
+        # 日本語サンプル表示
+        japanese_sample = self.engine.get_japanese_sample()
+        self.renderer.draw_text(
+            japanese_sample, 
+            Position(x=10, y=170), 
+            Color(r=255, g=192, b=203), 
+            font_size=16  # ピンク
+        )
+
         # 操作説明
-        help_text = "ESC: Quit | SPACE: Pause/Resume | R: Restart"
+        help_text = "ESC: Quit | SPACE: Pause/Resume | R: Restart | M: Music Toggle"
         help_position = Position(x=10, y=self.config.window_size.height - 25)
         self.renderer.draw_text(
             help_text, help_position, Color(r=128, g=128, b=128), font_size=16  # グレー

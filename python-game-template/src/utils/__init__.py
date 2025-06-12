@@ -4,6 +4,7 @@
 共通機能とヘルパー関数
 """
 
+from utils.audio import AudioManager, cleanup_audio, get_audio_manager
 from utils.error_handler import (
     ConfigError,
     GameError,
@@ -39,8 +40,19 @@ from utils.storage import (
     get_storage_info,
 )
 from utils.terminal import Screen, TerminalController
+from utils.timing import (
+    FrameCounter,
+    TimingManager,
+    cleanup_timing,
+    get_frame_counter,
+    get_timing_manager,
+)
 
 __all__ = [
+    # Audio
+    "AudioManager",
+    "get_audio_manager",
+    "cleanup_audio",
     # Error handling
     "GameError",
     "ConfigError",
@@ -80,4 +92,10 @@ __all__ = [
     # Terminal
     "TerminalController",
     "Screen",
+    # Timing
+    "TimingManager",
+    "FrameCounter",
+    "get_timing_manager",
+    "get_frame_counter",
+    "cleanup_timing",
 ]

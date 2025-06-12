@@ -4,15 +4,16 @@
 GUI版とCUI版で共通するゲームロジックを実装
 """
 
+import math
 import time
-from typing import Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 from game.models import (
     GameConfig,
     GameData,
+    GameObject,
     GameScene,
     GameState,
-    GameObject,
     InputEvent,
     Player,
     Position,
@@ -41,10 +42,20 @@ class GameEngine:
         self.paused = False
 
         # イベントハンドラーの辞書
-        self.event_handlers: Dict[str, callable] = {}
+        self.event_handlers: Dict[str, Callable[[InputEvent], None]] = {}
 
         # シーンの辞書
         self.scenes: Dict[str, GameScene] = {}
+
+        # アニメーション用の変数
+        self.animation_time = 0.0
+
+        # 音楽制御用の状態
+        self.music_playing = False
+
+        # 共有マネージャー（外部から設定される）
+        self.audio_manager: Optional[Any] = None
+        self.timing_manager: Optional[Any] = None
 
         self._setup_default_handlers()
 
@@ -56,10 +67,11 @@ class GameEngine:
                 "pause": self._handle_pause,
                 "resume": self._handle_resume,
                 "restart": self._handle_restart,
+                "music_toggle": self._handle_music_toggle,
             }
         )
 
-    def add_event_handler(self, event_type: str, handler: callable) -> None:
+    def add_event_handler(self, event_type: str, handler: Callable[[InputEvent], None]) -> None:
         """イベントハンドラーを追加
 
         Args:
@@ -91,9 +103,7 @@ class GameEngine:
             return True
         return False
 
-    def create_player(
-        self, name: str = "Player", position: Optional[Position] = None
-    ) -> Player:
+    def create_player(self, name: str = "Player", position: Optional[Position] = None) -> Player:
         """プレイヤーを作成
 
         Args:
@@ -106,9 +116,7 @@ class GameEngine:
         if position is None:
             position = Position(x=100, y=100)
 
-        player = Player(
-            id="player", name=name, position=position, size=Size(width=32, height=32)
-        )
+        player = Player(id="player", name=name, position=position, size=Size(width=32, height=32))
         self.data.player = player
         return player
 
@@ -165,6 +173,9 @@ class GameEngine:
         # プレイ時間を更新
         self.data.play_time += delta_time
 
+        # アニメーション時間を更新
+        self.animation_time += delta_time
+
         # 現在のシーンのオブジェクトを更新
         if self.data.current_scene:
             active_objects = self.data.current_scene.get_active_objects()
@@ -174,16 +185,15 @@ class GameEngine:
         # 衝突判定
         self._check_collisions()
 
-    def _update_object(self, obj: GameObject, delta_time: float) -> None:
+    def _update_object(self, _obj: GameObject, _delta_time: float) -> None:
         """オブジェクトを更新（サブクラスでオーバーライド用）
 
         Args:
-            obj: 更新するオブジェクト
-            delta_time: 経過時間
+            _obj: 更新するオブジェクト
+            _delta_time: 経過時間
         """
         # 基本実装では何もしない
         # 具体的なゲームでオーバーライドして使用
-        pass
 
     def _check_collisions(self) -> None:
         """衝突判定を実行"""
@@ -199,16 +209,15 @@ class GameEngine:
                 if obj1.is_colliding_with(obj2):
                     self._handle_collision(obj1, obj2)
 
-    def _handle_collision(self, obj1: GameObject, obj2: GameObject) -> None:
+    def _handle_collision(self, _obj1: GameObject, _obj2: GameObject) -> None:
         """衝突処理（サブクラスでオーバーライド用）
 
         Args:
-            obj1: 衝突したオブジェクト1
-            obj2: 衝突したオブジェクト2
+            _obj1: 衝突したオブジェクト1
+            _obj2: 衝突したオブジェクト2
         """
         # 基本実装では何もしない
         # 具体的なゲームでオーバーライドして使用
-        pass
 
     def handle_input(self, event: InputEvent) -> None:
         """入力イベントを処理
@@ -219,23 +228,28 @@ class GameEngine:
         if event.event_type in self.event_handlers:
             self.event_handlers[event.event_type](event)
 
-    def _handle_quit(self, event: InputEvent) -> None:
+    def _handle_quit(self, _event: InputEvent) -> None:
         """終了イベントを処理"""
         self.stop()
 
-    def _handle_pause(self, event: InputEvent) -> None:
+    def _handle_pause(self, _event: InputEvent) -> None:
         """一時停止イベントを処理"""
         if self.data.current_state == GameState.PLAYING:
             self.pause()
 
-    def _handle_resume(self, event: InputEvent) -> None:
+    def _handle_resume(self, _event: InputEvent) -> None:
         """再開イベントを処理"""
         if self.data.current_state == GameState.PAUSED:
             self.resume()
 
-    def _handle_restart(self, event: InputEvent) -> None:
+    def _handle_restart(self, _event: InputEvent) -> None:
         """再スタートイベントを処理"""
         self.restart()
+
+    def _handle_music_toggle(self, _event: InputEvent) -> None:
+        """音楽再生/停止の切り替えイベントを処理"""
+        self.music_playing = not self.music_playing
+        # 実際の音楽制御は各UI実装で行う
 
     def get_delta_time(self) -> float:
         """前フレームからの経過時間を取得
@@ -270,7 +284,18 @@ class GameEngine:
         Returns:
             表示するテキスト
         """
-        return "hoge"
+        # 浮遊するようなアニメーション
+        bounce = math.sin(self.animation_time * 2) * 3  # 上下の幅を3に
+        offset = int(bounce)
+
+        # 複数のパターンを表示
+        patterns = ["hoge", "HOGE", "Hoge", "hoGE"]
+        pattern_index = int(self.animation_time / 2) % len(patterns)  # 2秒ごとに変更
+
+        base_text = patterns[pattern_index]  # 音楽状態を表示
+        music_indicator = "[MUSIC]" if self.music_playing else "[SILENT]"
+
+        return f"{base_text} {music_indicator} (offset: {offset:+d})"
 
     def get_player_info(self) -> str:
         """プレイヤー情報を取得
@@ -295,3 +320,81 @@ class GameEngine:
         fps = self.data.config.fps
 
         return f"State: {state_text} | Time: {play_time}s | FPS: {fps}"
+
+    def is_music_playing(self) -> bool:
+        """音楽が再生中かどうかを取得
+
+        Returns:
+            音楽が再生中かどうか
+        """
+        return self.music_playing
+
+    def get_music_status(self) -> str:
+        """音楽の状態を取得
+
+        Returns:
+            音楽状態の文字列
+        """
+        if self.music_playing:
+            return "[MUSIC]"
+        else:
+            return "[SILENT]"
+
+    def get_animation_offset(self) -> int:
+        """アニメーションオフセットを取得（描画位置調整用）
+
+        Returns:
+            アニメーションオフセット値
+        """
+        bounce = math.sin(self.animation_time * 2) * 3
+        return int(bounce)
+
+    def get_shape_sample(self) -> str:
+        """図形サンプルを取得（○の色が時間で変化）
+
+        Returns:
+            図形表示用文字列
+        """
+        # 時間で色を変える
+        colors = ["○", "●", "◯", "◉"]
+        color_index = int(self.animation_time) % len(colors)
+        return f"Shape: {colors[color_index]}"
+
+    def get_image_sample(self) -> str:
+        """画像サンプル表示情報を取得
+
+        Returns:
+            画像表示用情報
+        """
+        # 簡単な画像情報（実際のファイル読み込みはUI側で処理）
+        return "Image: assets/images/test_icon.png"
+
+    def get_color_block_sample(self) -> tuple[int, int, int]:
+        """色付きブロック用のRGB色を取得（時間で変化）
+
+        Returns:
+            RGB色タプル (r, g, b)
+        """
+        # 時間で色を循環
+        time_factor = self.animation_time * 0.5
+        r = int(128 + 127 * math.sin(time_factor))
+        g = int(128 + 127 * math.sin(time_factor + 2.0))
+        b = int(128 + 127 * math.sin(time_factor + 4.0))
+        return (r, g, b)
+
+    def get_japanese_sample(self) -> str:
+        """日本語サンプルテキストを取得（時間で変化）
+
+        Returns:
+            日本語表示用文字列
+        """
+        # 日本語サンプル文字列のリスト
+        samples = [
+            "日本語: こんにちは世界！",
+            "日本語: プログラミング",
+            "日本語: ゲーム開発中",
+            "日本語: 文字化けテスト",
+            "日本語: ひらがな・カタカナ・漢字",
+        ]
+        sample_index = int(self.animation_time) % len(samples)
+        return samples[sample_index]
