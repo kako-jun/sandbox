@@ -6,11 +6,11 @@ interface FooterProps {}
 
 export default function Footer({}: FooterProps) {
   const socialLinks = [
-    { name: "GitHub", url: "https://github.com/kako-jun", icon: "/icons/github.svg" },
-    { name: "X", url: "https://x.com/kako_jun", icon: "/icons/x-twitter.svg" },
-    { name: "Instagram", url: "https://instagram.com/kako_jun", icon: "/icons/instagram.svg" },
-    { name: "Zenn", url: "https://zenn.dev/kako_jun", icon: "/icons/zenn.svg" },
-    { name: "Note", url: "https://note.com/kako_jun", icon: "/icons/note.svg" },
+    { name: "GitHub", url: "https://github.com/kako-jun", icon: "/icons/github.svg", size: 20 },
+    { name: "X", url: "https://x.com/kako_jun", icon: "/icons/x-twitter.svg", size: 20 },
+    { name: "Instagram", url: "https://instagram.com/kako_jun", icon: "/icons/instagram.svg", size: 20 },
+    { name: "Zenn", url: "https://zenn.dev/kako_jun", icon: "/icons/zenn.svg", size: 20 },
+    { name: "Note", url: "https://note.com/kako_jun", icon: "/icons/note.svg", size: 24 }, // noteだけ大きく
   ];
 
   return (
@@ -64,8 +64,8 @@ export default function Footer({}: FooterProps) {
               <Image
                 src={link.icon}
                 alt={link.name}
-                width={20}
-                height={20}
+                width={link.size}
+                height={link.size}
                 style={{
                   filter: "var(--icon-filter, none)",
                 }}

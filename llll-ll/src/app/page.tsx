@@ -9,7 +9,7 @@ import ImageDisplay from "@/components/ImageDisplay";
 import ProjectList from "@/components/ProjectList";
 import Footer from "@/components/Footer";
 import ScrollToTop from "@/components/ScrollToTop";
-import { FloatingSlime, FloatingCat, TetrisBlock } from "@/components/PixelAnimations";
+import BackgroundDots from "@/components/BackgroundDots";
 
 export default function HomePage() {
   const [selectedLanguage, setSelectedLanguage] = useState<Language | null>(null);
@@ -58,7 +58,7 @@ export default function HomePage() {
         </>
       )}
 
-      <TetrisBlock />
+      <BackgroundDots />
     </>
   );
 }

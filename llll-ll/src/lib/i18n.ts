@@ -23,8 +23,9 @@ export const translations = {
     noResults: "No results found.",
     loadMore: "Load more",
     redDoorMessage: "I might as well pick this red door...!",
-    showAbout: "▼ About Me",
-    hideAbout: "▲ Hide Details",
+    showAbout: "About Me",
+    hideAbout: "Hide Details",
+    forMobileDevices: "Scan QR code for mobile access",
   },
   zh: {
     welcome: "欢迎来到 llll-ll",
@@ -47,8 +48,9 @@ export const translations = {
     noResults: "未找到结果。",
     loadMore: "加载更多",
     redDoorMessage: "既然如此，我就选择这扇红门吧……！",
-    showAbout: "▼ 关于我",
-    hideAbout: "▲ 隐藏详情",
+    showAbout: "关于我",
+    hideAbout: "隐藏详情",
+    forMobileDevices: "扫描二维码访问手机版",
   },
   ja: {
     welcome: "llll-ll へようこそ",
@@ -71,8 +73,9 @@ export const translations = {
     noResults: "見つかりませんでした。",
     loadMore: "もっと見る",
     redDoorMessage: "せっかくだから、俺はこの赤の扉を選ぶぜ……ッ！",
-    showAbout: "▼ このサイトについて",
-    hideAbout: "▲ 閉じる",
+    showAbout: "このサイトについて",
+    hideAbout: "閉じる",
+    forMobileDevices: "QRコードでスマホアクセス",
   },
 };
 

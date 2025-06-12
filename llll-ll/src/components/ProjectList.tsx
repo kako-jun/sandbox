@@ -5,6 +5,7 @@ import { Product, Language } from "@/types";
 import { useTranslation } from "@/lib/i18n";
 import ProjectCard from "./ProjectCard";
 import ProjectModal from "./ProjectModal";
+import ArrowIcon from "./ArrowIcon";
 
 interface ProjectListProps {
   products: Product[];
@@ -16,7 +17,7 @@ export default function ProjectList({ products, language }: ProjectListProps) {
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [visibleCount, setVisibleCount] = useState(12);
+  const [visibleCount, setVisibleCount] = useState(18); // 12から18に増加
 
   const t = useTranslation(language);
 
@@ -53,7 +54,7 @@ export default function ProjectList({ products, language }: ProjectListProps) {
   const visibleProducts = filteredProducts.slice(0, visibleCount);
 
   const loadMore = () => {
-    setVisibleCount((prev) => prev + 12);
+    setVisibleCount((prev) => prev + 18); // 12から18に増加
   };
 
   const toggleTag = (tag: string) => {
@@ -66,7 +67,7 @@ export default function ProjectList({ products, language }: ProjectListProps) {
 
   useEffect(() => {
     const handleScroll = () => {
-      if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 1000) {
+      if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 1500) { // 1000から1500に増加してより早く読み込み
         if (visibleCount < filteredProducts.length) {
           loadMore();
         }
@@ -120,6 +121,7 @@ export default function ProjectList({ products, language }: ProjectListProps) {
                 backgroundColor: "var(--input-background)",
                 color: "var(--text-color)",
                 border: "1px solid var(--border-color)",
+                borderRadius: "4px", // 角ばった見た目に
                 fontSize: "0.9rem",
                 fontFamily: "inherit",
               }}
@@ -144,7 +146,7 @@ export default function ProjectList({ products, language }: ProjectListProps) {
                   style={{
                     background: "none",
                     border: "none",
-                    color: "var(--accent-color)",
+                    color: "var(--link-color)",
                     textDecoration: "underline",
                     fontSize: "0.8rem",
                     cursor: "pointer",
@@ -163,7 +165,7 @@ export default function ProjectList({ products, language }: ProjectListProps) {
                     background: selectedTags.includes(tag) ? "var(--primary-color)" : "var(--input-background)",
                     color: selectedTags.includes(tag) ? "#ffffff" : "var(--muted-text)",
                     border: "1px solid var(--border-color)",
-                    borderRadius: "1rem",
+                    borderRadius: "4px", // 1remから4pxに変更してより角ばった見た目に
                     padding: "0.25rem 0.75rem",
                     fontSize: "0.8rem",
                     cursor: "pointer",
@@ -197,14 +199,36 @@ export default function ProjectList({ products, language }: ProjectListProps) {
               marginTop: "1rem",
             }}
           >
-            <span style={{ fontSize: "0.9rem", color: "var(--muted-text)" }}>{t.sortOldest}</span>
+            <button
+              onClick={() => {
+                // 新しい順の時のみ古い順に切り替え
+                if (sortOrder === "newest") {
+                  setSortOrder("oldest");
+                }
+              }}
+              style={{
+                background: "none",
+                border: "none",
+                fontSize: "0.9rem",
+                color: sortOrder === "oldest" ? "var(--primary-color)" : "var(--muted-text)",
+                cursor: sortOrder === "newest" ? "pointer" : "default",
+                fontFamily: "inherit",
+                fontWeight: sortOrder === "oldest" ? "bold" : "normal",
+                padding: "0.25rem 0.5rem",
+                opacity: sortOrder === "newest" ? 1 : 0.7,
+                minWidth: "120px", // 90pxから120pxに拡大して英語の長いテキストに対応
+                textAlign: "center", // 中央揃え
+              }}
+            >
+              {t.sortOldest}
+            </button>
             <div
               style={{
                 position: "relative",
                 width: "60px",
                 height: "30px",
                 backgroundColor: sortOrder === "newest" ? "var(--primary-color)" : "var(--border-color)",
-                borderRadius: "15px",
+                borderRadius: "2px", // 15pxから2pxに変更
                 cursor: "pointer",
                 transition: "background-color 0.3s ease",
               }}
@@ -218,13 +242,35 @@ export default function ProjectList({ products, language }: ProjectListProps) {
                   width: "24px",
                   height: "24px",
                   backgroundColor: "#ffffff",
-                  borderRadius: "50%",
+                  borderRadius: "1px", // 2pxから1pxに変更してさらにラウンドを少なく
                   transition: "left 0.3s ease",
                   boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
                 }}
               />
             </div>
-            <span style={{ fontSize: "0.9rem", color: "var(--muted-text)" }}>{t.sortNewest}</span>
+            <button
+              onClick={() => {
+                // 古い順の時のみ新しい順に切り替え
+                if (sortOrder === "oldest") {
+                  setSortOrder("newest");
+                }
+              }}
+              style={{
+                background: "none",
+                border: "none",
+                fontSize: "0.9rem",
+                color: sortOrder === "newest" ? "var(--primary-color)" : "var(--muted-text)",
+                cursor: sortOrder === "oldest" ? "pointer" : "default",
+                fontFamily: "inherit",
+                fontWeight: sortOrder === "newest" ? "bold" : "normal",
+                padding: "0.25rem 0.5rem",
+                opacity: sortOrder === "oldest" ? 1 : 0.7,
+                minWidth: "120px", // 90pxから120pxに拡大して英語の長いテキストに対応
+                textAlign: "center", // 中央揃え
+              }}
+            >
+              {t.sortNewest}
+            </button>
           </div>
         </div>
 
@@ -266,9 +312,14 @@ export default function ProjectList({ products, language }: ProjectListProps) {
                     fontSize: "1rem",
                     cursor: "pointer",
                     fontFamily: "inherit",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.5rem",
+                    margin: "0 auto",
                   }}
                 >
                   {t.loadMore} ({filteredProducts.length - visibleCount}件)
+                  <ArrowIcon direction="down" size={16} strokeWidth={2} />
                 </button>
               </div>
             )}

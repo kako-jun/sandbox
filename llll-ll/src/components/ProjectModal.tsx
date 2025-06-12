@@ -1,8 +1,9 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { Product, Language } from '@/types';
-import { useTranslation } from '@/lib/i18n';
+import { useState, useEffect } from "react";
+import { Product, Language } from "@/types";
+import { useTranslation } from "@/lib/i18n";
+import ArrowIcon from "./ArrowIcon";
 
 interface ProjectModalProps {
   product: Product | null;
@@ -22,13 +23,13 @@ export default function ProjectModal({ product, language, onClose }: ProjectModa
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
+      if (e.key === "Escape") {
         onClose();
       }
     };
 
-    document.addEventListener('keydown', handleEscape);
-    return () => document.removeEventListener('keydown', handleEscape);
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
   }, [onClose]);
 
   if (!product) return null;
@@ -40,9 +41,10 @@ export default function ProjectModal({ product, language, onClose }: ProjectModa
           <h2 className="text-lg glow">{product.title[language]}</h2>
           <button
             onClick={onClose}
-            className="text-text-accent hover:text-text-primary text-xl"
+            className="text-text-accent hover:text-text-primary text-xl flex items-center justify-center w-8 h-8 rounded-full hover:bg-hover-background transition-colors"
+            title="閉じる"
           >
-            ✕
+            <ArrowIcon direction="close" size={16} strokeWidth={2} />
           </button>
         </div>
 
@@ -55,8 +57,29 @@ export default function ProjectModal({ product, language, onClose }: ProjectModa
                   alt={`${product.title[language]} - Image ${currentImageIndex + 1}`}
                   className="w-full h-full object-cover"
                 />
+
+                {/* 画像ナビゲーションボタン */}
+                {product.images.length > 1 && (
+                  <>
+                    <button
+                      onClick={() => setCurrentImageIndex((prev) => (prev > 0 ? prev - 1 : product.images.length - 1))}
+                      className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full w-8 h-8 flex items-center justify-center transition-colors"
+                      title="前の画像"
+                    >
+                      <ArrowIcon direction="left" size={16} strokeWidth={2} />
+                    </button>
+
+                    <button
+                      onClick={() => setCurrentImageIndex((prev) => (prev < product.images.length - 1 ? prev + 1 : 0))}
+                      className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full w-8 h-8 flex items-center justify-center transition-colors"
+                      title="次の画像"
+                    >
+                      <ArrowIcon direction="right" size={16} strokeWidth={2} />
+                    </button>
+                  </>
+                )}
               </div>
-              
+
               {product.images.length > 1 && (
                 <div className="flex gap-2 overflow-x-auto">
                   {product.images.map((image, index) => (
@@ -64,14 +87,10 @@ export default function ProjectModal({ product, language, onClose }: ProjectModa
                       key={index}
                       onClick={() => setCurrentImageIndex(index)}
                       className={`flex-shrink-0 w-16 h-16 pixel-border overflow-hidden ${
-                        index === currentImageIndex ? 'border-text-accent' : 'border-border-color'
+                        index === currentImageIndex ? "border-text-accent" : "border-border-color"
                       }`}
                     >
-                      <img
-                        src={image}
-                        alt={`Thumbnail ${index + 1}`}
-                        className="w-full h-full object-cover"
-                      />
+                      <img src={image} alt={`Thumbnail ${index + 1}`} className="w-full h-full object-cover" />
                     </button>
                   ))}
                 </div>
@@ -82,9 +101,7 @@ export default function ProjectModal({ product, language, onClose }: ProjectModa
           <div className="grid md:grid-cols-2 gap-6">
             <div>
               <h3 className="text-md glow-accent mb-3">Description</h3>
-              <p className="text-sm text-text-secondary leading-relaxed mb-4">
-                {product.description[language]}
-              </p>
+              <p className="text-sm text-text-secondary leading-relaxed mb-4">{product.description[language]}</p>
 
               <div className="mb-4">
                 <h4 className="text-sm glow mb-2">{t.madeWith}</h4>
@@ -119,7 +136,7 @@ export default function ProjectModal({ product, language, onClose }: ProjectModa
                     {t.viewDemo}
                   </a>
                 )}
-                
+
                 {product.repositoryUrl && (
                   <a
                     href={product.repositoryUrl}
@@ -130,7 +147,7 @@ export default function ProjectModal({ product, language, onClose }: ProjectModa
                     {t.viewCode}
                   </a>
                 )}
-                
+
                 {product.blogUrl && (
                   <a
                     href={product.blogUrl}
@@ -141,7 +158,7 @@ export default function ProjectModal({ product, language, onClose }: ProjectModa
                     {t.viewBlog}
                   </a>
                 )}
-                
+
                 {product.supportUrl && (
                   <a
                     href={product.supportUrl}

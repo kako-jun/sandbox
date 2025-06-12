@@ -102,7 +102,25 @@ export default function LanguageSelector({ onLanguageSelect, selectedLanguage }:
                 gap: "0.5rem",
               }}
             >
-              <span style={{ fontSize: "0.8rem", color: "var(--muted-text)" }}>☀️</span>
+              <button
+                onClick={() => {
+                  // ライトテーマの時のみダークテーマに切り替え
+                  if (theme === "dark") {
+                    toggleTheme();
+                  }
+                }}
+                style={{
+                  background: "none",
+                  border: "none",
+                  fontSize: "0.8rem",
+                  color: "var(--muted-text)",
+                  cursor: theme === "dark" ? "pointer" : "default",
+                  padding: "0.25rem",
+                  opacity: theme === "dark" ? 1 : 0.5,
+                }}
+              >
+                ☀️
+              </button>
               <button
                 onClick={toggleTheme}
                 style={{
@@ -111,7 +129,7 @@ export default function LanguageSelector({ onLanguageSelect, selectedLanguage }:
                   height: "24px",
                   backgroundColor: theme === "dark" ? "var(--primary-color)" : "#ccc",
                   border: "none",
-                  borderRadius: "12px",
+                  borderRadius: "2px", // 4pxから2pxに変更してラウンドを少なく
                   cursor: "pointer",
                   transition: "background-color 0.3s ease",
                   padding: 0,
@@ -125,13 +143,31 @@ export default function LanguageSelector({ onLanguageSelect, selectedLanguage }:
                     width: "20px",
                     height: "20px",
                     backgroundColor: "#ffffff",
-                    borderRadius: "50%",
+                    borderRadius: "1px", // 2pxから1pxに変更してさらにラウンドを少なく
                     transition: "left 0.3s ease",
                     boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
                   }}
                 />
               </button>
-              <span style={{ fontSize: "0.8rem", color: "var(--muted-text)" }}>🌙</span>
+              <button
+                onClick={() => {
+                  // ライトテーマの時のみダークテーマに切り替え
+                  if (theme === "light") {
+                    toggleTheme();
+                  }
+                }}
+                style={{
+                  background: "none",
+                  border: "none",
+                  fontSize: "0.8rem",
+                  color: "var(--muted-text)",
+                  cursor: theme === "light" ? "pointer" : "default",
+                  padding: "0.25rem",
+                  opacity: theme === "light" ? 1 : 0.5,
+                }}
+              >
+                🌙
+              </button>
             </div>
           </div>
         </div>
@@ -182,7 +218,7 @@ export default function LanguageSelector({ onLanguageSelect, selectedLanguage }:
               display: "flex",
               justifyContent: "center",
               alignItems: "center",
-              gap: "2rem",
+              gap: "1rem",
               marginBottom: "3rem",
             }}
           >
@@ -192,18 +228,20 @@ export default function LanguageSelector({ onLanguageSelect, selectedLanguage }:
               style={{
                 background: "none",
                 border: "none",
-                color: currentLang === "en" ? "var(--primary-color)" : "var(--link-color)",
-                textDecoration: "underline",
+                color: currentLang === "en" ? "var(--primary-color)" : "var(--text-color)",
+                textDecoration: "none",
                 fontSize: "1rem",
-                cursor: "pointer",
+                cursor: "default",
                 fontFamily: "inherit",
                 fontWeight: currentLang === "en" ? "bold" : "normal",
+                minWidth: "80px",
+                textAlign: "center",
               }}
             >
               English
             </button>
 
-            <span style={{ color: "var(--muted-text)", fontSize: "0.9rem" }}>|</span>
+            <span style={{ color: "var(--muted-text)", fontSize: "0.9rem", margin: "0 0.5rem" }}>|</span>
 
             <button
               onClick={() => setCurrentLang("ja")}
@@ -211,18 +249,20 @@ export default function LanguageSelector({ onLanguageSelect, selectedLanguage }:
               style={{
                 background: "none",
                 border: "none",
-                color: currentLang === "ja" ? "var(--primary-color)" : "var(--link-color)",
-                textDecoration: "underline",
+                color: currentLang === "ja" ? "var(--primary-color)" : "var(--text-color)",
+                textDecoration: "none",
                 fontSize: "1rem",
-                cursor: "pointer",
+                cursor: "default",
                 fontFamily: "inherit",
                 fontWeight: currentLang === "ja" ? "bold" : "normal",
+                minWidth: "80px",
+                textAlign: "center",
               }}
             >
               日本語
             </button>
 
-            <span style={{ color: "var(--muted-text)", fontSize: "0.9rem" }}>|</span>
+            <span style={{ color: "var(--muted-text)", fontSize: "0.9rem", margin: "0 0.5rem" }}>|</span>
 
             <button
               onClick={() => setCurrentLang("zh")}
@@ -230,12 +270,14 @@ export default function LanguageSelector({ onLanguageSelect, selectedLanguage }:
               style={{
                 background: "none",
                 border: "none",
-                color: currentLang === "zh" ? "var(--primary-color)" : "var(--link-color)",
-                textDecoration: "underline",
+                color: currentLang === "zh" ? "var(--primary-color)" : "var(--text-color)",
+                textDecoration: "none",
                 fontSize: "1rem",
-                cursor: "pointer",
+                cursor: "default",
                 fontFamily: "'Noto Sans SC', sans-serif",
                 fontWeight: currentLang === "zh" ? "bold" : "normal",
+                minWidth: "80px",
+                textAlign: "center",
               }}
             >
               中文
@@ -272,9 +314,23 @@ export default function LanguageSelector({ onLanguageSelect, selectedLanguage }:
             style={{
               fontSize: "0.9rem",
               color: "var(--muted-text)",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: "1rem",
             }}
           >
-            for mobile devices
+            <div>{t.forMobileDevices}</div>
+            <img
+              src="https://llll-ll.com/images/qrcode.webp"
+              alt="QR Code for mobile access"
+              style={{
+                width: "120px",
+                height: "120px",
+                border: "2px solid var(--border-color)",
+                borderRadius: "8px",
+              }}
+            />
           </div>
         </div>
       </div>
