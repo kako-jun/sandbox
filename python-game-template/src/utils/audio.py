@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Optional
 
 try:
-    import pygame
+    import pygame  # type: ignore
 
     pygame.mixer.init()
     PYGAME_AVAILABLE = True
@@ -51,7 +51,9 @@ class AudioManager:
         """
         return self.initialized and PYGAME_AVAILABLE
 
-    def play_music(self, file_path: str, loops: int = -1, volume: Optional[float] = None) -> bool:
+    def play_music(
+        self, file_path: str, loops: int = -1, volume: Optional[float] = None
+    ) -> bool:
         """音楽を再生
 
         Args:
@@ -70,7 +72,9 @@ class AudioManager:
             # ファイルの存在確認
             if not os.path.exists(file_path):
                 # テスト用のダミー音楽データを生成（無音）
-                self.logger.info(f"Music file not found: {file_path}, using silent mode")
+                self.logger.info(
+                    f"Music file not found: {file_path}, using silent mode"
+                )
                 return True
 
             pygame.mixer.music.load(file_path)

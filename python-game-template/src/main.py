@@ -18,7 +18,11 @@ from utils.error_handler import (
 )
 from utils.i18n import init_i18n, t
 from utils.logging import cleanup_old_logs, get_logger, setup_logging
-from utils.process_lock import get_process_locks, check_single_instance
+from utils.process_lock import (
+    check_single_instance,
+    force_cleanup_locks,
+    get_process_locks,
+)
 from utils.storage import ConfigManager, ensure_directories
 
 
@@ -28,25 +32,45 @@ def parse_arguments() -> argparse.Namespace:
     Returns:
         解析された引数
     """
-    parser = argparse.ArgumentParser(description="Python Game Template - A cross-platform game framework")
+    parser = argparse.ArgumentParser(
+        description="Python Game Template - A cross-platform game framework"
+    )
 
     parser.add_argument("--cui-only", action="store_true", help="Use CUI mode only")
 
-    parser.add_argument("--gui-only", action="store_true", help="Use GUI mode only (default)")
+    parser.add_argument(
+        "--gui-only", action="store_true", help="Use GUI mode only (default)"
+    )
 
-    parser.add_argument("--both", action="store_true", help="Run both CUI and GUI simultaneously")
+    parser.add_argument(
+        "--both", action="store_true", help="Run both CUI and GUI simultaneously"
+    )
 
-    parser.add_argument("--language", choices=["en", "ja"], help="Language (default: from config or en)")
+    parser.add_argument(
+        "--force-unlock",
+        action="store_true",
+        help="Force remove all lock files and exit (emergency use only)",
+    )
+
+    parser.add_argument(
+        "--language", choices=["en", "ja"], help="Language (default: from config or en)"
+    )
 
     parser.add_argument("--debug", action="store_true", help="Enable debug mode")
 
-    parser.add_argument("--fullscreen", action="store_true", help="Start in fullscreen mode (GUI only)")
+    parser.add_argument(
+        "--fullscreen", action="store_true", help="Start in fullscreen mode (GUI only)"
+    )
 
     parser.add_argument("--fps", type=int, metavar="N", help="Target FPS (default: 60)")
 
-    parser.add_argument("--width", type=int, metavar="N", help="Window width (GUI only, default: 800)")
+    parser.add_argument(
+        "--width", type=int, metavar="N", help="Window width (GUI only, default: 800)"
+    )
 
-    parser.add_argument("--height", type=int, metavar="N", help="Window height (GUI only, default: 600)")
+    parser.add_argument(
+        "--height", type=int, metavar="N", help="Window height (GUI only, default: 600)"
+    )
 
     parser.add_argument(
         "--log-level",
@@ -54,9 +78,13 @@ def parse_arguments() -> argparse.Namespace:
         help="Log level (default: INFO)",
     )
 
-    parser.add_argument("--no-console-log", action="store_true", help="Disable console logging")
+    parser.add_argument(
+        "--no-console-log", action="store_true", help="Disable console logging"
+    )
 
-    parser.add_argument("--no-file-log", action="store_true", help="Disable file logging")
+    parser.add_argument(
+        "--no-file-log", action="store_true", help="Disable file logging"
+    )
 
     return parser.parse_args()
 
@@ -77,7 +105,9 @@ def load_config(args: argparse.Namespace) -> GameConfig:
     if loaded_config is None:
         config = GameConfig()
     else:
-        config = loaded_config if isinstance(loaded_config, GameConfig) else GameConfig()
+        config = (
+            loaded_config if isinstance(loaded_config, GameConfig) else GameConfig()
+        )
 
     # コマンドライン引数で上書き
     updates = {}
@@ -104,7 +134,9 @@ def load_config(args: argparse.Namespace) -> GameConfig:
         updates["fps"] = max(1, min(120, args.fps))
 
     if args.width and args.height:
-        updates["window_size"] = Size(width=max(400, args.width), height=max(300, args.height))
+        updates["window_size"] = Size(
+            width=max(400, args.width), height=max(300, args.height)
+        )
 
     if updates:
         config = config.model_copy(update=updates)
@@ -166,10 +198,16 @@ def run_game(config: GameConfig) -> int:
     try:
         logger.info(t("message_game_started"))
         mode_str = config.mode if isinstance(config.mode, str) else config.mode.value
-        lang_str = config.language if isinstance(config.language, str) else config.language.value
+        lang_str = (
+            config.language
+            if isinstance(config.language, str)
+            else config.language.value
+        )
         logger.info(f"Mode: {mode_str}, Language: {lang_str}")
 
-        if (isinstance(config.mode, str) and config.mode == "gui") or config.mode == GameMode.GUI:
+        if (
+            isinstance(config.mode, str) and config.mode == "gui"
+        ) or config.mode == GameMode.GUI:
             app = PyGameApp(config)
         else:
             app = CUIApp(config)
@@ -223,8 +261,6 @@ def run_both_modes(config: GameConfig) -> int:
             cui_app = CUIApp(config)
             # 共有エンジンを使用するように設定
             cui_app.engine = shared_engine
-            cui_app.audio_manager = shared_audio
-            cui_app.timing_manager = shared_timing
             cui_app.run()
         except Exception as e:
             exceptions.append(("CUI", e))
@@ -234,8 +270,6 @@ def run_both_modes(config: GameConfig) -> int:
             gui_app = PyGameApp(config)
             # 共有エンジンを使用するように設定
             gui_app.engine = shared_engine
-            gui_app.audio_manager = shared_audio
-            gui_app.timing_manager = shared_timing
             gui_app.run()
         except Exception as e:
             exceptions.append(("GUI", e))
@@ -281,13 +315,22 @@ def main() -> int:
         # コマンドライン引数解析
         args = parse_arguments()
 
+        # 強制解除オプションの処理
+        if args.force_unlock:
+            print("Forcing removal of all lock files...")
+            force_cleanup_locks()
+            print("All lock files removed. You can now start the game normally.")
+            return 0
+
         # 設定読み込み
         config = load_config(args)
 
         # プロセスロックの確認（多重起動防止）
         mode_str = "both" if args.both else "gui" if (not args.cui_only) else "cui"
         if not check_single_instance(mode_str):
-            print(f"Error: Another instance of the game is already running in {mode_str} mode.")
+            print(
+                f"Error: Another instance of the game is already running in {mode_str} mode."
+            )
             print("Please close the existing instance before starting a new one.")
             return 1
 
@@ -296,7 +339,7 @@ def main() -> int:
 
         # プロセスロックを取得
         process_locks = get_process_locks(mode_str)
-        
+
         try:
             # 全てのロックを取得
             for lock in process_locks:

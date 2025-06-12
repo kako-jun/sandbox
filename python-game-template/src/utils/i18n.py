@@ -14,7 +14,7 @@ from game.models import Language
 class I18nManager:
     """国際化管理クラス"""
 
-    def __init__(self, default_language: Language = Language.ENGLISH):
+    def __init__(self, default_language: Language = Language.EN):
         """初期化
 
         Args:
@@ -78,13 +78,21 @@ class I18nManager:
             翻訳された文字列
         """
         # 現在の言語での翻訳を試行
-        current_lang = self.current_language if isinstance(self.current_language, str) else self.current_language.value
+        current_lang = (
+            self.current_language
+            if isinstance(self.current_language, str)
+            else self.current_language.value
+        )
         current_lang_translations = self.translations.get(current_lang, {})
         text = current_lang_translations.get(key)
 
         # 見つからない場合はデフォルト言語を試行
         if text is None:
-            default_lang = self.default_language if isinstance(self.default_language, str) else self.default_language.value
+            default_lang = (
+                self.default_language
+                if isinstance(self.default_language, str)
+                else self.default_language.value
+            )
             default_lang_translations = self.translations.get(default_lang, {})
             text = default_lang_translations.get(key)
 
@@ -183,7 +191,7 @@ def init_i18n(language: Optional[Language] = None) -> I18nManager:
     """
     global _i18n_manager
 
-    default_lang = language if language else Language.ENGLISH
+    default_lang = language if language else Language.EN
     _i18n_manager = I18nManager(default_lang)
 
     if language:

@@ -71,7 +71,9 @@ class GameEngine:
             }
         )
 
-    def add_event_handler(self, event_type: str, handler: Callable[[InputEvent], None]) -> None:
+    def add_event_handler(
+        self, event_type: str, handler: Callable[[InputEvent], None]
+    ) -> None:
         """イベントハンドラーを追加
 
         Args:
@@ -103,7 +105,9 @@ class GameEngine:
             return True
         return False
 
-    def create_player(self, name: str = "Player", position: Optional[Position] = None) -> Player:
+    def create_player(
+        self, name: str = "Player", position: Optional[Position] = None
+    ) -> Player:
         """プレイヤーを作成
 
         Args:
@@ -116,7 +120,9 @@ class GameEngine:
         if position is None:
             position = Position(x=100, y=100)
 
-        player = Player(id="player", name=name, position=position, size=Size(width=32, height=32))
+        player = Player(
+            id="player", name=name, position=position, size=Size(width=32, height=32)
+        )
         self.data.player = player
         return player
 

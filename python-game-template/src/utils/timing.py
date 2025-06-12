@@ -8,7 +8,7 @@ import time
 from typing import Optional
 
 try:
-    import pygame
+    import pygame  # type: ignore
 
     PYGAME_AVAILABLE = True
 except ImportError:

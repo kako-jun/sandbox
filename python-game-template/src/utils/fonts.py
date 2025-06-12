@@ -7,7 +7,7 @@ OSにプリインストールされた等幅フォントを検出し、日本語
 import platform
 from typing import List, Optional
 
-import pygame
+import pygame  # type: ignore
 
 
 def get_system_monospace_fonts() -> List[str]:

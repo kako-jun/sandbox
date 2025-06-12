@@ -5,13 +5,11 @@ pytest設定ファイル
 """
 
 import os
+import sys
 import tempfile
 from pathlib import Path
 
 import pytest
-
-import sys
-from pathlib import Path
 
 # Add src directory to Python path for tests
 src_path = Path(__file__).parent.parent / "src"
@@ -31,7 +29,7 @@ def テンポラリディレクトリ():
 @pytest.fixture
 def テスト用ゲーム設定():
     """テスト用のゲーム設定を作成"""
-    return GameConfig(mode=GameMode.CUI, language=Language.JAPANESE, debug=True, fps=30)
+    return GameConfig(mode=GameMode.CUI, language=Language.JA, debug=True, fps=30)
 
 
 @pytest.fixture
@@ -58,3 +56,73 @@ def 環境変数クリーンアップ(monkeypatch):
     # 他のアプリケーションに影響を与えないよう、データディレクトリを分離
     test_data_dir = Path(tempfile.gettempdir()) / "python_game_template_test"
     monkeypatch.setenv("GAME_DATA_DIR", str(test_data_dir))
+
+
+@pytest.fixture(autouse=True)
+def pygame_headless_setup():
+    """PyGameをヘッドレスモードで設定（全テストで自動適用）"""
+    # SDL_VIDEODRIVERを'dummy'に設定してヘッドレス実行
+    old_driver = os.environ.get("SDL_VIDEODRIVER", None)
+    os.environ["SDL_VIDEODRIVER"] = "dummy"
+
+    # DISPLAYを無効化（Linux環境対応）
+    old_display = os.environ.get("DISPLAY", None)
+    if "DISPLAY" in os.environ:
+        del os.environ["DISPLAY"]
+
+    yield
+
+    # 環境変数を復元
+    if old_driver is not None:
+        os.environ["SDL_VIDEODRIVER"] = old_driver
+    else:
+        os.environ.pop("SDL_VIDEODRIVER", None)
+
+    if old_display is not None:
+        os.environ["DISPLAY"] = old_display
+
+
+@pytest.fixture
+def mock_process_lock_dir(テンポラリディレクトリ, monkeypatch):
+    """プロセスロック用の一時ディレクトリを作成"""
+    lock_dir = テンポラリディレクトリ / "python_game_locks"
+    lock_dir.mkdir()
+
+    def mock_gettempdir():
+        return str(テンポラリディレクトリ)
+
+    monkeypatch.setattr("tempfile.gettempdir", mock_gettempdir)
+    yield lock_dir
+
+
+@pytest.fixture
+def suppress_pygame_output(monkeypatch):
+    """PyGameの出力を抑制"""
+    import sys
+    from io import StringIO
+
+    # 標準出力をキャプチャ
+    captured_output = StringIO()
+    monkeypatch.setattr(sys, "stdout", captured_output)
+
+    yield captured_output
+
+
+def pytest_configure(config):
+    """pytest設定時の処理"""
+    # PyGameの初期化メッセージを抑制
+    os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "1"
+
+    # テスト実行時のディスプレイ設定
+    if "DISPLAY" not in os.environ and os.name != "nt":
+        os.environ["SDL_VIDEODRIVER"] = "dummy"
+
+
+def pytest_collection_modifyitems(config, items):
+    """テスト収集時の処理"""
+    # GUIテストにマーカーを追加
+    for item in items:
+        if "gui" in item.nodeid.lower() or "pygame" in item.nodeid.lower():
+            item.add_marker(pytest.mark.gui)
+        if "process_lock" in item.nodeid.lower():
+            item.add_marker(pytest.mark.process_lock)

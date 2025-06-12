@@ -3,13 +3,11 @@
 """
 
 import json
+import sys
 import tempfile
 from pathlib import Path
 
 import pytest
-
-import sys
-from pathlib import Path
 
 src_path = Path(__file__).parent.parent / "src"
 sys.path.insert(0, str(src_path))
@@ -117,28 +115,28 @@ class TestI18n:
 
     def test_I18nManager初期化(self):
         """I18nManager が正常に初期化される"""
-        manager = I18nManager(Language.JAPANESE)
-        assert manager.current_language == Language.JAPANESE
-        assert manager.default_language == Language.JAPANESE
+        manager = I18nManager(Language.JA)
+        assert manager.current_language == Language.JA
+        assert manager.default_language == Language.JA
 
     def test_言語切り替え(self):
         """言語を切り替えできる"""
         manager = I18nManager()
-        manager.set_language(Language.JAPANESE)
-        assert manager.get_language() == Language.JAPANESE
+        manager.set_language(Language.JA)
+        assert manager.get_language() == Language.JA
 
     def test_翻訳追加と取得(self):
         """翻訳を追加して取得できる"""
         manager = I18nManager()
-        manager.add_translation(Language.ENGLISH, "test_key", "Test Value")
-        manager.add_translation(Language.JAPANESE, "test_key", "テスト値")
+        manager.add_translation(Language.EN, "test_key", "Test Value")
+        manager.add_translation(Language.JA, "test_key", "テスト値")
 
         # 英語
-        manager.set_language(Language.ENGLISH)
+        manager.set_language(Language.EN)
         assert manager.translate("test_key") == "Test Value"
 
         # 日本語
-        manager.set_language(Language.JAPANESE)
+        manager.set_language(Language.JA)
         assert manager.translate("test_key") == "テスト値"
 
     def test_存在しない翻訳キー(self):
@@ -150,7 +148,7 @@ class TestI18n:
     def test_フォーマット付き翻訳(self):
         """フォーマット付きの翻訳ができる"""
         manager = I18nManager()
-        manager.add_translation(Language.ENGLISH, "greeting", "Hello, {name}!")
+        manager.add_translation(Language.EN, "greeting", "Hello, {name}!")
 
         result = manager.translate("greeting", name="World")
         assert result == "Hello, World!"
@@ -158,7 +156,7 @@ class TestI18n:
     def test_フォーマットエラー時の処理(self):
         """フォーマットエラー時は元の文字列が返される"""
         manager = I18nManager()
-        manager.add_translation(Language.ENGLISH, "bad_format", "Hello, {name}!")
+        manager.add_translation(Language.EN, "bad_format", "Hello, {name}!")
 
         # 不正なフォーマット引数
         result = manager.translate("bad_format", invalid_key="value")
@@ -167,25 +165,25 @@ class TestI18n:
     def test_利用可能言語取得(self):
         """利用可能な言語を取得できる"""
         manager = I18nManager()
-        manager.add_translation(Language.ENGLISH, "test", "test")
-        manager.add_translation(Language.JAPANESE, "test", "テスト")
+        manager.add_translation(Language.EN, "test", "test")
+        manager.add_translation(Language.JA, "test", "テスト")
 
         available = manager.get_available_languages()
-        assert Language.ENGLISH in available
-        assert Language.JAPANESE in available
+        assert Language.EN in available
+        assert Language.JA in available
 
     def test_グローバル関数_init_i18n(self):
         """グローバル関数で国際化システムを初期化できる"""
-        manager = init_i18n(Language.JAPANESE)
-        assert manager.current_language == Language.JAPANESE
+        manager = init_i18n(Language.JA)
+        assert manager.current_language == Language.JA
 
     def test_グローバル関数_set_language(self):
         """グローバル関数で言語を設定できる"""
         init_i18n()
-        set_language(Language.JAPANESE)
+        set_language(Language.JA)
         from utils.i18n import get_language
 
-        assert get_language() == Language.JAPANESE
+        assert get_language() == Language.JA
 
 
 class TestStorage:
@@ -193,7 +191,7 @@ class TestStorage:
 
     def test_ConfigManager_設定保存と読み込み(self, テスト用設定マネージャー):
         """設定の保存と読み込みができる"""
-        config = GameConfig(mode=GameMode.CUI, language=Language.JAPANESE)
+        config = GameConfig(mode=GameMode.CUI, language=Language.JA)
 
         # 保存
         result = テスト用設定マネージャー.save_config(config)
@@ -203,7 +201,7 @@ class TestStorage:
         loaded_config = テスト用設定マネージャー.load_config(GameConfig)
         assert loaded_config is not None
         assert loaded_config.mode == GameMode.CUI
-        assert loaded_config.language == Language.JAPANESE
+        assert loaded_config.language == Language.JA
 
     def test_ConfigManager_存在チェック(self, テスト用設定マネージャー):
         """設定ファイルの存在チェックができる"""

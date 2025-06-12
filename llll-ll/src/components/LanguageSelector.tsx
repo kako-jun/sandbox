@@ -1,40 +1,281 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Language } from '@/types';
+import { useState } from "react";
+import { Language } from "@/types";
+import { useTheme } from "@/hooks/useTheme";
+import { useTranslation } from "@/lib/i18n";
 
 interface LanguageSelectorProps {
   onLanguageSelect: (lang: Language) => void;
+  selectedLanguage?: Language | null;
 }
 
-export default function LanguageSelector({ onLanguageSelect }: LanguageSelectorProps) {
-  const languages = [
-    { code: 'en' as Language, flag: '🇺🇸', label: 'English' },
-    { code: 'zh' as Language, flag: '🇨🇳', label: '中文' },
-    { code: 'ja' as Language, flag: '🇯🇵', label: '日本語' },
-  ];
+export default function LanguageSelector({ onLanguageSelect, selectedLanguage }: LanguageSelectorProps) {
+  const { theme, toggleTheme } = useTheme();
+  const [currentLang, setCurrentLang] = useState<Language>("en"); // 表示用の言語状態
+
+  // 言語が既に選択されている場合は、コンパクトな表示
+  if (selectedLanguage) {
+    return (
+      <div
+        style={{
+          backgroundColor: "var(--background-color)",
+          borderBottom: "1px solid var(--border-color)",
+          padding: "0.5rem 0",
+        }}
+      >
+        <div className="container">
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              gap: "1rem",
+              fontSize: "0.9rem",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "1rem",
+              }}
+            >
+              <button
+                onClick={() => onLanguageSelect("en")}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: selectedLanguage === "en" ? "var(--primary-color)" : "var(--link-color)",
+                  textDecoration: selectedLanguage === "en" ? "none" : "underline",
+                  fontSize: "0.9rem",
+                  cursor: "pointer",
+                  fontFamily: "inherit",
+                  fontWeight: selectedLanguage === "en" ? "bold" : "normal",
+                }}
+              >
+                English
+              </button>
+
+              <span style={{ color: "var(--muted-text)" }}>|</span>
+
+              <button
+                onClick={() => onLanguageSelect("ja")}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: selectedLanguage === "ja" ? "var(--primary-color)" : "var(--link-color)",
+                  textDecoration: selectedLanguage === "ja" ? "none" : "underline",
+                  fontSize: "0.9rem",
+                  cursor: "pointer",
+                  fontFamily: "inherit",
+                  fontWeight: selectedLanguage === "ja" ? "bold" : "normal",
+                }}
+              >
+                日本語
+              </button>
+
+              <span style={{ color: "var(--muted-text)" }}>|</span>
+
+              <button
+                onClick={() => onLanguageSelect("zh")}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: selectedLanguage === "zh" ? "var(--primary-color)" : "var(--link-color)",
+                  textDecoration: selectedLanguage === "zh" ? "none" : "underline",
+                  fontSize: "0.9rem",
+                  cursor: "pointer",
+                  fontFamily: "'Noto Sans SC', sans-serif",
+                  fontWeight: selectedLanguage === "zh" ? "bold" : "normal",
+                }}
+              >
+                中文
+              </button>
+            </div>
+
+            {/* Theme Toggle Switch */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "0.5rem",
+              }}
+            >
+              <span style={{ fontSize: "0.8rem", color: "var(--muted-text)" }}>☀️</span>
+              <button
+                onClick={toggleTheme}
+                style={{
+                  position: "relative",
+                  width: "50px",
+                  height: "24px",
+                  backgroundColor: theme === "dark" ? "var(--primary-color)" : "#ccc",
+                  border: "none",
+                  borderRadius: "12px",
+                  cursor: "pointer",
+                  transition: "background-color 0.3s ease",
+                  padding: 0,
+                }}
+              >
+                <div
+                  style={{
+                    position: "absolute",
+                    top: "2px",
+                    left: theme === "dark" ? "26px" : "2px",
+                    width: "20px",
+                    height: "20px",
+                    backgroundColor: "#ffffff",
+                    borderRadius: "50%",
+                    transition: "left 0.3s ease",
+                    boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
+                  }}
+                />
+              </button>
+              <span style={{ fontSize: "0.8rem", color: "var(--muted-text)" }}>🌙</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // 言語が未選択の場合は、フルスクリーンの選択画面
+  const t = useTranslation(currentLang);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-900 to-black">
+    <div
+      style={{
+        minHeight: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: "var(--background-color)",
+      }}
+    >
       <div className="container">
-        <div className="text-center mb-8">
-          <h1 className="text-2xl md:text-4xl glow mb-4">llll-ll</h1>
-          <p className="text-text-secondary text-sm">Select Language / 选择语言 / 言語を選択</p>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-md mx-auto">
-          {languages.map((lang) => (
+        <div style={{ textAlign: "center" }}>
+          <h1
+            style={{
+              fontSize: "2.5rem",
+              fontWeight: "bold",
+              marginBottom: "2rem",
+              color: "var(--primary-color)",
+            }}
+          >
+            llll-ll
+          </h1>
+
+          <p
+            style={{
+              fontSize: "1.2rem",
+              marginBottom: "3rem",
+              color: "var(--text-color)",
+              fontFamily: currentLang === "zh" ? "'Noto Sans SC', sans-serif" : "inherit",
+            }}
+          >
+            {t.redDoorMessage}
+          </p>
+
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              gap: "2rem",
+              marginBottom: "3rem",
+            }}
+          >
             <button
-              key={lang.code}
-              onClick={() => onLanguageSelect(lang.code)}
-              className="pixel-border p-6 bg-bg-secondary hover:bg-bg-accent transition-all duration-300 hover:scale-105 group"
+              onClick={() => setCurrentLang("en")}
+              onMouseEnter={() => setCurrentLang("en")}
+              style={{
+                background: "none",
+                border: "none",
+                color: currentLang === "en" ? "var(--primary-color)" : "var(--link-color)",
+                textDecoration: "underline",
+                fontSize: "1rem",
+                cursor: "pointer",
+                fontFamily: "inherit",
+                fontWeight: currentLang === "en" ? "bold" : "normal",
+              }}
             >
-              <div className="text-4xl mb-2">{lang.flag}</div>
-              <div className="text-sm glow group-hover:glow-accent transition-all duration-300">
-                {lang.label}
-              </div>
+              English
             </button>
-          ))}
+
+            <span style={{ color: "var(--muted-text)", fontSize: "0.9rem" }}>|</span>
+
+            <button
+              onClick={() => setCurrentLang("ja")}
+              onMouseEnter={() => setCurrentLang("ja")}
+              style={{
+                background: "none",
+                border: "none",
+                color: currentLang === "ja" ? "var(--primary-color)" : "var(--link-color)",
+                textDecoration: "underline",
+                fontSize: "1rem",
+                cursor: "pointer",
+                fontFamily: "inherit",
+                fontWeight: currentLang === "ja" ? "bold" : "normal",
+              }}
+            >
+              日本語
+            </button>
+
+            <span style={{ color: "var(--muted-text)", fontSize: "0.9rem" }}>|</span>
+
+            <button
+              onClick={() => setCurrentLang("zh")}
+              onMouseEnter={() => setCurrentLang("zh")}
+              style={{
+                background: "none",
+                border: "none",
+                color: currentLang === "zh" ? "var(--primary-color)" : "var(--link-color)",
+                textDecoration: "underline",
+                fontSize: "1rem",
+                cursor: "pointer",
+                fontFamily: "'Noto Sans SC', sans-serif",
+                fontWeight: currentLang === "zh" ? "bold" : "normal",
+              }}
+            >
+              中文
+            </button>
+          </div>
+
+          <div style={{ marginBottom: "2rem" }}>
+            <button
+              onClick={() => onLanguageSelect(currentLang)}
+              style={{
+                backgroundColor: "var(--primary-color)",
+                color: "#ffffff",
+                border: "none",
+                padding: "0.75rem 2rem",
+                fontSize: "1.1rem",
+                cursor: "pointer",
+                fontFamily: currentLang === "zh" ? "'Noto Sans SC', sans-serif" : "inherit",
+                fontWeight: "bold",
+                borderRadius: "0.25rem",
+                transition: "opacity 0.2s",
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.opacity = "0.9";
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.opacity = "1";
+              }}
+            >
+              {currentLang === "en" ? "Continue" : currentLang === "ja" ? "続行" : "继续"}
+            </button>
+          </div>
+
+          <div
+            style={{
+              fontSize: "0.9rem",
+              color: "var(--muted-text)",
+            }}
+          >
+            for mobile devices
+          </div>
         </div>
       </div>
     </div>
