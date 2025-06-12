@@ -25,7 +25,28 @@ export default function IntroSection({ language }: IntroSectionProps) {
               color: "var(--primary-color)",
             }}
           >
-            {t.welcome}
+            {language === "en" ? (
+              <>
+                {t.welcome}{" "}
+                <span className="logo-font" style={{ fontSize: "1.8rem" }}>
+                  llll-ll
+                </span>
+              </>
+            ) : language === "zh" ? (
+              <>
+                {t.welcome}{" "}
+                <span className="logo-font" style={{ fontSize: "1.8rem" }}>
+                  llll-ll
+                </span>
+              </>
+            ) : (
+              <>
+                <span className="logo-font" style={{ fontSize: "1.8rem" }}>
+                  llll-ll
+                </span>{" "}
+                {t.welcome}
+              </>
+            )}
           </h2>
 
           <button
@@ -34,7 +55,7 @@ export default function IntroSection({ language }: IntroSectionProps) {
               background: "none",
               border: "none",
               color: "var(--link-color)",
-              textDecoration: "underline",
+              textDecoration: "none",
               fontSize: "1rem",
               cursor: "pointer",
               fontFamily: language === "zh" ? "'Noto Sans SC', sans-serif" : "inherit",

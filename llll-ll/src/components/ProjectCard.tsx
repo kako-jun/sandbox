@@ -279,7 +279,7 @@ export default function ProjectCard({ product, language, onSelect }: ProjectCard
                           font-size: 0.7rem;
                           text-align: center;
                         `;
-                        placeholder.textContent = "アニメーション\n読み込みエラー";
+                        placeholder.textContent = "画像なし";
                         e.currentTarget.parentNode?.appendChild(placeholder);
                       }}
                     />

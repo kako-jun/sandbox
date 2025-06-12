@@ -16,6 +16,7 @@ export default function Header({ language }: HeaderProps) {
   const [grid, setGrid] = useState<boolean[][]>([]);
   const [gridWidth, setGridWidth] = useState(0);
   const [fallingBlocks, setFallingBlocks] = useState<{ id: number; x: number; y: number }[]>([]);
+  const [disappearingBlocks, setDisappearingBlocks] = useState<{ id: number; x: number; y: number }[]>([]);
   const [mounted, setMounted] = useState(false);
 
   const scrollToTop = () => {
@@ -221,41 +222,56 @@ export default function Header({ language }: HeaderProps) {
   const handleBlockClick = useCallback((e: React.MouseEvent, column: number, row: number) => {
     e.stopPropagation();
 
-    setGrid((prev) => {
-      const newGrid = prev.map((col) => [...col]);
+    // 消えるブロックのアニメーション用に追加
+    const header = document.getElementById("main-header");
+    const headerHeight = header?.getBoundingClientRect().height || 64;
+    const pixelY = headerHeight - BLOCK_SIZE * (row + 1);
+    
+    const disappearingBlock = {
+      id: Date.now() + Math.random(),
+      x: column,
+      y: pixelY / BLOCK_SIZE,
+    };
+    
+    setDisappearingBlocks((prev) => [...prev, disappearingBlock]);
 
-      // クリックしたブロックを削除
-      if (newGrid[column]) {
-        newGrid[column][row] = false;
+    // 400ms後に消えるブロックを削除し、グリッドから削除
+    setTimeout(() => {
+      setDisappearingBlocks((prev) => prev.filter((block) => block.id !== disappearingBlock.id));
+      
+      setGrid((prev) => {
+        const newGrid = prev.map((col) => [...col]);
 
-        // 削除したブロックより上にあるブロックを落下ブロックとして追加
-        const header = document.getElementById("main-header");
-        const headerHeight = header?.getBoundingClientRect().height || 64;
+        // クリックしたブロックを削除
+        if (newGrid[column]) {
+          newGrid[column][row] = false;
 
-        const newFallingBlocks: { id: number; x: number; y: number }[] = [];
+          // 削除したブロックより上にあるブロックを落下ブロックとして追加
+          const newFallingBlocks: { id: number; x: number; y: number }[] = [];
 
-        for (let y = row + 1; y < GRID_HEIGHT; y++) {
-          if (newGrid[column][y]) {
-            // 上段のブロックを落下ブロックに変換
-            const currentPixelY = headerHeight - BLOCK_SIZE * (y + 1);
-            const fallingBlock = {
-              id: Date.now() + Math.random() + y,
-              x: column,
-              y: currentPixelY / BLOCK_SIZE, // 現在の位置をピクセル座標で
-            };
-            newFallingBlocks.push(fallingBlock);
-            newGrid[column][y] = false; // グリッドから削除
+          for (let y = row + 1; y < GRID_HEIGHT; y++) {
+            if (newGrid[column][y]) {
+              // 上段のブロックを落下ブロックに変換
+              const currentPixelY = headerHeight - BLOCK_SIZE * (y + 1);
+              const fallingBlock = {
+                id: Date.now() + Math.random() + y,
+                x: column,
+                y: currentPixelY / BLOCK_SIZE, // 現在の位置をピクセル座標で
+              };
+              newFallingBlocks.push(fallingBlock);
+              newGrid[column][y] = false; // グリッドから削除
+            }
+          }
+
+          // 落下ブロックを追加
+          if (newFallingBlocks.length > 0) {
+            setFallingBlocks((prevFalling) => [...prevFalling, ...newFallingBlocks]);
           }
         }
 
-        // 落下ブロックを追加
-        if (newFallingBlocks.length > 0) {
-          setFallingBlocks((prevFalling) => [...prevFalling, ...newFallingBlocks]);
-        }
-      }
-
-      return newGrid;
-    });
+        return newGrid;
+      });
+    }, 400);
   }, []);
 
   // ヘッダークリック
@@ -298,6 +314,7 @@ export default function Header({ language }: HeaderProps) {
           <div style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
             <h1
               onClick={scrollToTop}
+              className="logo-font"
               style={{
                 fontSize: "1.25rem",
                 fontWeight: "bold",
@@ -334,6 +351,7 @@ export default function Header({ language }: HeaderProps) {
       <div className="container">
         <div style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
           <h1
+            className="logo-font"
             style={{
               fontSize: "1.25rem",
               fontWeight: "bold",
@@ -402,6 +420,30 @@ export default function Header({ language }: HeaderProps) {
               height: `${BLOCK_SIZE}px`,
               backgroundColor: "var(--text-accent)",
               zIndex: 19,
+            }}
+          />
+        );
+      })}
+
+      {/* 消えるブロック（アニメーション） */}
+      {disappearingBlocks.map((block) => {
+        const header = document.getElementById("main-header");
+        const headerHeight = header?.getBoundingClientRect().height || 64;
+        const pixelY = block.y * BLOCK_SIZE;
+
+        return (
+          <div
+            key={block.id}
+            style={{
+              position: "absolute",
+              left: `${block.x * BLOCK_SIZE}px`,
+              top: `${pixelY}px`,
+              width: `${BLOCK_SIZE}px`,
+              height: `${BLOCK_SIZE}px`,
+              backgroundColor: "var(--text-accent)",
+              zIndex: 21,
+              animation: "shrinkToCenter 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards",
+              transformOrigin: "center center",
             }}
           />
         );

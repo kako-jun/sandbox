@@ -10,9 +10,8 @@ import BackgroundDots from "@/components/BackgroundDots";
 
 export default function NotFound() {
   const [language, setLanguage] = useState<Language>("ja");
-  const { theme, toggleTheme } = useTheme();
+  const { theme, toggleTheme, mounted } = useTheme();
   const t = useTranslation(language);
-  const [mounted, setMounted] = useState(false);
 
   // ミニゲーム用の状態
   const [gameStarted, setGameStarted] = useState(false);
@@ -21,11 +20,6 @@ export default function NotFound() {
   const [gameCompleted, setGameCompleted] = useState(false);
   const [startTime, setStartTime] = useState<number>(0);
   const [endTime, setEndTime] = useState<number>(0);
-
-  // クライアントサイドでのマウント確認
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   // ゲーム初期化
   const initializeGame = () => {
@@ -76,7 +70,7 @@ export default function NotFound() {
       title: "404 - ページが見つかりません",
       message: "お探しのページは見つかりませんでした。",
       backHome: "ホームに戻る",
-      gameTitle: "ミニゲーム: 1から16を順番にクリック！",
+      gameTitle: "ミニゲーム: 1から順番にクリック！",
       gameStart: "ゲーム開始",
       gameReset: "リセット",
       gameCompleted: "クリア！",
@@ -122,7 +116,9 @@ export default function NotFound() {
             alignItems: "center",
             gap: "1rem",
           }}
-        >          <button
+        >
+          {" "}
+          <button
             onClick={() => {
               setLanguage("en");
               document.documentElement.lang = "en";
@@ -131,12 +127,12 @@ export default function NotFound() {
               background: "none",
               border: "none",
               color: language === "en" ? "var(--primary-color)" : "var(--link-color)",
-              textDecoration: "underline",
+              textDecoration: "none",
               fontSize: "0.9rem",
               cursor: "pointer",
-              fontFamily: "inherit",
+              fontFamily: "'Noto Sans', sans-serif",
               fontWeight: language === "en" ? "bold" : "normal",
-              minWidth: "60px",
+              minWidth: "80px",
               textAlign: "center",
             }}
           >
@@ -152,12 +148,12 @@ export default function NotFound() {
               background: "none",
               border: "none",
               color: language === "ja" ? "var(--primary-color)" : "var(--link-color)",
-              textDecoration: "underline",
+              textDecoration: "none",
               fontSize: "0.9rem",
               cursor: "pointer",
-              fontFamily: "inherit",
+              fontFamily: "'Noto Sans', sans-serif",
               fontWeight: language === "ja" ? "bold" : "normal",
-              minWidth: "60px",
+              minWidth: "80px",
               textAlign: "center",
             }}
           >
@@ -173,12 +169,12 @@ export default function NotFound() {
               background: "none",
               border: "none",
               color: language === "zh" ? "var(--primary-color)" : "var(--link-color)",
-              textDecoration: "underline",
+              textDecoration: "none",
               fontSize: "0.9rem",
               cursor: "pointer",
-              fontFamily: language === "zh" ? "'Noto Sans SC', sans-serif" : "inherit",
+              fontFamily: "'Noto Sans', sans-serif",
               fontWeight: language === "zh" ? "bold" : "normal",
-              minWidth: "60px",
+              minWidth: "80px",
               textAlign: "center",
             }}
           >
@@ -207,9 +203,9 @@ export default function NotFound() {
               border: "none",
               fontSize: "0.8rem",
               color: "var(--muted-text)",
-              cursor: theme === "dark" ? "pointer" : "default",
+              cursor: mounted ? (theme === "dark" ? "pointer" : "default") : "default",
               padding: "0.25rem",
-              opacity: theme === "dark" ? 1 : 0.5,
+              opacity: mounted ? (theme === "dark" ? 1 : 0.5) : 0.5,
             }}
           >
             ☀️
@@ -220,7 +216,7 @@ export default function NotFound() {
               position: "relative",
               width: "50px",
               height: "24px",
-              backgroundColor: theme === "dark" ? "var(--primary-color)" : "#ccc",
+              backgroundColor: mounted ? (theme === "dark" ? "var(--primary-color)" : "#ccc") : "#ccc",
               border: "none",
               borderRadius: "2px", // 4pxから2pxに変更してラウンドを少なく
               cursor: "pointer",
@@ -232,7 +228,7 @@ export default function NotFound() {
               style={{
                 position: "absolute",
                 top: "2px",
-                left: theme === "dark" ? "26px" : "2px",
+                left: mounted ? (theme === "dark" ? "26px" : "2px") : "2px",
                 width: "20px",
                 height: "20px",
                 backgroundColor: "#ffffff",
@@ -254,9 +250,9 @@ export default function NotFound() {
               border: "none",
               fontSize: "0.8rem",
               color: "var(--muted-text)",
-              cursor: theme === "light" ? "pointer" : "default",
+              cursor: mounted ? (theme === "light" ? "pointer" : "default") : "default",
               padding: "0.25rem",
-              opacity: theme === "light" ? 1 : 0.5,
+              opacity: mounted ? (theme === "light" ? 1 : 0.5) : 0.5,
             }}
           >
             🌙
@@ -382,10 +378,10 @@ export default function NotFound() {
                       number < currentNumber
                         ? "var(--primary-color)"
                         : number === currentNumber
-                        ? "var(--accent-color)"
+                        ? "#fbbf24"
                         : "var(--input-background)",
                     color:
-                      number < currentNumber ? "#ffffff" : number === currentNumber ? "#ffffff" : "var(--text-color)",
+                      number < currentNumber ? "#ffffff" : number === currentNumber ? "#000000" : "var(--text-color)",
                     border: "1px solid var(--border-color)",
                     borderRadius: "4px",
                     fontSize: "1rem",
@@ -396,7 +392,11 @@ export default function NotFound() {
                   }}
                   onMouseOver={(e) => {
                     if (!gameCompleted && number >= currentNumber) {
-                      e.currentTarget.style.backgroundColor = "var(--hover-background)";
+                      if (number === currentNumber) {
+                        e.currentTarget.style.backgroundColor = "#f59e0b"; // オレンジっぽい黄色
+                      } else {
+                        e.currentTarget.style.backgroundColor = "var(--hover-background)";
+                      }
                     }
                   }}
                   onMouseOut={(e) => {
@@ -405,7 +405,7 @@ export default function NotFound() {
                         number < currentNumber
                           ? "var(--primary-color)"
                           : number === currentNumber
-                          ? "var(--accent-color)"
+                          ? "#fbbf24"
                           : "var(--input-background)";
                     }
                   }}

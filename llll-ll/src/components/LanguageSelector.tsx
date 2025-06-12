@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Language } from "@/types";
 import { useTheme } from "@/hooks/useTheme";
 import { useTranslation } from "@/lib/i18n";
@@ -11,8 +11,20 @@ interface LanguageSelectorProps {
 }
 
 export default function LanguageSelector({ onLanguageSelect, selectedLanguage }: LanguageSelectorProps) {
-  const { theme, toggleTheme } = useTheme();
+  const { theme, toggleTheme, mounted } = useTheme();
   const [currentLang, setCurrentLang] = useState<Language>("en"); // 表示用の言語状態
+  const [isChanging, setIsChanging] = useState(false);
+
+  // 言語変更時のフェード効果付き関数
+  const changeLanguageWithFade = (lang: Language) => {
+    if (lang !== currentLang) {
+      setIsChanging(true);
+      setTimeout(() => {
+        setCurrentLang(lang);
+        setIsChanging(false);
+      }, 200); // 200msでフェードアウト→フェードイン
+    }
+  };
 
   // 言語選択時にHTMLのlang属性も更新
   const handleLanguageSelect = (lang: Language) => {
@@ -54,17 +66,19 @@ export default function LanguageSelector({ onLanguageSelect, selectedLanguage }:
                   background: "none",
                   border: "none",
                   color: selectedLanguage === "en" ? "var(--primary-color)" : "var(--link-color)",
-                  textDecoration: selectedLanguage === "en" ? "none" : "underline",
+                  textDecoration: "none",
                   fontSize: "0.9rem",
                   cursor: "pointer",
-                  fontFamily: "inherit",
+                  fontFamily: "'Noto Sans', sans-serif",
                   fontWeight: selectedLanguage === "en" ? "bold" : "normal",
+                  width: "70px",
+                  textAlign: "center",
                 }}
               >
                 English
               </button>
 
-              <span style={{ color: "var(--muted-text)" }}>|</span>
+              <span style={{ color: "var(--muted-text)", width: "20px", textAlign: "center", display: "inline-block" }}>|</span>
 
               <button
                 onClick={() => handleLanguageSelect("ja")}
@@ -72,17 +86,19 @@ export default function LanguageSelector({ onLanguageSelect, selectedLanguage }:
                   background: "none",
                   border: "none",
                   color: selectedLanguage === "ja" ? "var(--primary-color)" : "var(--link-color)",
-                  textDecoration: selectedLanguage === "ja" ? "none" : "underline",
+                  textDecoration: "none",
                   fontSize: "0.9rem",
                   cursor: "pointer",
-                  fontFamily: "inherit",
+                  fontFamily: "'Noto Sans', sans-serif",
                   fontWeight: selectedLanguage === "ja" ? "bold" : "normal",
+                  width: "70px",
+                  textAlign: "center",
                 }}
               >
                 日本語
               </button>
 
-              <span style={{ color: "var(--muted-text)" }}>|</span>
+              <span style={{ color: "var(--muted-text)", width: "20px", textAlign: "center", display: "inline-block" }}>|</span>
 
               <button
                 onClick={() => handleLanguageSelect("zh")}
@@ -90,11 +106,13 @@ export default function LanguageSelector({ onLanguageSelect, selectedLanguage }:
                   background: "none",
                   border: "none",
                   color: selectedLanguage === "zh" ? "var(--primary-color)" : "var(--link-color)",
-                  textDecoration: selectedLanguage === "zh" ? "none" : "underline",
+                  textDecoration: "none",
                   fontSize: "0.9rem",
                   cursor: "pointer",
-                  fontFamily: "'Noto Sans SC', sans-serif",
+                  fontFamily: "'Noto Sans', sans-serif",
                   fontWeight: selectedLanguage === "zh" ? "bold" : "normal",
+                  width: "70px",
+                  textAlign: "center",
                 }}
               >
                 中文
@@ -121,9 +139,9 @@ export default function LanguageSelector({ onLanguageSelect, selectedLanguage }:
                   border: "none",
                   fontSize: "0.8rem",
                   color: "var(--muted-text)",
-                  cursor: theme === "dark" ? "pointer" : "default",
+                  cursor: mounted ? (theme === "dark" ? "pointer" : "default") : "default",
                   padding: "0.25rem",
-                  opacity: theme === "dark" ? 1 : 0.5,
+                  opacity: mounted ? (theme === "dark" ? 1 : 0.5) : 0.5,
                 }}
               >
                 ☀️
@@ -134,7 +152,7 @@ export default function LanguageSelector({ onLanguageSelect, selectedLanguage }:
                   position: "relative",
                   width: "50px",
                   height: "24px",
-                  backgroundColor: theme === "dark" ? "var(--primary-color)" : "#ccc",
+                  backgroundColor: mounted ? (theme === "dark" ? "var(--primary-color)" : "#ccc") : "#ccc",
                   border: "none",
                   borderRadius: "2px", // 4pxから2pxに変更してラウンドを少なく
                   cursor: "pointer",
@@ -146,7 +164,7 @@ export default function LanguageSelector({ onLanguageSelect, selectedLanguage }:
                   style={{
                     position: "absolute",
                     top: "2px",
-                    left: theme === "dark" ? "26px" : "2px",
+                    left: mounted ? (theme === "dark" ? "26px" : "2px") : "2px",
                     width: "20px",
                     height: "20px",
                     backgroundColor: "#ffffff",
@@ -168,9 +186,9 @@ export default function LanguageSelector({ onLanguageSelect, selectedLanguage }:
                   border: "none",
                   fontSize: "0.8rem",
                   color: "var(--muted-text)",
-                  cursor: theme === "light" ? "pointer" : "default",
+                  cursor: mounted ? (theme === "light" ? "pointer" : "default") : "default",
                   padding: "0.25rem",
-                  opacity: theme === "light" ? 1 : 0.5,
+                  opacity: mounted ? (theme === "light" ? 1 : 0.5) : 0.5,
                 }}
               >
                 🌙
@@ -199,6 +217,7 @@ export default function LanguageSelector({ onLanguageSelect, selectedLanguage }:
       <div className="container">
         <div style={{ textAlign: "center" }}>
           <h1
+            className="logo-font"
             style={{
               fontSize: "2.5rem",
               fontWeight: "bold",
@@ -215,6 +234,9 @@ export default function LanguageSelector({ onLanguageSelect, selectedLanguage }:
               marginBottom: "3rem",
               color: "var(--text-color)",
               fontFamily: currentLang === "zh" ? "'Noto Sans SC', sans-serif" : "inherit",
+              transition: "opacity 0.2s ease-out",
+              minHeight: "1.8rem", // 高さを固定してレイアウトシフトを防ぐ
+              opacity: isChanging ? 0 : 1,
             }}
           >
             {t.redDoorMessage}
@@ -230,16 +252,16 @@ export default function LanguageSelector({ onLanguageSelect, selectedLanguage }:
             }}
           >
             <button
-              onClick={() => setCurrentLang("en")}
-              onMouseEnter={() => setCurrentLang("en")}
+              onClick={() => changeLanguageWithFade("en")}
+              onMouseEnter={() => changeLanguageWithFade("en")}
               style={{
                 background: "none",
                 border: "none",
-                color: currentLang === "en" ? "var(--primary-color)" : "var(--text-color)",
+                color: currentLang === "en" ? "var(--primary-color)" : "var(--link-color)",
                 textDecoration: "none",
                 fontSize: "1rem",
-                cursor: "default",
-                fontFamily: "inherit",
+                cursor: "pointer",
+                fontFamily: "'Noto Sans', sans-serif",
                 fontWeight: currentLang === "en" ? "bold" : "normal",
                 minWidth: "80px",
                 textAlign: "center",
@@ -251,16 +273,16 @@ export default function LanguageSelector({ onLanguageSelect, selectedLanguage }:
             <span style={{ color: "var(--muted-text)", fontSize: "0.9rem", margin: "0 0.5rem" }}>|</span>
 
             <button
-              onClick={() => setCurrentLang("ja")}
-              onMouseEnter={() => setCurrentLang("ja")}
+              onClick={() => changeLanguageWithFade("ja")}
+              onMouseEnter={() => changeLanguageWithFade("ja")}
               style={{
                 background: "none",
                 border: "none",
-                color: currentLang === "ja" ? "var(--primary-color)" : "var(--text-color)",
+                color: currentLang === "ja" ? "var(--primary-color)" : "var(--link-color)",
                 textDecoration: "none",
                 fontSize: "1rem",
-                cursor: "default",
-                fontFamily: "inherit",
+                cursor: "pointer",
+                fontFamily: "'Noto Sans', sans-serif",
                 fontWeight: currentLang === "ja" ? "bold" : "normal",
                 minWidth: "80px",
                 textAlign: "center",
@@ -272,16 +294,16 @@ export default function LanguageSelector({ onLanguageSelect, selectedLanguage }:
             <span style={{ color: "var(--muted-text)", fontSize: "0.9rem", margin: "0 0.5rem" }}>|</span>
 
             <button
-              onClick={() => setCurrentLang("zh")}
-              onMouseEnter={() => setCurrentLang("zh")}
+              onClick={() => changeLanguageWithFade("zh")}
+              onMouseEnter={() => changeLanguageWithFade("zh")}
               style={{
                 background: "none",
                 border: "none",
-                color: currentLang === "zh" ? "var(--primary-color)" : "var(--text-color)",
+                color: currentLang === "zh" ? "var(--primary-color)" : "var(--link-color)",
                 textDecoration: "none",
                 fontSize: "1rem",
-                cursor: "default",
-                fontFamily: "'Noto Sans SC', sans-serif",
+                cursor: "pointer",
+                fontFamily: "'Noto Sans', sans-serif",
                 fontWeight: currentLang === "zh" ? "bold" : "normal",
                 minWidth: "80px",
                 textAlign: "center",
@@ -304,16 +326,27 @@ export default function LanguageSelector({ onLanguageSelect, selectedLanguage }:
                 fontFamily: currentLang === "zh" ? "'Noto Sans SC', sans-serif" : "inherit",
                 fontWeight: "bold",
                 borderRadius: "0.25rem",
-                transition: "opacity 0.2s",
+                transition: "all 0.3s ease",
               }}
               onMouseOver={(e) => {
+                e.currentTarget.style.transform = "scale(1.05)";
                 e.currentTarget.style.opacity = "0.9";
               }}
               onMouseOut={(e) => {
+                e.currentTarget.style.transform = "scale(1)";
                 e.currentTarget.style.opacity = "1";
               }}
             >
-              {currentLang === "en" ? "Continue" : currentLang === "ja" ? "続行" : "继续"}
+              <span 
+                style={{ 
+                  minWidth: "80px", 
+                  display: "inline-block",
+                  transition: "opacity 0.2s ease-out",
+                  opacity: isChanging ? 0 : 1
+                }}
+              >
+                {currentLang === "en" ? "Continue" : currentLang === "ja" ? "続行" : "继续"}
+              </span>
             </button>
           </div>
 
@@ -327,7 +360,15 @@ export default function LanguageSelector({ onLanguageSelect, selectedLanguage }:
               gap: "1rem",
             }}
           >
-            <div>{t.forMobileDevices}</div>
+            <div
+              style={{
+                transition: "opacity 0.2s ease-out",
+                minHeight: "1.2rem", // 高さ固定でレイアウトシフト防止
+                opacity: isChanging ? 0 : 1,
+              }}
+            >
+              {t.forMobileDevices}
+            </div>
             <img
               src="https://llll-ll.com/images/qrcode.webp"
               alt="QR Code for mobile access"

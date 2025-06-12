@@ -6,18 +6,31 @@ export type Theme = "light" | "dark";
 
 export function useTheme() {
   const [theme, setTheme] = useState<Theme>("light");
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    // ユーザーのOS設定を確認
+    // 少し遅延させてテーマを適用（トランジション用）
     const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-
-    // ローカルストレージから設定を取得、なければOS設定を使用
     const savedTheme = localStorage.getItem("theme") as Theme;
     const initialTheme = savedTheme || (prefersDark ? "dark" : "light");
-
+    
+    // マウント完了後に状態を更新
+    setMounted(true);
     setTheme(initialTheme);
-    updateDocumentTheme(initialTheme);
+    
+    // 少し遅延させてDOMを更新（トランジション効果のため）
+    setTimeout(() => {
+      updateDocumentTheme(initialTheme);
+    }, 100);
   }, []);
+
+  const updateDocumentTheme = (newTheme: Theme) => {
+    if (typeof document !== 'undefined') {
+      document.documentElement.setAttribute("data-theme", newTheme);
+      document.documentElement.style.background = newTheme === "dark" ? "#121212" : "#ffffff";
+      document.documentElement.style.color = newTheme === "dark" ? "#ffffff" : "#000000";
+    }
+  };
 
   const toggleTheme = () => {
     const newTheme: Theme = theme === "light" ? "dark" : "light";
@@ -25,12 +38,6 @@ export function useTheme() {
     localStorage.setItem("theme", newTheme);
     updateDocumentTheme(newTheme);
   };
-  const updateDocumentTheme = (newTheme: Theme) => {
-    document.documentElement.setAttribute("data-theme", newTheme);
-    // html要素の背景色も即座に更新
-    document.documentElement.style.background = newTheme === "dark" ? "#121212" : "#ffffff";
-    document.documentElement.style.color = newTheme === "dark" ? "#ffffff" : "#000000";
-  };
 
-  return { theme, toggleTheme };
+  return { theme, toggleTheme, mounted };
 }

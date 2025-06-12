@@ -4,8 +4,14 @@ import { useEffect, useState } from "react";
 
 export function TetrisBlock() {
   const [blocks, setBlocks] = useState<Array<{ id: number; x: number; y: number; opacity: number }>>([]);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
     // ヘッダーの位置を取得する関数
     const getHeaderPosition = () => {
       const header = document.getElementById("main-header");
@@ -56,7 +62,7 @@ export function TetrisBlock() {
     // 1.5秒間隔でブロックを生成（少し頻度を上げる）
     const interval = setInterval(addBlock, 1500);
     return () => clearInterval(interval);
-  }, []);
+  }, [mounted]);
 
   useEffect(() => {
     const animate = () => {
@@ -102,6 +108,11 @@ export function TetrisBlock() {
     const animationInterval = setInterval(animate, 60); // より滑らかなアニメーション
     return () => clearInterval(animationInterval);
   }, []);
+
+  // SSR中は何も表示しない
+  if (!mounted) {
+    return null;
+  }
 
   return (
     <>
