@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Language } from "@/types";
 import { useTranslation } from "@/lib/i18n";
 import { useTheme } from "@/hooks/useTheme";
@@ -12,6 +12,7 @@ export default function NotFound() {
   const [language, setLanguage] = useState<Language>("ja");
   const { theme, toggleTheme } = useTheme();
   const t = useTranslation(language);
+  const [mounted, setMounted] = useState(false);
 
   // ミニゲーム用の状態
   const [gameStarted, setGameStarted] = useState(false);
@@ -20,6 +21,11 @@ export default function NotFound() {
   const [gameCompleted, setGameCompleted] = useState(false);
   const [startTime, setStartTime] = useState<number>(0);
   const [endTime, setEndTime] = useState<number>(0);
+
+  // クライアントサイドでのマウント確認
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // ゲーム初期化
   const initializeGame = () => {
@@ -116,9 +122,11 @@ export default function NotFound() {
             alignItems: "center",
             gap: "1rem",
           }}
-        >
-          <button
-            onClick={() => setLanguage("en")}
+        >          <button
+            onClick={() => {
+              setLanguage("en");
+              document.documentElement.lang = "en";
+            }}
             style={{
               background: "none",
               border: "none",
@@ -136,7 +144,10 @@ export default function NotFound() {
           </button>
           <span style={{ color: "var(--muted-text)", fontSize: "0.8rem" }}>|</span>
           <button
-            onClick={() => setLanguage("ja")}
+            onClick={() => {
+              setLanguage("ja");
+              document.documentElement.lang = "ja";
+            }}
             style={{
               background: "none",
               border: "none",
@@ -154,7 +165,10 @@ export default function NotFound() {
           </button>
           <span style={{ color: "var(--muted-text)", fontSize: "0.8rem" }}>|</span>
           <button
-            onClick={() => setLanguage("zh")}
+            onClick={() => {
+              setLanguage("zh");
+              document.documentElement.lang = "zh";
+            }}
             style={{
               background: "none",
               border: "none",
