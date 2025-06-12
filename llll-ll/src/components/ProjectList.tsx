@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useMemo } from 'react';
-import { Product, Language } from '@/types';
-import { useTranslation } from '@/lib/i18n';
-import ProjectCard from './ProjectCard';
-import ProjectModal from './ProjectModal';
+import { useState, useEffect, useMemo } from "react";
+import { Product, Language } from "@/types";
+import { useTranslation } from "@/lib/i18n";
+import ProjectCard from "./ProjectCard";
+import ProjectModal from "./ProjectModal";
 
 interface ProjectListProps {
   products: Product[];
@@ -13,39 +13,55 @@ interface ProjectListProps {
 
 export default function ProjectList({ products, language }: ProjectListProps) {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filter, setFilter] = useState<'all' | 'free' | 'paid'>('all');
+  const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [visibleCount, setVisibleCount] = useState(12);
-  
+
   const t = useTranslation(language);
 
+  // 全タグを抽出
+  const allTags = useMemo(() => {
+    const tagSet = new Set<string>();
+    products.forEach((product) => {
+      product.tags.forEach((tag) => tagSet.add(tag));
+    });
+    return Array.from(tagSet).sort();
+  }, [products]);
+
   const filteredProducts = useMemo(() => {
-    let filtered = products.filter(product => {
-      const matchesSearch = product.title[language].toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           product.description[language].toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           product.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
-      
-      const matchesFilter = filter === 'all' || 
-                           (filter === 'free' && product.tags.includes('Free')) ||
-                           (filter === 'paid' && !product.tags.includes('Free'));
-      
-      return matchesSearch && matchesFilter;
+    let filtered = products.filter((product) => {
+      const matchesSearch =
+        product.title[language].toLowerCase().includes(searchTerm.toLowerCase()) ||
+        product.description[language].toLowerCase().includes(searchTerm.toLowerCase()) ||
+        product.tags.some((tag) => tag.toLowerCase().includes(searchTerm.toLowerCase()));
+
+      const matchesTags = selectedTags.length === 0 || selectedTags.every((tag) => product.tags.includes(tag));
+
+      return matchesSearch && matchesTags;
     });
 
     filtered.sort((a, b) => {
       const dateA = new Date(a.updatedAt).getTime();
       const dateB = new Date(b.updatedAt).getTime();
-      return sortOrder === 'newest' ? dateB - dateA : dateA - dateB;
+      return sortOrder === "newest" ? dateB - dateA : dateA - dateB;
     });
 
     return filtered;
-  }, [products, language, searchTerm, filter, sortOrder]);
+  }, [products, language, searchTerm, selectedTags, sortOrder]);
 
   const visibleProducts = filteredProducts.slice(0, visibleCount);
 
   const loadMore = () => {
-    setVisibleCount(prev => prev + 12);
+    setVisibleCount((prev) => prev + 12);
+  };
+
+  const toggleTag = (tag: string) => {
+    setSelectedTags((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]));
+  };
+
+  const clearAllTags = () => {
+    setSelectedTags([]);
   };
 
   useEffect(() => {
@@ -57,72 +73,202 @@ export default function ProjectList({ products, language }: ProjectListProps) {
       }
     };
 
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, [visibleCount, filteredProducts.length]);
 
   return (
-    <section className="py-8">
+    <section style={{ padding: "2rem 0" }}>
       <div className="container">
-        <h2 className="text-xl glow-accent mb-6 text-center">{t.projectsTitle}</h2>
-        
-        <div className="mb-6 space-y-4">
-          <div className="flex flex-wrap gap-4 justify-center">
-            <select
-              value={sortOrder}
-              onChange={(e) => setSortOrder(e.target.value as 'newest' | 'oldest')}
-              className="px-3 py-2 bg-bg-secondary text-text-primary pixel-border text-xs"
-            >
-              <option value="newest">{t.sortNewest}</option>
-              <option value="oldest">{t.sortOldest}</option>
-            </select>
+        <h2
+          style={{
+            fontSize: "1.8rem",
+            fontWeight: "bold",
+            marginBottom: "2rem",
+            textAlign: "center",
+            color: "var(--primary-color)",
+          }}
+        >
+          {t.projectsTitle}
+        </h2>
 
-            <select
-              value={filter}
-              onChange={(e) => setFilter(e.target.value as 'all' | 'free' | 'paid')}
-              className="px-3 py-2 bg-bg-secondary text-text-primary pixel-border text-xs"
+        {/* 検索・フィルター・ソートエリア */}
+        <div style={{ marginBottom: "2rem" }}>
+          {/* 検索ボックス */}
+          <div style={{ maxWidth: "400px", margin: "0 auto 1.5rem", position: "relative" }}>
+            <div
+              style={{
+                position: "absolute",
+                left: "0.75rem",
+                top: "50%",
+                transform: "translateY(-50%)",
+                fontSize: "1rem",
+                color: "var(--muted-text)",
+                pointerEvents: "none",
+              }}
             >
-              <option value="all">{t.filterAll}</option>
-              <option value="free">{t.filterFree}</option>
-              <option value="paid">{t.filterPaid}</option>
-            </select>
-          </div>
-
-          <div className="max-w-md mx-auto">
+              🔍
+            </div>
             <input
               type="text"
               placeholder={t.searchPlaceholder}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-4 py-2 bg-bg-secondary text-text-primary pixel-border text-xs placeholder-text-secondary"
+              style={{
+                width: "100%",
+                padding: "0.75rem 1rem 0.75rem 2.5rem",
+                backgroundColor: "var(--input-background)",
+                color: "var(--text-color)",
+                border: "1px solid var(--border-color)",
+                fontSize: "0.9rem",
+                fontFamily: "inherit",
+              }}
             />
+          </div>
+
+          {/* タグクラウド */}
+          <div style={{ textAlign: "center", marginBottom: "1rem" }}>
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "0.5rem",
+                justifyContent: "center",
+                maxWidth: "600px",
+                margin: "0 auto",
+              }}
+            >
+              {selectedTags.length > 0 && (
+                <button
+                  onClick={clearAllTags}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "var(--accent-color)",
+                    textDecoration: "underline",
+                    fontSize: "0.8rem",
+                    cursor: "pointer",
+                    fontFamily: "inherit",
+                    padding: "0.25rem 0.5rem",
+                  }}
+                >
+                  {t.clearFilters}
+                </button>
+              )}
+              {allTags.map((tag) => (
+                <button
+                  key={tag}
+                  onClick={() => toggleTag(tag)}
+                  style={{
+                    background: selectedTags.includes(tag) ? "var(--primary-color)" : "var(--input-background)",
+                    color: selectedTags.includes(tag) ? "#ffffff" : "var(--muted-text)",
+                    border: "1px solid var(--border-color)",
+                    borderRadius: "1rem",
+                    padding: "0.25rem 0.75rem",
+                    fontSize: "0.8rem",
+                    cursor: "pointer",
+                    fontFamily: "inherit",
+                    transition: "all 0.2s",
+                  }}
+                  onMouseOver={(e) => {
+                    if (!selectedTags.includes(tag)) {
+                      e.currentTarget.style.backgroundColor = "var(--hover-background)";
+                    }
+                  }}
+                  onMouseOut={(e) => {
+                    if (!selectedTags.includes(tag)) {
+                      e.currentTarget.style.backgroundColor = "var(--input-background)";
+                    }
+                  }}
+                >
+                  {tag}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* ソートスイッチ */}
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              gap: "1rem",
+              marginTop: "1rem",
+            }}
+          >
+            <span style={{ fontSize: "0.9rem", color: "var(--muted-text)" }}>{t.sortOldest}</span>
+            <div
+              style={{
+                position: "relative",
+                width: "60px",
+                height: "30px",
+                backgroundColor: sortOrder === "newest" ? "var(--primary-color)" : "var(--border-color)",
+                borderRadius: "15px",
+                cursor: "pointer",
+                transition: "background-color 0.3s ease",
+              }}
+              onClick={() => setSortOrder(sortOrder === "newest" ? "oldest" : "newest")}
+            >
+              <div
+                style={{
+                  position: "absolute",
+                  top: "3px",
+                  left: sortOrder === "newest" ? "33px" : "3px",
+                  width: "24px",
+                  height: "24px",
+                  backgroundColor: "#ffffff",
+                  borderRadius: "50%",
+                  transition: "left 0.3s ease",
+                  boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
+                }}
+              />
+            </div>
+            <span style={{ fontSize: "0.9rem", color: "var(--muted-text)" }}>{t.sortNewest}</span>
           </div>
         </div>
 
         {filteredProducts.length === 0 ? (
-          <div className="text-center text-text-secondary py-12">
-            No projects found matching your criteria.
+          <div
+            style={{
+              textAlign: "center",
+              color: "var(--muted-text)",
+              padding: "3rem 0",
+            }}
+          >
+            <div style={{ fontSize: "2rem", marginBottom: "1rem" }}>🔍</div>
+            <p>{t.noResults}</p>
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-8">
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "1.5rem",
+                marginBottom: "2rem",
+              }}
+            >
               {visibleProducts.map((product) => (
-                <ProjectCard
-                  key={product.id}
-                  product={product}
-                  language={language}
-                  onSelect={setSelectedProduct}
-                />
+                <ProjectCard key={product.id} product={product} language={language} onSelect={setSelectedProduct} />
               ))}
             </div>
 
             {visibleCount < filteredProducts.length && (
-              <div className="text-center">
+              <div style={{ textAlign: "center" }}>
                 <button
                   onClick={loadMore}
-                  className="px-6 py-3 bg-bg-secondary hover:bg-bg-accent pixel-border text-sm glow transition-colors"
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "var(--link-color)",
+                    textDecoration: "underline",
+                    fontSize: "1rem",
+                    cursor: "pointer",
+                    fontFamily: "inherit",
+                  }}
                 >
-                  Load More ({filteredProducts.length - visibleCount} remaining)
+                  {t.loadMore} ({filteredProducts.length - visibleCount}件)
                 </button>
               </div>
             )}
@@ -130,11 +276,7 @@ export default function ProjectList({ products, language }: ProjectListProps) {
         )}
       </div>
 
-      <ProjectModal
-        product={selectedProduct}
-        language={language}
-        onClose={() => setSelectedProduct(null)}
-      />
+      <ProjectModal product={selectedProduct} language={language} onClose={() => setSelectedProduct(null)} />
     </section>
   );
 }

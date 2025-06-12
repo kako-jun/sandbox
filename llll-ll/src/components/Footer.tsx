@@ -1,65 +1,77 @@
-'use client';
+"use client";
+
+import Image from "next/image";
 
 interface FooterProps {}
 
 export default function Footer({}: FooterProps) {
   const socialLinks = [
-    { name: 'Instagram', url: 'https://instagram.com/kako_jun', icon: '📷' },
-    { name: 'Note', url: 'https://note.com/kako-jun', icon: '📝' },
-    { name: 'Zenn', url: 'https://zenn.dev/kako-jun', icon: '💡' },
-    { name: 'X', url: 'https://x.com/kako_jun', icon: '🐦' },
-    { name: 'Mixi2', url: 'https://mixi.jp/kako_jun', icon: '🌟' },
-    { name: 'GitHub', url: 'https://github.com/kako-jun', icon: '⚡' },
+    { name: "GitHub", url: "https://github.com/kako-jun", icon: "/icons/github.svg" },
+    { name: "X", url: "https://x.com/kako_jun", icon: "/icons/x-twitter.svg" },
+    { name: "Instagram", url: "https://instagram.com/kako_jun", icon: "/icons/instagram.svg" },
+    { name: "Zenn", url: "https://zenn.dev/kako_jun", icon: "/icons/zenn.svg" },
+    { name: "Note", url: "https://note.com/kako_jun", icon: "/icons/note.svg" },
   ];
 
   return (
-    <footer className="relative bg-bg-secondary border-t border-border-color mt-12">
-      <div className="container py-8">
-        <div className="relative">
-          <div 
-            className="absolute inset-0 bg-cover bg-center opacity-30 pixel-border"
-            style={{
-              backgroundImage: 'url("/images/kanazawa-station.jpg")',
-              height: '120px',
-            }}
-          />
-          
-          <div className="relative z-10 flex items-center h-[120px]">
-            <div 
-              className="w-20 h-24 bg-cover bg-center pixel-border ml-4 -mt-2"
+    <footer
+      style={{
+        backgroundColor: "var(--background-color)",
+        borderTop: "1px solid var(--border-color)",
+        marginTop: "3rem",
+        padding: "2rem 0",
+      }}
+    >
+      <div className="container">
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            gap: "1rem",
+            marginBottom: "1rem",
+          }}
+        >
+          <span style={{ color: "var(--muted-text)", fontSize: "0.9rem" }}>© kako-jun</span>
+
+          {socialLinks.map((link) => (
+            <a
+              key={link.name}
+              href={link.url}
+              target="_blank"
+              rel="noopener noreferrer"
               style={{
-                backgroundImage: 'url("/images/kako-jun-avatar.jpg")',
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "32px",
+                height: "32px",
+                textDecoration: "none",
+                color: "var(--text-color)",
+                transition: "all 0.2s ease",
+                borderRadius: "4px",
               }}
-            />
-            
-            <div className="ml-6 flex-1">
-              <h3 className="text-sm glow mb-2">kako-jun</h3>
-              <p className="text-xs text-text-secondary mb-3">
-                Game & App Developer from Kanazawa
-              </p>
-              
-              <div className="flex flex-wrap gap-3">
-                {socialLinks.map((link) => (
-                  <a
-                    key={link.name}
-                    href={link.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-lg hover:scale-110 transition-transform"
-                    title={link.name}
-                  >
-                    {link.icon}
-                  </a>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <div className="text-center mt-6 pt-4 border-t border-border-color">
-          <p className="text-xs text-text-secondary">
-            © 2024 llll-ll. Built with Next.js and ♥
-          </p>
+              title={link.name}
+              onMouseOver={(e) => {
+                e.currentTarget.style.transform = "scale(1.1)";
+                e.currentTarget.style.backgroundColor = "var(--hover-color, rgba(0,0,0,0.1))";
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.transform = "scale(1)";
+                e.currentTarget.style.backgroundColor = "transparent";
+              }}
+            >
+              <Image
+                src={link.icon}
+                alt={link.name}
+                width={20}
+                height={20}
+                style={{
+                  filter: "var(--icon-filter, none)",
+                }}
+              />
+            </a>
+          ))}
         </div>
       </div>
     </footer>

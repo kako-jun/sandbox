@@ -2,11 +2,11 @@
 モデルクラスのテスト
 """
 
-import pytest
-from pydantic import ValidationError
-
 import sys
 from pathlib import Path
+
+import pytest
+from pydantic import ValidationError
 
 src_path = Path(__file__).parent.parent / "src"
 sys.path.insert(0, str(src_path))
@@ -15,8 +15,8 @@ from game.models import (
     Color,
     GameConfig,
     GameData,
-    GameObject,
     GameMode,
+    GameObject,
     GameScene,
     GameState,
     Language,
@@ -107,17 +107,15 @@ class TestGameConfig:
         """デフォルト設定が正しい"""
         config = GameConfig()
         assert config.mode == GameMode.GUI
-        assert config.language == Language.ENGLISH
+        assert config.language == Language.EN
         assert config.debug is False
         assert config.fps == 60
 
     def test_設定変更(self):
         """設定を変更できる"""
-        config = GameConfig(
-            mode=GameMode.CUI, language=Language.JAPANESE, debug=True, fps=30
-        )
+        config = GameConfig(mode=GameMode.CUI, language=Language.JA, debug=True, fps=30)
         assert config.mode == GameMode.CUI
-        assert config.language == Language.JAPANESE
+        assert config.language == Language.JA
         assert config.debug is True
         assert config.fps == 30
 
@@ -144,25 +142,17 @@ class TestGameObject:
 
     def test_境界ボックス取得(self):
         """境界ボックスを正しく取得できる"""
-        obj = GameObject(
-            id="test", position=Position(x=10, y=20), size=Size(width=30, height=40)
-        )
+        obj = GameObject(id="test", position=Position(x=10, y=20), size=Size(width=30, height=40))
         bounds = obj.get_bounds()
         assert bounds == (10, 20, 30, 40)
 
     def test_衝突判定(self):
         """衝突判定が正しく動作する"""
-        obj1 = GameObject(
-            id="obj1", position=Position(x=0, y=0), size=Size(width=10, height=10)
-        )
+        obj1 = GameObject(id="obj1", position=Position(x=0, y=0), size=Size(width=10, height=10))
 
-        obj2 = GameObject(
-            id="obj2", position=Position(x=5, y=5), size=Size(width=10, height=10)
-        )
+        obj2 = GameObject(id="obj2", position=Position(x=5, y=5), size=Size(width=10, height=10))
 
-        obj3 = GameObject(
-            id="obj3", position=Position(x=20, y=20), size=Size(width=10, height=10)
-        )
+        obj3 = GameObject(id="obj3", position=Position(x=20, y=20), size=Size(width=10, height=10))
 
         # obj1 と obj2 は衝突している
         assert obj1.is_colliding_with(obj2) is True

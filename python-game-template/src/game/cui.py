@@ -19,7 +19,9 @@ from utils.timing import get_frame_counter, get_timing_manager
 class CUIRenderer:
     """CUI版のレンダラー"""
 
-    def __init__(self, terminal: TerminalController, engine: Optional[GameEngine] = None):
+    def __init__(
+        self, terminal: TerminalController, engine: Optional[GameEngine] = None
+    ):
         """初期化
 
         Args:
@@ -70,7 +72,9 @@ class CUIRenderer:
         """
         self.screen.draw_box(top, left, height, width, "*")
 
-    def draw_color_block(self, row: int, col: int, rgb: tuple[int, int, int], text: str = "█") -> None:
+    def draw_color_block(
+        self, row: int, col: int, rgb: tuple[int, int, int], text: str = "█"
+    ) -> None:
         """色付きブロックを描画
 
         Args:
@@ -117,19 +121,35 @@ class CUIInputHandler:
         if key:
             # 特別なキーマッピング
             if key == "\x1b":  # ESC
-                events.append(InputEvent(event_type="quit", key="escape", timestamp=current_time))
+                events.append(
+                    InputEvent(event_type="quit", key="escape", timestamp=current_time)
+                )
             elif key == " ":  # スペース
-                events.append(InputEvent(event_type="pause", key="space", timestamp=current_time))
+                events.append(
+                    InputEvent(event_type="pause", key="space", timestamp=current_time)
+                )
             elif key.lower() == "q":
-                events.append(InputEvent(event_type="quit", key="q", timestamp=current_time))
+                events.append(
+                    InputEvent(event_type="quit", key="q", timestamp=current_time)
+                )
             elif key.lower() == "r":
-                events.append(InputEvent(event_type="restart", key="r", timestamp=current_time))
+                events.append(
+                    InputEvent(event_type="restart", key="r", timestamp=current_time)
+                )
             elif key.lower() == "p":
-                events.append(InputEvent(event_type="pause", key="p", timestamp=current_time))
+                events.append(
+                    InputEvent(event_type="pause", key="p", timestamp=current_time)
+                )
             elif key.lower() == "m":  # 音楽制御
-                events.append(InputEvent(event_type="music_toggle", key="m", timestamp=current_time))
+                events.append(
+                    InputEvent(
+                        event_type="music_toggle", key="m", timestamp=current_time
+                    )
+                )
             else:
-                events.append(InputEvent(event_type="key_press", key=key, timestamp=current_time))
+                events.append(
+                    InputEvent(event_type="key_press", key=key, timestamp=current_time)
+                )
 
         return events
 
@@ -185,7 +205,10 @@ class CUIApp:
 
                     # 自動終了チェック（デモ用）
                     if elapsed > auto_quit_seconds:
-                        print(f"\nAuto-quit after {auto_quit_seconds} seconds (frame {frame_count})", flush=True)
+                        print(
+                            f"\nAuto-quit after {auto_quit_seconds} seconds (frame {frame_count})",
+                            flush=True,
+                        )
                         break
                     # 入力処理
                     events = self.input_handler.get_input_events()
@@ -215,7 +238,9 @@ class CUIApp:
                 print("Game ended.")
             except Exception:
                 # 最低限のリセット処理
-                print("\033[0m\033[?25h\033[?1049l\033[?1000l\033[r\033[H\033[2J\033[3J")
+                print(
+                    "\033[0m\033[?25h\033[?1049l\033[?1000l\033[r\033[H\033[2J\033[3J"
+                )
                 print("Game ended.")
 
     def _render(self) -> None:
@@ -272,7 +297,13 @@ class CUIApp:
                 self.renderer.draw_text(3, 2, short_info)
 
             # 操作説明を下部に表示
-            help_lines = ["Controls:", "Q/ESC: Quit", "P/SPACE: Pause/Resume", "R: Restart", "M: Music Toggle"]
+            help_lines = [
+                "Controls:",
+                "Q/ESC: Quit",
+                "P/SPACE: Pause/Resume",
+                "R: Restart",
+                "M: Music Toggle",
+            ]
 
             start_row = max(8, height - len(help_lines) - 3)
             for i, line in enumerate(help_lines):
@@ -310,7 +341,9 @@ class CUIApp:
         else:
             # 音楽を開始（テスト用）
             # 実際のファイルがなくても動作するようにサイレントモード
-            success = self.audio_manager.play_music("assets/audio/test_music.ogg", volume=0.5)
+            success = self.audio_manager.play_music(
+                "assets/audio/test_music.ogg", volume=0.5
+            )
             if success:
                 print("[AUDIO] Music started (CUI mode)", flush=True)
             else:
