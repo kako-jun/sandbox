@@ -271,7 +271,7 @@ export default function NotFound() {
                 boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
               }}
             />
-          </button>
+          </button>{" "}
           <button
             onClick={() => {
               // ライトテーマの時のみダークテーマに切り替え
@@ -286,9 +286,16 @@ export default function NotFound() {
               cursor: mounted ? (theme === "light" ? "pointer" : "default") : "default",
               padding: "0.25rem",
               opacity: mounted ? (theme === "light" ? 1 : 0.5) : 0.5,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
             }}
           >
-            🌙
+            {" "}
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M2 12.79A9 9 0 1 0 11.79 2 7.2 7.2 0 0 1 2 12.79z" />
+              <circle cx="8" cy="12" r="2.5" fill="currentColor" />
+            </svg>
           </button>
         </div>
       </div>
