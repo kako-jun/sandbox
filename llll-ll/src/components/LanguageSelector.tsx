@@ -229,7 +229,10 @@ export default function LanguageSelector({ onLanguageSelect, selectedLanguage }:
                   justifyContent: "center",
                 }}
               >
-                🌙
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M2 12.79A9 9 0 1 0 11.79 2 7.2 7.2 0 0 1 2 12.79z" />
+                  <circle cx="8" cy="12" r="2.5" fill="currentColor" />
+                </svg>
               </button>
             </div>
           </div>
