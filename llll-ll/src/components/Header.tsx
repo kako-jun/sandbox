@@ -173,6 +173,12 @@ export default function Header({ language }: HeaderProps) {
               if (newGrid[block.x]) {
                 newGrid[block.x][bottomRow] = true;
               }
+
+              // 着地後にライン消去をチェック
+              setTimeout(() => {
+                checkAndClearLines();
+              }, 50);
+
               return newGrid;
             });
             // 落下中リストから除外（着地完了）
@@ -192,6 +198,76 @@ export default function Header({ language }: HeaderProps) {
     const animationInterval = setInterval(animate, 33); // 30fps
     return () => clearInterval(animationInterval);
   }, [getBottomEmptyRow]);
+
+  // ライン消去判定（横一列すべてtrueのチェック）
+  const checkAndClearLines = useCallback(() => {
+    if (gridWidth === 0) return;
+
+    const header = document.getElementById("main-header");
+    const headerHeight = header?.getBoundingClientRect().height || 64;
+
+    setGrid((prevGrid) => {
+      const newGrid = prevGrid.map((col) => [...col]);
+      const completedRows: number[] = [];
+
+      // 完成したライン（横一列すべてtrue）を検出
+      for (let y = 0; y < GRID_HEIGHT; y++) {
+        let isComplete = true;
+        for (let x = 0; x < gridWidth; x++) {
+          if (!newGrid[x]?.[y]) {
+            isComplete = false;
+            break;
+          }
+        }
+        if (isComplete) {
+          completedRows.push(y);
+        }
+      }
+
+      // 完成したラインがある場合
+      if (completedRows.length > 0) {
+        // 完成したラインを削除
+        completedRows.forEach((row) => {
+          for (let x = 0; x < gridWidth; x++) {
+            if (newGrid[x]) {
+              newGrid[x][row] = false;
+            }
+          }
+        });
+
+        // 削除されたラインより上のブロックを落下ブロックに変換
+        const newFallingBlocks: { id: number; x: number; y: number }[] = [];
+
+        for (let x = 0; x < gridWidth; x++) {
+          for (let y = GRID_HEIGHT - 1; y >= 0; y--) {
+            if (newGrid[x]?.[y]) {
+              // このブロックより下に削除されたラインがいくつあるかカウント
+              const linesBelow = completedRows.filter((row) => row < y).length;
+
+              if (linesBelow > 0) {
+                // 落下ブロックに変換
+                const currentPixelY = headerHeight - BLOCK_SIZE * (y + 1);
+                const fallingBlock = {
+                  id: Date.now() + Math.random() + x * 1000 + y,
+                  x: x,
+                  y: currentPixelY / BLOCK_SIZE,
+                };
+                newFallingBlocks.push(fallingBlock);
+                newGrid[x][y] = false; // グリッドから削除
+              }
+            }
+          }
+        }
+
+        // 落下ブロックを追加
+        if (newFallingBlocks.length > 0) {
+          setFallingBlocks((prevFalling) => [...prevFalling, ...newFallingBlocks]);
+        }
+      }
+
+      return newGrid;
+    });
+  }, [gridWidth]);
 
   // 全消し判定
   useEffect(() => {
@@ -226,19 +302,19 @@ export default function Header({ language }: HeaderProps) {
     const header = document.getElementById("main-header");
     const headerHeight = header?.getBoundingClientRect().height || 64;
     const pixelY = headerHeight - BLOCK_SIZE * (row + 1);
-    
+
     const disappearingBlock = {
       id: Date.now() + Math.random(),
       x: column,
       y: pixelY / BLOCK_SIZE,
     };
-    
+
     setDisappearingBlocks((prev) => [...prev, disappearingBlock]);
 
     // 400ms後に消えるブロックを削除し、グリッドから削除
     setTimeout(() => {
       setDisappearingBlocks((prev) => prev.filter((block) => block.id !== disappearingBlock.id));
-      
+
       setGrid((prev) => {
         const newGrid = prev.map((col) => [...col]);
 
