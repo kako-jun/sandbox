@@ -424,9 +424,9 @@ export default function ProjectCard({ product, language, onSelect }: ProjectCard
               </a>
             )}
 
-            {product.blogUrl && (
+            {product.developmentRecordUrl && (
               <a
-                href={product.blogUrl}
+                href={product.developmentRecordUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{
@@ -450,7 +450,7 @@ export default function ProjectCard({ product, language, onSelect }: ProjectCard
                 }}
                 onClick={(e) => e.stopPropagation()}
               >
-                {t.viewBlog}
+                {t.viewDevelopmentRecord}
               </a>
             )}
           </div>

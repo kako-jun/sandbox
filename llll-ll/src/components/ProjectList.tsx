@@ -106,11 +106,15 @@ export default function ProjectList({ products, language }: ProjectListProps) {
                 transform: "translateY(-50%)",
                 color: "var(--muted-text)",
                 pointerEvents: "none",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                height: "100%",
               }}
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="11" cy="11" r="8"></circle>
-                <path d="m21 21-4.35-4.35"></path>
+                <circle cx="10" cy="10" r="7"></circle>
+                <path d="M15.24 15.24L21 21"></path>
               </svg>
             </div>
             <input

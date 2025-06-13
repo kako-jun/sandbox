@@ -1,4 +1,4 @@
-export type Language = 'en' | 'zh' | 'ja';
+export type Language = "en" | "zh" | "ja";
 
 export interface Product {
   id: string;
@@ -10,7 +10,7 @@ export interface Product {
   videos?: string[];
   demoUrl?: string;
   repositoryUrl?: string;
-  blogUrl?: string;
+  developmentRecordUrl?: string;
   supportUrl?: string;
   createdAt: string;
   updatedAt: string;

@@ -42,7 +42,6 @@ export default function ImageDisplay({ language }: ImageDisplayProps) {
                 gap: "0.5rem",
               }}
             >
-              <div style={{ fontSize: "2rem", opacity: 0.5 }}>🖼️</div>
               <div style={{ fontSize: "0.8rem", opacity: 0.7 }}>
                 Image placeholder
                 <br />

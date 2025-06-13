@@ -18,7 +18,7 @@ images:
   - "/images/task-manager/screenshot2.png"
 demoUrl: "https://apps.apple.com/app/task-manager-pro"
 repositoryUrl: "https://github.com/kako-jun/task-manager-pro"
-blogUrl: "https://note.com/kako-jun/n/task-manager-development"
+developmentRecordUrl: "https://note.com/kako-jun/n/task-manager-development"
 createdAt: "2023-03-20T00:00:00Z"
 updatedAt: "2024-11-15T00:00:00Z"
 featured: false
