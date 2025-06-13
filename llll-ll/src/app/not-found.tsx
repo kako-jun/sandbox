@@ -106,7 +106,6 @@ export default function NotFound() {
         textAlign: "center",
       }}
     >
-      {" "}
       {/* 言語選択 */}
       <div style={{ marginBottom: "2rem" }}>
         <div
@@ -117,7 +116,6 @@ export default function NotFound() {
             gap: "1rem",
           }}
         >
-          {" "}
           <button
             onClick={() => {
               setLanguage("en");
@@ -132,13 +130,25 @@ export default function NotFound() {
               cursor: "pointer",
               fontFamily: "'Noto Sans', sans-serif",
               fontWeight: language === "en" ? "bold" : "normal",
-              minWidth: "80px",
+              width: "60px",
               textAlign: "center",
+              flexShrink: 0,
             }}
           >
             English
           </button>
-          <span style={{ color: "var(--muted-text)", fontSize: "0.8rem" }}>|</span>
+          <span
+            style={{
+              color: "var(--muted-text)",
+              width: "15px",
+              textAlign: "center",
+              display: "inline-block",
+              fontFamily: "'Noto Sans', sans-serif",
+              flexShrink: 0,
+            }}
+          >
+            |
+          </span>
           <button
             onClick={() => {
               setLanguage("ja");
@@ -153,13 +163,25 @@ export default function NotFound() {
               cursor: "pointer",
               fontFamily: "'Noto Sans', sans-serif",
               fontWeight: language === "ja" ? "bold" : "normal",
-              minWidth: "80px",
+              width: "60px",
               textAlign: "center",
+              flexShrink: 0,
             }}
           >
             日本語
           </button>
-          <span style={{ color: "var(--muted-text)", fontSize: "0.8rem" }}>|</span>
+          <span
+            style={{
+              color: "var(--muted-text)",
+              width: "15px",
+              textAlign: "center",
+              display: "inline-block",
+              fontFamily: "'Noto Sans', sans-serif",
+              flexShrink: 0,
+            }}
+          >
+            |
+          </span>
           <button
             onClick={() => {
               setLanguage("zh");
@@ -174,13 +196,14 @@ export default function NotFound() {
               cursor: "pointer",
               fontFamily: "'Noto Sans', sans-serif",
               fontWeight: language === "zh" ? "bold" : "normal",
-              minWidth: "80px",
+              width: "60px",
               textAlign: "center",
+              flexShrink: 0,
             }}
           >
             中文
           </button>{" "}
-        </div>{" "}
+        </div>
         {/* テーマ切り替えスイッチ */}
         <div
           style={{
@@ -201,15 +224,26 @@ export default function NotFound() {
             style={{
               background: "none",
               border: "none",
-              fontSize: "0.8rem",
               color: "var(--muted-text)",
               cursor: mounted ? (theme === "dark" ? "pointer" : "default") : "default",
               padding: "0.25rem",
               opacity: mounted ? (theme === "dark" ? 1 : 0.5) : 0.5,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
             }}
           >
-            ☀️
-          </button>{" "}
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <circle cx="12" cy="12" r="5" />
+              <path
+                d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"
+                strokeWidth="2"
+                stroke="currentColor"
+                fill="none"
+              />
+              <circle cx="12" cy="12" r="4" fill="currentColor" />{" "}
+            </svg>
+          </button>
           <button
             onClick={toggleTheme}
             style={{
@@ -248,7 +282,6 @@ export default function NotFound() {
             style={{
               background: "none",
               border: "none",
-              fontSize: "0.8rem",
               color: "var(--muted-text)",
               cursor: mounted ? (theme === "light" ? "pointer" : "default") : "default",
               padding: "0.25rem",
@@ -271,7 +304,7 @@ export default function NotFound() {
           }}
         >
           404
-        </h1>{" "}
+        </h1>
         <h2
           style={{
             fontSize: "1.5rem",
@@ -282,7 +315,7 @@ export default function NotFound() {
           }}
         >
           {messages.title}
-        </h2>{" "}
+        </h2>
         <p
           style={{
             fontSize: "1rem",
@@ -295,7 +328,7 @@ export default function NotFound() {
         >
           {messages.message}
         </p>
-      </div>{" "}
+      </div>
       {/* ミニゲーム */}
       <div style={{ marginBottom: "6rem" }}>
         <h3
@@ -465,7 +498,6 @@ export default function NotFound() {
           e.currentTarget.style.opacity = "1";
         }}
       >
-        {" "}
         <ArrowIcon direction="left" size={16} strokeWidth={2} />
         {messages.backHome}
       </Link>

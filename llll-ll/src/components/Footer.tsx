@@ -19,7 +19,7 @@ export default function Footer({}: FooterProps) {
         backgroundColor: "var(--footer-background)",
         borderTop: "1px solid var(--border-color)",
         marginTop: "3rem",
-        padding: "2rem 0",
+        padding: "2rem 0 4rem 0", // 下のパディングを増やしてScrollToTopボタンとの重複を避ける
         position: "relative",
         backgroundImage: "var(--footer-gradient)",
         transition: "background-color 0.3s ease, background-image 0.3s ease",
@@ -31,7 +31,7 @@ export default function Footer({}: FooterProps) {
           position: "absolute",
           top: "-30px", // フッター線より上に1/3程度はみ出す
           left: "50%",
-          transform: "translateX(-184px)", // kako-junテキストの真上に配置
+          transform: "translateX(-183px)", // kako-junテキストの真上に配置（1px右にずらす）
           width: "80px",
           height: "80px",
           backgroundColor: "var(--input-background)",
@@ -50,7 +50,7 @@ export default function Footer({}: FooterProps) {
         <br />
         Image
       </div>
-      
+
       <div className="container">
         <div
           style={{
@@ -58,7 +58,7 @@ export default function Footer({}: FooterProps) {
             justifyContent: "center",
             alignItems: "center",
             gap: "1rem",
-            marginBottom: "1rem",
+            marginBottom: "2rem", // 下マージンを増やしてScrollToTopボタンとの重複を防ぐ
             marginTop: "20px", // プロフィール画像分のスペースを確保
           }}
         >
