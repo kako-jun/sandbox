@@ -126,7 +126,7 @@ class ParallaxBackground:
                 # 画像を繰り返し描画してシームレスにする
                 screen.blit(image, (x - image.get_width(), 0))
                 screen.blit(image, (x, 0))
-                if x + image.get_width() < SCREEN_WIDTH:
+                if x + image.get_width() < screen.get_width():
                     screen.blit(image, (x + image.get_width(), 0))
 
             elif "surface" in layer:
@@ -136,7 +136,7 @@ class ParallaxBackground:
 
                 screen.blit(surface, (x - surface.get_width(), 0))
                 screen.blit(surface, (x, 0))
-                if x + surface.get_width() < SCREEN_WIDTH:
+                if x + surface.get_width() < screen.get_width():
                     screen.blit(surface, (x + surface.get_width(), 0))
 
 
