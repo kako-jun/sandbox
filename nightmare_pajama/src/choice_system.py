@@ -3,28 +3,23 @@ import pygame
 class ChoiceSystem:
     def __init__(self, screen):
         self.screen = screen
-        # 日本語フォントを使用
+        # 明朝体フォントを使用
         try:
-            self.font = pygame.font.Font("/usr/share/fonts/noto-cjk/NotoSansCJK-Regular.ttc", 28)
+            self.font = pygame.font.Font("/usr/share/fonts/noto-cjk/NotoSerifCJK-Regular.ttc", 28)
         except:
             try:
                 # fallbackとしてシステムフォントを試す
-                self.font = pygame.font.SysFont("notosanscjkjp", 28)
+                self.font = pygame.font.SysFont("notoserifcjkjp", 28)
             except:
-                try:
-                    self.font = pygame.font.SysFont("liberation", 28)
-                except:
-                    self.font = pygame.font.Font(None, 28)
+                self.font = pygame.font.Font(None, 28)
         self.choices = []
         self.selected_choice = 0
         self.choice_rect_height = 50
         self.choice_margin = 10
         
         # 色設定
-        self.normal_color = (60, 60, 100)
-        self.selected_color = (100, 100, 150)
         self.text_color = (255, 255, 255)
-        self.border_color = (150, 150, 200)
+        self.selected_text_color = (255, 200, 200)  # 選択時は赤みがかった色
     
     def set_choices(self, choices):
         self.choices = choices
@@ -59,20 +54,14 @@ class ChoiceSystem:
             y = start_y + i * (self.choice_rect_height + self.choice_margin)
             rect = pygame.Rect(start_x, y, choice_width, self.choice_rect_height)
             
-            # 選択されているかどうかで色を変える
-            bg_color = self.selected_color if i == self.selected_choice else self.normal_color
-            
-            # 選択肢の背景
-            pygame.draw.rect(self.screen, bg_color, rect)
-            pygame.draw.rect(self.screen, self.border_color, rect, 2)
-            
-            # 選択肢のテキスト
-            text_surface = self.font.render(choice["text"], True, self.text_color)
+            # 選択肢のテキスト（選択時は色を変更）
+            text_color = self.selected_text_color if i == self.selected_choice else self.text_color
+            text_surface = self.font.render(choice["text"], True, text_color)
             text_rect = text_surface.get_rect(center=rect.center)
             self.screen.blit(text_surface, text_rect)
             
             # 選択インジケーター
             if i == self.selected_choice:
                 indicator = "▶"
-                indicator_surface = self.font.render(indicator, True, self.text_color)
+                indicator_surface = self.font.render(indicator, True, self.selected_text_color)
                 self.screen.blit(indicator_surface, (start_x - 30, y + 15))

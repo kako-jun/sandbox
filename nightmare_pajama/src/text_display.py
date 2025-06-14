@@ -4,21 +4,19 @@ class TextDisplay:
     def __init__(self, screen):
         self.screen = screen
         self.font_size = 24
-        # 日本語フォントを使用
+        # 明朝体フォントを使用（ホラー風にサイズを調整）
+        self.font_size = 26  # 少し大きめでインパクトを
         try:
-            self.font = pygame.font.Font("/usr/share/fonts/noto-cjk/NotoSansCJK-Regular.ttc", self.font_size)
+            self.font = pygame.font.Font("/usr/share/fonts/noto-cjk/NotoSerifCJK-Regular.ttc", self.font_size)
         except:
             try:
                 # fallbackとしてシステムフォントを試す
-                self.font = pygame.font.SysFont("notosanscjkjp", self.font_size)
+                self.font = pygame.font.SysFont("notoserifcjkjp", self.font_size)
             except:
-                try:
-                    self.font = pygame.font.SysFont("liberation", self.font_size)
-                except:
-                    self.font = pygame.font.Font(None, self.font_size)
+                self.font = pygame.font.Font(None, self.font_size)
         
-        # テキスト表示領域
-        self.text_box_rect = pygame.Rect(50, 500, 924, 200)
+        # テキスト表示領域（画面中央）
+        self.text_box_rect = pygame.Rect(50, 284, 924, 200)  # 中央に配置
         self.text_margin = 20
         
         # テキスト状態
@@ -41,7 +39,8 @@ class TextDisplay:
     
     def update(self):
         if not self.text_complete and self.text_index < len(self.current_text):
-            # テキストを少しずつ表示
+            # ホラー風にゆっくりとしたタイプライター効果
+            self.text_speed = 1  # より遅く、緊張感を演出
             for _ in range(self.text_speed):
                 if self.text_index < len(self.current_text):
                     self.displayed_text += self.current_text[self.text_index]
@@ -61,9 +60,7 @@ class TextDisplay:
             self.set_text(self.current_text)
     
     def render(self):
-        # テキストボックスの背景
-        pygame.draw.rect(self.screen, self.bg_color, self.text_box_rect)
-        pygame.draw.rect(self.screen, self.border_color, self.text_box_rect, 3)
+        # 枠なしでテキストのみ表示
         
         # テキストを複数行に分割して描画
         lines = self.displayed_text.split('\n')
