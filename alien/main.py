@@ -357,9 +357,15 @@ def generate_bgm():
     return sound
 
 
-# BGMを生成
-bgm = generate_bgm()
-bgm.set_volume(0.6)  # 音量を0.4から0.6に上げる
+# BGMを読み込み
+try:
+    bgm = pygame.mixer.Sound("bgm.mp3")
+    bgm.set_volume(0.3)  # 音量調整
+    print("✓ BGM loaded from bgm.mp3")
+except pygame.error:
+    print("⚠ Failed to load bgm.mp3, using generated BGM")
+    bgm = generate_bgm()
+    bgm.set_volume(0.6)
 
 
 class GameState:
