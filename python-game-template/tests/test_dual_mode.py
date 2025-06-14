@@ -48,8 +48,8 @@ class TestDualMode:
         with patch("main.CUIApp", return_value=mock_cui_app):
             with patch("main.PyGameApp", return_value=mock_gui_app):
                 with patch("game.core.GameEngine", return_value=mock_engine):
-                    with patch("main.get_audio_manager", return_value=mock_audio):
-                        with patch("main.get_timing_manager", return_value=mock_timing):
+                    with patch("utils.audio.get_audio_manager", return_value=mock_audio):
+                        with patch("utils.timing.get_timing_manager", return_value=mock_timing):
                             # 短時間で終了するようにモック化
                             mock_cui_app.run = Mock()
                             mock_gui_app.run = Mock()
@@ -70,11 +70,13 @@ class TestDualMode:
         mock_gui_app = Mock()
         mock_engine = Mock()
         mock_audio = Mock()
-        mock_timing = Mock()        with patch("main.CUIApp", return_value=mock_cui_app):
+        mock_timing = Mock()
+        
+        with patch("main.CUIApp", return_value=mock_cui_app):
             with patch("main.PyGameApp", return_value=mock_gui_app):
                 with patch("game.core.GameEngine", return_value=mock_engine):
-                    with patch("main.get_audio_manager", return_value=mock_audio):
-                        with patch("main.get_timing_manager", return_value=mock_timing):
+                    with patch("utils.audio.get_audio_manager", return_value=mock_audio):
+                        with patch("utils.timing.get_timing_manager", return_value=mock_timing):
                             with patch("threading.Thread"):
                                 with patch("time.sleep"):
                                     # 実行を短縮するためのモック
@@ -102,11 +104,12 @@ class TestDualMode:
         mock_thread.start = Mock()
         mock_thread.join = Mock()
 
-        with patch("threading.Thread", return_value=mock_thread) as mock_thread_class:            with patch("main.CUIApp") as mock_cui_class:
+        with patch("threading.Thread", return_value=mock_thread) as mock_thread_class:
+            with patch("main.CUIApp") as mock_cui_class:
                 with patch("main.PyGameApp") as mock_gui_class:
                     with patch("game.core.GameEngine"):
-                        with patch("main.get_audio_manager"):
-                            with patch("main.get_timing_manager"):
+                        with patch("utils.audio.get_audio_manager"):
+                            with patch("utils.timing.get_timing_manager"):
                                 with patch("time.sleep"):
                                     mock_gui_app = Mock()
                                     mock_gui_app.run = Mock()
@@ -139,7 +142,9 @@ class TestDualMode:
         mock_cui_app = Mock()
         mock_cui_app.run = cui_exception
         mock_gui_app = Mock()
-        mock_gui_app.run = Mock()        with patch("main.CUIApp", return_value=mock_cui_app):
+        mock_gui_app.run = Mock()
+        
+        with patch("main.CUIApp", return_value=mock_cui_app):
             with patch("main.PyGameApp", return_value=mock_gui_app):
                 with patch("game.core.GameEngine"):
                     with patch("main.get_audio_manager"):
@@ -163,7 +168,9 @@ class TestDualMode:
             raise KeyboardInterrupt()
 
         mock_gui_app = Mock()
-        mock_gui_app.run = keyboard_interrupt        with patch("main.CUIApp"):
+        mock_gui_app.run = keyboard_interrupt
+        
+        with patch("main.CUIApp"):
             with patch("main.PyGameApp", return_value=mock_gui_app):
                 with patch("game.core.GameEngine"):
                     with patch("main.get_audio_manager"):

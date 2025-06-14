@@ -58,6 +58,9 @@ class GameEngine:
         self.timing_manager: Optional[Any] = None
 
         self._setup_default_handlers()
+        
+        # 音楽ファイルパス
+        self.background_music_path = "assets/audio/harunohizashi.ogg"
 
     def _setup_default_handlers(self) -> None:
         """デフォルトのイベントハンドラーを設定"""
@@ -127,15 +130,25 @@ class GameEngine:
         return player
 
     def start(self) -> None:
-        """ゲームを開始"""
+        """ゲームを開始（冪等性保証：複数回呼んでも安全）"""
+        # 既に開始済みの場合は何もしない
+        if self.running and self.data.current_state == GameState.PLAYING:
+            return
+            
         self.running = True
         self.data.current_state = GameState.PLAYING
         self.last_update_time = time.time()
+        
+        # 音楽を自動開始
+        self._start_background_music()
 
     def stop(self) -> None:
         """ゲームを停止"""
         self.running = False
         self.data.current_state = GameState.QUIT
+        
+        # 音楽を停止
+        self._stop_background_music()
 
     def pause(self) -> None:
         """ゲームを一時停止"""
@@ -254,8 +267,10 @@ class GameEngine:
 
     def _handle_music_toggle(self, _event: InputEvent) -> None:
         """音楽再生/停止の切り替えイベントを処理"""
-        self.music_playing = not self.music_playing
-        # 実際の音楽制御は各UI実装で行う
+        if self.music_playing:
+            self._stop_background_music()
+        else:
+            self._start_background_music()
 
     def get_delta_time(self) -> float:
         """前フレームからの経過時間を取得
@@ -299,7 +314,7 @@ class GameEngine:
         pattern_index = int(self.animation_time / 2) % len(patterns)  # 2秒ごとに変更
 
         base_text = patterns[pattern_index]  # 音楽状態を表示
-        music_indicator = "[MUSIC]" if self.music_playing else "[SILENT]"
+        music_indicator = self.get_music_status()
 
         return f"{base_text} {music_indicator} (offset: {offset:+d})"
 
@@ -333,7 +348,15 @@ class GameEngine:
         Returns:
             音楽が再生中かどうか
         """
-        return self.music_playing
+        # 内部フラグと実際のオーディオマネージャーの状態を両方チェック
+        is_actually_playing = False
+        
+        # オーディオマネージャーがある場合は実際の再生状態をチェック
+        if self.audio_manager and self.audio_manager.is_available():
+            is_actually_playing = self.audio_manager.is_music_playing()
+        
+        # 内部フラグと実際の状態の両方を考慮
+        return self.music_playing and is_actually_playing
 
     def get_music_status(self) -> str:
         """音楽の状態を取得
@@ -341,10 +364,28 @@ class GameEngine:
         Returns:
             音楽状態の文字列
         """
-        if self.music_playing:
+        # 内部フラグと実際のオーディオマネージャーの状態を両方チェック
+        is_actually_playing = False
+        audio_available = False
+        
+        # オーディオマネージャーがある場合は実際の再生状態をチェック
+        if self.audio_manager and self.audio_manager.is_available():
+            audio_available = True
+            is_actually_playing = self.audio_manager.is_music_playing()
+        
+        # 内部フラグと実際の状態に基づいて詳細な状態を返す
+        if not audio_available:
+            return "[NO AUDIO]"
+        elif self.music_playing and is_actually_playing:
             return "[MUSIC]"
-        else:
+        elif self.music_playing and not is_actually_playing:
+            # 音楽ファイルが見つからない場合など（サイレントモード）
             return "[SILENT]"
+        elif not self.music_playing:
+            return "[SILENT]"
+        else:
+            # 稀なケース: 内部フラグはfalseだが実際は再生中
+            return "[MUSIC]"
 
     def get_animation_offset(self) -> int:
         """アニメーションオフセットを取得（描画位置調整用）
@@ -404,3 +445,20 @@ class GameEngine:
         ]
         sample_index = int(self.animation_time) % len(samples)
         return samples[sample_index]
+
+    def _start_background_music(self) -> None:
+        """背景音楽を開始"""
+        if not self.audio_manager:
+            from utils.audio import get_audio_manager
+            self.audio_manager = get_audio_manager()
+        
+        if self.audio_manager and self.audio_manager.is_available():
+            success = self.audio_manager.play_music(self.background_music_path, loops=-1)
+            if success:
+                self.music_playing = True
+
+    def _stop_background_music(self) -> None:
+        """背景音楽を停止"""
+        if self.audio_manager and self.audio_manager.is_available():
+            self.audio_manager.stop_music()
+            self.music_playing = False

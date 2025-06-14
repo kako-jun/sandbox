@@ -80,6 +80,18 @@ def pygame_headless_setup():
 
     if old_display is not None:
         os.environ["DISPLAY"] = old_display
+    
+    # Linuxでのターミナル設定リセット（テスト後の改行問題対策）
+    if os.name != "nt":
+        try:
+            import subprocess
+            # より包括的なリセット
+            subprocess.run(["stty", "onlcr", "opost", "echo"], check=False, capture_output=True)
+            # 保存された設定がある場合は復元
+            if '_original_stty_settings' in globals():
+                subprocess.run(["stty", globals()['_original_stty_settings']], check=False, capture_output=True)
+        except (subprocess.SubprocessError, FileNotFoundError):
+            pass
 
 
 @pytest.fixture
@@ -116,6 +128,34 @@ def pytest_configure(config):
     # テスト実行時のディスプレイ設定
     if "DISPLAY" not in os.environ and os.name != "nt":
         os.environ["SDL_VIDEODRIVER"] = "dummy"
+    
+    # テスト開始前にLinuxターミナル設定を保存
+    if os.name != "nt":
+        try:
+            import subprocess
+            # 現在のstty設定を保存
+            result = subprocess.run(["stty", "-g"], capture_output=True, text=True, check=False)
+            if result.returncode == 0:
+                # グローバル変数として保存
+                globals()['_original_stty_settings'] = result.stdout.strip()
+        except (subprocess.SubprocessError, FileNotFoundError):
+            pass
+
+
+def pytest_unconfigure(config):
+    """pytest終了時の処理"""
+    # Linuxターミナル設定を元に戻す
+    if os.name != "nt":
+        try:
+            import subprocess
+            # 保存された設定がある場合は復元
+            if '_original_stty_settings' in globals():
+                subprocess.run(["stty", globals()['_original_stty_settings']], check=False, capture_output=True)
+            else:
+                # フォールバック：基本的な設定をリセット
+                subprocess.run(["stty", "onlcr", "opost", "echo"], check=False, capture_output=True)
+        except (subprocess.SubprocessError, FileNotFoundError):
+            pass
 
 
 def pytest_collection_modifyitems(config, items):
