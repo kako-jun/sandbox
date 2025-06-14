@@ -41,21 +41,23 @@ except ImportError as e:
 
 # フォントの初期化
 try:
-    # Windowsの日本語フォントを試す
-    font = pygame.font.SysFont("meiryo", 24)  # メイリオ
-    big_font = pygame.font.SysFont("meiryo", 48)
+    # Linuxの日本語フォントを試す
+    font = pygame.font.SysFont("notosanscjkjp", 24)  # Noto Sans CJK JP
+    big_font = pygame.font.SysFont("notosanscjkjp", 48)
 except:
     try:
-        font = pygame.font.SysFont("msgothic", 24)  # MS ゴシック
-        big_font = pygame.font.SysFont("msgothic", 48)
+        font = pygame.font.SysFont("hackgenconsole", 24)  # HackGen Console
+        big_font = pygame.font.SysFont("hackgenconsole", 48)
     except:
         try:
-            font = pygame.font.SysFont("mspgothic", 24)  # MS Pゴシック
-            big_font = pygame.font.SysFont("mspgothic", 48)
+            # TTFファイルを直接読み込み
+            font = pygame.font.Font("/usr/share/fonts/noto-cjk/NotoSansCJK-Regular.ttc", 24)
+            big_font = pygame.font.Font("/usr/share/fonts/noto-cjk/NotoSansCJK-Regular.ttc", 48)
         except:
             try:
-                font = pygame.font.SysFont("yugothic", 24)  # 游ゴシック
-                big_font = pygame.font.SysFont("yugothic", 48)
+                # Windowsの日本語フォントも試す（WSL対応）
+                font = pygame.font.SysFont("meiryo", 24)
+                big_font = pygame.font.SysFont("meiryo", 48)
             except:
                 # デフォルトフォント（英語のみ）
                 font = pygame.font.Font(None, 24)
@@ -360,7 +362,7 @@ def generate_bgm():
 # BGMを読み込み
 try:
     bgm = pygame.mixer.Sound("bgm.mp3")
-    bgm.set_volume(0.3)  # 音量調整
+    bgm.set_volume(0.7)  # 音量調整
     print("✓ BGM loaded from bgm.mp3")
 except pygame.error:
     print("⚠ Failed to load bgm.mp3, using generated BGM")
@@ -1943,7 +1945,12 @@ class DeflectedBullet:
 class ScreenFlash:
     def __init__(self, duration=12):  # 0.2秒 (60FPS * 0.2)
         self.duration = duration
-        self.timer = duration
+        self.timer = 0  # 初期状態では非表示
+        self.alpha = 0
+
+    def trigger(self):
+        """フラッシュエフェクトを発動"""
+        self.timer = self.duration
         self.alpha = 255
 
     def update(self):
@@ -2089,8 +2096,8 @@ async def main():
 
     # BGMを開始（ループ再生）
     bgm_channel = pygame.mixer.Channel(0)
-    if not bgm_channel.get_busy():
-        bgm_channel.play(bgm, loops=-1)  # 無限ループ
+    bgm_channel.play(bgm, loops=-1)  # 無限ループ
+    print(f"BGM started - volume: {bgm.get_volume()}")
 
     while True:
         try:
@@ -2098,6 +2105,10 @@ async def main():
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        pygame.quit()
+                        sys.exit()
 
             # ゲームオーバー状態の確認
             if game_state.should_reset():
@@ -2113,7 +2124,7 @@ async def main():
                 big_explosions = []
                 flying_platforms = []  # 飛んでいくプラットフォームもリセット
                 apple_generator.reset()
-                screen_flash = ScreenFlash()
+                screen_flash = ScreenFlash()  # フラッシュをリセット
                 game_over_screen = GameOverScreen()
 
             if not game_state.game_over:
