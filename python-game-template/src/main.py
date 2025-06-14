@@ -252,6 +252,9 @@ def run_both_modes(config: GameConfig) -> int:
     # 共有マネージャーを設定
     shared_engine.audio_manager = shared_audio
     shared_engine.timing_manager = shared_timing
+    
+    # 共有エンジンを1回だけ開始（音楽重複防止）
+    shared_engine.start()
 
     # 例外処理用
     exceptions = []

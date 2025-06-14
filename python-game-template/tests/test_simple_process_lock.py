@@ -46,7 +46,9 @@ class TestBasicProcessLock:
                 assert lock.file_handle is not None
 
                 # クリーンアップ
-                lock.release()    def test_lock_release(self):
+                lock.release()
+
+    def test_lock_release(self):
         """ロック解放をテストする"""
         lock = ProcessLock("test_game", "gui")
 
@@ -66,7 +68,9 @@ class TestBasicProcessLock:
 
                 # ロックファイルが削除されていることを確認
                 assert not lock_file_path.exists()
-                assert lock.file_handle is None    def test_process_running_check_public_interface(self):
+                assert lock.file_handle is None
+
+    def test_process_running_check_public_interface(self):
         """プロセス存在確認の公開インターフェースをテストする"""
         lock = ProcessLock("test_game", "gui")
 

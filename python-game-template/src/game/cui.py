@@ -189,27 +189,13 @@ class CUIApp:
         try:
             with self.terminal:  # コンテキストマネージャーで自動クリーンアップ
                 self.terminal.hide_cursor()
+                # エンジンを開始（冪等性により複数回呼んでも安全）
                 self.engine.start()
 
                 # 最初に一度だけ画面をクリア
                 self.terminal.clear_screen()
 
-                start_time = time.time()
-                auto_quit_seconds = 10
-                frame_count = 0
-
                 while self.engine.is_running():
-                    frame_count += 1
-                    current_time = time.time()
-                    elapsed = current_time - start_time
-
-                    # 自動終了チェック（デモ用）
-                    if elapsed > auto_quit_seconds:
-                        print(
-                            f"\nAuto-quit after {auto_quit_seconds} seconds (frame {frame_count})",
-                            flush=True,
-                        )
-                        break
                     # 入力処理
                     events = self.input_handler.get_input_events()
                     for event in events:
@@ -235,12 +221,30 @@ class CUIApp:
             # ターミナル状態を完全にリセット
             try:
                 self.terminal.reset_terminal()
+                # Linux追加リセット処理
+                if not self.terminal.is_windows:
+                    try:
+                        import subprocess
+                        import os
+                        # 追加のstty設定でLinuxの改行問題を修正
+                        subprocess.run(["stty", "onlcr", "opost"], check=False, capture_output=True)
+                        subprocess.run(["stty", "echo"], check=False, capture_output=True)
+                        # tput reset でターミナル状態を完全リセット
+                        subprocess.run(["tput", "reset"], check=False, capture_output=True)
+                    except (subprocess.SubprocessError, FileNotFoundError):
+                        pass
                 print("Game ended.")
             except Exception:
                 # 最低限のリセット処理
                 print(
                     "\033[0m\033[?25h\033[?1049l\033[?1000l\033[r\033[H\033[2J\033[3J"
                 )
+                # Linux用の緊急リセット
+                try:
+                    import subprocess
+                    subprocess.run(["stty", "sane"], check=False, capture_output=True)
+                except (subprocess.SubprocessError, FileNotFoundError, ImportError):
+                    pass
                 print("Game ended.")
 
     def _render(self) -> None:

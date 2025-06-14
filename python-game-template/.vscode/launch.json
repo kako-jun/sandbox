@@ -3,7 +3,7 @@
     "configurations": [
         {
             "name": "Python: PyGame版を起動",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/src/main.py",
             "console": "integratedTerminal",
@@ -15,7 +15,7 @@
         },
         {
             "name": "Python: CUI版を起動",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/src/main.py",
             "console": "integratedTerminal",
@@ -26,8 +26,20 @@
             "args": ["--cui"]
         },
         {
+            "name": "Python: 同時実行モード（GUI + CUI）",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/main.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/src"
+            },
+            "args": ["--both"]
+        },
+        {
             "name": "Python: デバッグモード（英語）",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/src/main.py",
             "console": "integratedTerminal",
@@ -39,7 +51,7 @@
         },
         {
             "name": "Python: デバッグモード（日本語）",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/src/main.py",
             "console": "integratedTerminal",
@@ -51,7 +63,7 @@
         },
         {
             "name": "Python: テスト実行",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "module": "pytest",
             "console": "integratedTerminal",

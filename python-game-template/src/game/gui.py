@@ -57,8 +57,11 @@ class PyGameRenderer:
     def _initialize_japanese_font(self) -> None:
         """日本語フォントを初期化してキャッシュ"""
         font_candidates = [
-            "msgothic",  # MS Gothic
-            "msuigothic",  # MS UI Gothic
+            "notosanscjkjp",  # Noto Sans CJK JP (Linux)
+            "msgothic",  # MS Gothic (Windows)
+            "msuigothic",  # MS UI Gothic (Windows)
+            "hiragino sans",  # Hiragino Sans (macOS)
+            "osaka-mono",  # Osaka-Mono (macOS)
             "consolas",  # Consolas
             "couriernew",  # Courier New
         ]
@@ -74,7 +77,7 @@ class PyGameRenderer:
                     if test_surface.get_width() > 0:
                         self._japanese_font_name = font_name
                         # 初回のみログ出力
-                        if not hasattr(self, "_font_logged"):
+                        if not self._font_logged:
                             print(f"[GUI] Japanese font detected: {font_name}")
                             self._font_logged = True
                         return
@@ -83,7 +86,7 @@ class PyGameRenderer:
 
         self._japanese_font_name = None
         # 初回のみログ出力
-        if not hasattr(self, "_font_logged"):
+        if not self._font_logged:
             print("[GUI] No Japanese font found, using default font")
             self._font_logged = True
 
@@ -370,6 +373,7 @@ class PyGameApp:
     def run(self) -> None:
         """ゲームを実行"""
         try:
+            # エンジンを開始（冪等性により複数回呼んでも安全）
             self.engine.start()
 
             while self.engine.is_running():

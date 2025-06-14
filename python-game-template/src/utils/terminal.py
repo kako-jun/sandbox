@@ -73,6 +73,15 @@ def _global_cleanup():
                     termios.tcsetattr(
                         sys.stdin, termios.TCSADRAIN, terminal.original_settings
                     )
+            
+            # Linuxでのstty追加リセット（グローバルクリーンアップ時）
+            if not terminal.is_windows:
+                try:
+                    import subprocess
+                    subprocess.run(["stty", "onlcr"], check=False, capture_output=True)
+                    subprocess.run(["stty", "opost"], check=False, capture_output=True)
+                except (subprocess.SubprocessError, FileNotFoundError, AttributeError):
+                    pass
         except Exception:
             pass
 
@@ -105,9 +114,14 @@ class TerminalController:
         if not _cleanup_registered:
             atexit.register(_global_cleanup)
             if not self.is_windows:
-                signal.signal(signal.SIGTERM, _signal_handler)
-                signal.signal(signal.SIGINT, _signal_handler)
-                signal.signal(signal.SIGHUP, _signal_handler)
+                # メインスレッドでのみシグナルハンドラーを設定
+                try:
+                    signal.signal(signal.SIGTERM, _signal_handler)
+                    signal.signal(signal.SIGINT, _signal_handler)
+                    signal.signal(signal.SIGHUP, _signal_handler)
+                except ValueError:
+                    # signal only works in main thread - サブスレッドでは無視
+                    pass
             _cleanup_registered = True
 
         self._init_terminal()
@@ -253,6 +267,20 @@ class TerminalController:
                 "\033[2J"  # 画面クリア
             )
             print(reset_sequence, end="", flush=True)
+            
+            # Linuxでの改行処理リセット
+            if not self.is_windows and self.original_settings and termios is not None:
+                try:
+                    # 端末設定を元に戻す（特に改行処理）
+                    termios.tcsetattr(sys.stdin, termios.TCSADRAIN, self.original_settings)
+                    # 強制的に端末の行出力設定をリセット
+                    import tty
+                    # 一時的にrawモードにしてからリセット
+                    current_settings = termios.tcgetattr(sys.stdin)
+                    termios.tcsetattr(sys.stdin, termios.TCSADRAIN, self.original_settings)
+                except (termios.error, OSError, ImportError):
+                    pass
+            
             # 追加で標準出力をフラッシュ
             sys.stdout.flush()
             sys.stderr.flush()
@@ -273,6 +301,16 @@ class TerminalController:
             )
             print(reset_sequence, end="", flush=True)
 
+        # Linuxでsttyを使った追加の改行処理リセット
+        if not self.is_windows:
+            try:
+                import subprocess
+                # sttyコマンドで改行処理を正常化
+                subprocess.run(["stty", "onlcr"], check=False, capture_output=True)
+                subprocess.run(["stty", "opost"], check=False, capture_output=True)
+            except (subprocess.SubprocessError, FileNotFoundError):
+                pass
+        
         # 最後に改行を出力して正常な出力位置に戻す
         print("")
 
