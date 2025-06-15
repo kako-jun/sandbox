@@ -7,6 +7,7 @@ from grenade import Grenade
 pygame.init()
 pygame.mixer.pre_init(frequency=22050, size=-16, channels=2, buffer=512)
 pygame.mixer.init()
+pygame.joystick.init()
 
 def create_sound_effects():
     try:
@@ -133,7 +134,7 @@ class PowerUp:
         self.powerup_type = powerup_type  # 'speed' or 'hp'
         self.width = 20
         self.height = 20
-        self.speed = 2
+        self.speed = 2.2
         
     def update(self):
         self.y += self.speed
@@ -143,6 +144,29 @@ class PowerUp:
         pygame.draw.circle(screen, ORANGE, (int(self.x + self.width // 2), int(self.y + self.height // 2)), 10)
         # 中央に小さな白い円
         pygame.draw.circle(screen, WHITE, (int(self.x + self.width // 2), int(self.y + self.height // 2)), 3)
+
+class Apple:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+        self.width = 25
+        self.height = 25
+        self.speed = 2.5
+        
+    def update(self):
+        self.y += self.speed
+        
+    def draw(self, screen):
+        # りんごを描画（赤い円に緑の葉っぱ）
+        center_x = int(self.x + self.width // 2)
+        center_y = int(self.y + self.height // 2)
+        
+        # りんご本体（赤）
+        pygame.draw.circle(screen, RED, (center_x, center_y), 12)
+        # ハイライト（薄い赤）
+        pygame.draw.circle(screen, (255, 100, 100), (center_x - 3, center_y - 3), 4)
+        # 葉っぱ（緑）
+        pygame.draw.circle(screen, GREEN, (center_x + 2, center_y - 10), 3)
 
 class Player:
     def __init__(self, player_type):
@@ -166,7 +190,8 @@ class Player:
             self.max_hp = 3  # 最大HP
             self.current_hp = 3  # 現在のHP
         
-    def update(self, keys):
+    def update(self, keys, joystick=None):
+        # キーボード操作
         if keys[pygame.K_LEFT] and self.x > 0:
             self.x -= self.speed
         if keys[pygame.K_RIGHT] and self.x < GAME_WIDTH - self.width:
@@ -175,6 +200,34 @@ class Player:
             self.y -= self.speed
         if keys[pygame.K_DOWN] and self.y < SCREEN_HEIGHT - self.height:
             self.y += self.speed
+            
+        # コントローラー操作
+        if joystick:
+            # アナログスティック（左）
+            axis_x = joystick.get_axis(0)  # 左右
+            axis_y = joystick.get_axis(1)  # 上下
+            
+            # デッドゾーンを設定（0.1未満は無視）
+            if abs(axis_x) > 0.1:
+                new_x = self.x + axis_x * self.speed
+                if 0 <= new_x <= GAME_WIDTH - self.width:
+                    self.x = new_x
+            
+            if abs(axis_y) > 0.1:
+                new_y = self.y + axis_y * self.speed
+                if 0 <= new_y <= SCREEN_HEIGHT - self.height:
+                    self.y = new_y
+                    
+            # 十字キー
+            hat = joystick.get_hat(0)
+            if hat[0] == -1 and self.x > 0:  # 左
+                self.x -= self.speed
+            elif hat[0] == 1 and self.x < GAME_WIDTH - self.width:  # 右
+                self.x += self.speed
+            if hat[1] == 1 and self.y > 0:  # 上
+                self.y -= self.speed
+            elif hat[1] == -1 and self.y < SCREEN_HEIGHT - self.height:  # 下
+                self.y += self.speed
             
         for bullet in self.bullets[:]:
             bullet.update()
@@ -326,16 +379,32 @@ class Enemy:
         self.x = x
         self.y = y
         self.enemy_type = enemy_type
-        self.width = 25 if enemy_type == 1 else 40
-        self.height = 25 if enemy_type == 1 else 40
-        self.speed = 2 if enemy_type == 1 else 1
+        if enemy_type == 3:  # 強化敵
+            self.width = 35
+            self.height = 25
+            self.speed = 1.5
+            self.hp = 2
+        elif enemy_type == 1:
+            self.width = 25
+            self.height = 25
+            self.speed = 2
+            self.hp = 1
+        else:  # enemy_type == 2
+            self.width = 40
+            self.height = 40
+            self.speed = 1
+            self.hp = 3
         self.bullets = []
         self.shoot_timer = 0
-        self.hp = 1 if enemy_type == 1 else 3
+        self.rotation_angle = 0  # 強化敵用の回転角度
         
     def update(self, player_x, player_y, difficulty="ノーマル"):
         self.y += self.speed
         self.shoot_timer += 1
+        
+        # 強化敵の回転角度更新（弾用）
+        if self.enemy_type == 3:
+            self.rotation_angle += 5  # 回転速度
         
         # 難易度に応じて射撃頻度を調整
         if difficulty == "イージー":
@@ -365,6 +434,15 @@ class Enemy:
                 bullet = EnemyBullet(self.x + self.width // 2, self.y + self.height // 2,
                                    2 * math.cos(angle), 2 * math.sin(angle))
                 self.bullets.append(bullet)
+        elif self.enemy_type == 3 and self.shoot_timer % 90 == 0:  # 強化敵の射撃
+            # プレイヤーを狙って3発同時発射
+            base_angle = math.atan2(player_y - self.y, player_x - self.x)
+            for i in range(3):
+                angle_offset = (i - 1) * 0.3  # 少し角度をずらして3発
+                bullet = RotatingBullet(self.x + self.width // 2, self.y + self.height // 2,
+                                       2.5 * math.cos(base_angle + angle_offset), 2.5 * math.sin(base_angle + angle_offset),
+                                       self.rotation_angle)
+                self.bullets.append(bullet)
                 
         for bullet in self.bullets[:]:
             bullet.update()
@@ -375,8 +453,11 @@ class Enemy:
     def draw(self, screen):
         if self.enemy_type == 1:
             pygame.draw.rect(screen, RED, (self.x, self.y, self.width, self.height))
-        else:
+        elif self.enemy_type == 2:
             pygame.draw.rect(screen, DARK_RED, (self.x, self.y, self.width, self.height))
+        elif self.enemy_type == 3:  # 強化敵（青い長方形）
+            # 普通の青い長方形を描画
+            pygame.draw.rect(screen, BLUE, (self.x, self.y, self.width, self.height))
             
         for bullet in self.bullets:
             bullet.draw(screen)
@@ -422,7 +503,7 @@ class Boss:
                     bullet = EnemyBullet(self.x + self.width // 2, self.y + self.height // 2,
                                        2 * math.cos(angle), 2 * math.sin(angle))
                     self.bullets.append(bullet)
-            elif difficulty == "ハード" and self.shoot_timer % 120 == 0:
+            elif difficulty == "ハード" and self.shoot_timer % 60 == 0:
                 # ハード: ボスを中心として32方向弾を回転させて発射
                 self.rotation_angle += 5.625  # 5.625度ずつ回転（32分割の半分）
                 for i in range(32):
@@ -493,11 +574,247 @@ class EnemyBullet:
     def draw(self, screen):
         pygame.draw.circle(screen, WHITE, (int(self.x), int(self.y)), 3)
 
+class RotatingBullet(EnemyBullet):
+    def __init__(self, x, y, dx, dy, initial_rotation):
+        super().__init__(x, y, dx, dy)
+        self.rotation_angle = initial_rotation
+        self.width = 10
+        self.height = 10
+        
+    def update(self):
+        super().update()
+        self.rotation_angle += 8  # 回転速度
+        
+    def draw(self, screen):
+        # 回転する青い四角形を描画
+        center_x = int(self.x)
+        center_y = int(self.y)
+        
+        cos_angle = math.cos(math.radians(self.rotation_angle))
+        sin_angle = math.sin(math.radians(self.rotation_angle))
+        
+        size = 5
+        points = []
+        corners = [(-size, -size), (size, -size), (size, size), (-size, size)]
+        
+        for corner_x, corner_y in corners:
+            rotated_x = corner_x * cos_angle - corner_y * sin_angle
+            rotated_y = corner_x * sin_angle + corner_y * cos_angle
+            points.append((center_x + rotated_x, center_y + rotated_y))
+        
+        pygame.draw.polygon(screen, WHITE, points)
+
+class TwinBoss:
+    def __init__(self):
+        self.boss1 = MagatamaBoss(GAME_WIDTH * 0.7, 80, "right")  # 右上
+        self.boss2 = MagatamaBoss(GAME_WIDTH * 0.3, 80, "left")   # 左上
+        self.is_dying = False
+        self.death_timer = 0
+        
+    def update(self, player_x, player_y, difficulty="ノーマル"):
+        if not self.is_dying:
+            self.boss1.update(player_x, player_y, difficulty)
+            self.boss2.update(player_x, player_y, difficulty)
+            
+            # 片方が死んだら怒りモードに
+            if self.boss1.is_dead() and not self.boss2.is_dead():
+                self.boss2.enter_rage_mode()
+            elif self.boss2.is_dead() and not self.boss1.is_dead():
+                self.boss1.enter_rage_mode()
+            
+            # 両方死んだら全体の死亡開始
+            if self.boss1.is_dead() and self.boss2.is_dead():
+                self.is_dying = True
+                self.death_timer = 0
+        else:
+            self.death_timer += 1
+    
+    def take_damage(self, x, y):
+        """座標に基づいてどちらのボスにダメージを与えるかを決定"""
+        boss1_dist = ((x - self.boss1.x) ** 2 + (y - self.boss1.y) ** 2) ** 0.5
+        boss2_dist = ((x - self.boss2.x) ** 2 + (y - self.boss2.y) ** 2) ** 0.5
+        
+        if boss1_dist < boss2_dist:
+            self.boss1.take_damage()
+        else:
+            self.boss2.take_damage()
+    
+    def is_dead(self):
+        return self.is_dying and self.death_timer >= 60
+    
+    def get_current_explosion_pos(self):
+        """死亡演出用の爆発位置"""
+        if self.is_dying and self.death_timer % 15 == 1:
+            explosion_x = GAME_WIDTH // 2 + random.randint(-40, 40)
+            explosion_y = 100 + random.randint(-20, 20)
+            return explosion_x, explosion_y, 3
+        return None
+    
+    def draw(self, screen):
+        if not self.is_dying:
+            if not self.boss1.is_dead():
+                self.boss1.draw(screen)
+            if not self.boss2.is_dead():
+                self.boss2.draw(screen)
+
+class MagatamaBoss:
+    def __init__(self, x, y, side):
+        self.x = x
+        self.y = y
+        self.side = side  # "left" or "right"
+        self.width = 60
+        self.height = 60
+        self.hp = 30
+        self.max_hp = 30
+        self.bullets = []
+        self.shoot_timer = 0
+        self.is_dying = False
+        self.rage_mode = False
+        self.target_x = x
+        self.target_y = 30  # 画面上らへん
+        self.moving_to_rage_position = False
+        self.move_speed = 2
+        
+    def update(self, player_x, player_y, difficulty="ノーマル"):
+        if not self.is_dying:
+            self.shoot_timer += 1
+            
+            # 怒りモード時の移動処理
+            if self.rage_mode and self.moving_to_rage_position:
+                if abs(self.x - self.target_x) > 2 or abs(self.y - self.target_y) > 2:
+                    # 目標位置に向かって移動
+                    dx = self.target_x - self.x
+                    dy = self.target_y - self.y
+                    distance = (dx ** 2 + dy ** 2) ** 0.5
+                    if distance > 0:
+                        self.x += (dx / distance) * self.move_speed
+                        self.y += (dy / distance) * self.move_speed
+                else:
+                    self.moving_to_rage_position = False
+            
+            # 射撃処理
+            if not self.moving_to_rage_position:
+                if self.rage_mode and self.shoot_timer % 30 == 0:  # 0.5秒に1回
+                    # 攻撃パターンを時間で切り替え
+                    pattern = (self.shoot_timer // 180) % 4  # 3秒ごとに切り替え（180フレーム）
+                    
+                    if pattern == 0:
+                        # パターン1: 中央に向かって-45度から45度に5発
+                        center_x = GAME_WIDTH // 2
+                        center_y = SCREEN_HEIGHT // 2
+                        base_angle = math.atan2(center_y - self.y, center_x - self.x)
+                        for i in range(5):
+                            angle_offset = math.radians((i - 2) * 22.5)  # -45度から45度まで22.5度間隔
+                            bullet = EnemyBullet(self.x + self.width // 2, self.y + self.height // 2,
+                                               3 * math.cos(base_angle + angle_offset), 
+                                               3 * math.sin(base_angle + angle_offset))
+                            self.bullets.append(bullet)
+                    elif pattern == 1:
+                        # パターン2: 8方向弾幕
+                        for i in range(8):
+                            angle = (i * 45) * math.pi / 180  # 45度間隔
+                            bullet = EnemyBullet(self.x + self.width // 2, self.y + self.height // 2,
+                                               3.5 * math.cos(angle), 3.5 * math.sin(angle))
+                            self.bullets.append(bullet)
+                    elif pattern == 2:
+                        # パターン3: 螺旋弾
+                        spiral_angle = (self.shoot_timer * 15) % 360  # 回転角度
+                        for i in range(3):
+                            angle = math.radians(spiral_angle + i * 120)  # 120度間隔で3発
+                            bullet = EnemyBullet(self.x + self.width // 2, self.y + self.height // 2,
+                                               2.5 * math.cos(angle), 2.5 * math.sin(angle))
+                            self.bullets.append(bullet)
+                    else:
+                        # パターン4: プレイヤー追跡弾
+                        player_angle = math.atan2(player_y - self.y, player_x - self.x)
+                        for i in range(7):
+                            angle_offset = math.radians((i - 3) * 15)  # -45度から45度まで15度間隔
+                            bullet = EnemyBullet(self.x + self.width // 2, self.y + self.height // 2,
+                                               4 * math.cos(player_angle + angle_offset), 
+                                               4 * math.sin(player_angle + angle_offset))
+                            self.bullets.append(bullet)
+                
+                # 特殊攻撃: 2秒間のとてつもなく早い弾（6秒周期の最初の2秒間）
+                rage_cycle = (self.shoot_timer // 360) % 2  # 6秒周期（360フレーム）の前半2秒
+                if self.rage_mode and rage_cycle == 0 and self.shoot_timer % 5 == 0:  # 0.083秒間隔で高速弾
+                    player_angle = math.atan2(player_y - self.y, player_x - self.x)
+                    # とてつもなく早い弾（速度8）
+                    bullet = EnemyBullet(self.x + self.width // 2, self.y + self.height // 2,
+                                       8 * math.cos(player_angle), 8 * math.sin(player_angle))
+                    self.bullets.append(bullet)
+                elif not self.rage_mode and self.shoot_timer % 90 == 0:  # 通常モード
+                    # プレイヤーに向かって3発
+                    angle = math.atan2(player_y - self.y, player_x - self.x)
+                    for i in range(3):
+                        angle_offset = (i - 1) * 0.2
+                        bullet = EnemyBullet(self.x + self.width // 2, self.y + self.height // 2,
+                                           2.5 * math.cos(angle + angle_offset), 
+                                           2.5 * math.sin(angle + angle_offset))
+                        self.bullets.append(bullet)
+        
+        # 弾の更新
+        for bullet in self.bullets[:]:
+            bullet.update()
+            if (bullet.x < 0 or bullet.x > GAME_WIDTH or 
+                bullet.y < 0 or bullet.y > SCREEN_HEIGHT):
+                self.bullets.remove(bullet)
+    
+    def enter_rage_mode(self):
+        if not self.rage_mode:
+            self.rage_mode = True
+            self.moving_to_rage_position = True
+            self.target_x = GAME_WIDTH // 2  # 中央
+            self.target_y = 30  # 画面上らへん
+    
+    def take_damage(self):
+        if not self.is_dying:
+            self.hp -= 1
+            if self.hp <= 0:
+                self.is_dying = True
+    
+    def is_dead(self):
+        return self.is_dying
+    
+    def draw(self, screen):
+        if not self.is_dying:
+            # 勾玉の形を描画
+            center_x = int(self.x + self.width // 2)
+            center_y = int(self.y + self.height // 2)
+            
+            # 勾玉の大きな部分（円）
+            pygame.draw.circle(screen, (128, 0, 128), (center_x, center_y), 20)
+            # 勾玉の小さな部分（小円）
+            if self.side == "left":
+                small_x = center_x + 15
+                small_y = center_y - 15
+            else:
+                small_x = center_x - 15
+                small_y = center_y - 15
+            pygame.draw.circle(screen, (128, 0, 128), (small_x, small_y), 8)
+            
+            # HPバー
+            bar_width = self.width
+            bar_height = 6
+            hp_ratio = self.hp / self.max_hp
+            pygame.draw.rect(screen, RED, (self.x, self.y - 10, bar_width, bar_height))
+            pygame.draw.rect(screen, GREEN, (self.x, self.y - 10, bar_width * hp_ratio, bar_height))
+        
+        # 弾の描画
+        for bullet in self.bullets:
+            bullet.draw(screen)
+
 class Game:
     def __init__(self):
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         pygame.display.set_caption("超弾幕シューティングゲーム")
         self.clock = pygame.time.Clock()
+        
+        # ジョイスティックの初期化
+        self.joystick = None
+        if pygame.joystick.get_count() > 0:
+            self.joystick = pygame.joystick.Joystick(0)
+            self.joystick.init()
+            print(f"コントローラーが検出されました: {self.joystick.get_name()}")
         try:
             # 日本語フォントを使用
             self.font = pygame.font.Font("/usr/share/fonts/noto-cjk/NotoSansCJK-Regular.ttc", 36)
@@ -523,8 +840,11 @@ class Game:
         self.boss = None
         self.defeated_enemy_count = 0  # 倒した敵の総数
         self.grenade_count = 2  # 手榴弾の残り使用回数
+        self.boss_defeated_count = 0  # ボスを倒した回数
         self.explosions = []
         self.powerups = []  # パワーアップアイテム
+        self.apples = []  # りんご
+        self.apple_timer = 0  # りんご出現タイマー
         self.independent_enemy_bullets = []  # 敵が倒された後も残る弾
         self.grenades = []  # グレネード
         
@@ -540,6 +860,11 @@ class Game:
         self.lives = 3
         
         self.game_start_timer = 0
+        
+        # アナログスティック用の状態変数
+        self.last_axis_x = 0
+        self.last_axis_y = 0
+        self.axis_cooldown = 0
         
         self.select_sound, self.explosion_sound, self.grenade_sound, self.throw_sound, self.powerdown_sound = create_sound_effects()
         
@@ -579,11 +904,60 @@ class Game:
             pygame.draw.polygon(screen, RED, points)
         
     def handle_events(self):
+        # アナログスティックのクールダウンを減らす
+        if self.axis_cooldown > 0:
+            self.axis_cooldown -= 1
+            
+        # プレイヤーセレクト画面でのアナログスティック処理
+        if self.state == "player_select" and self.joystick and self.axis_cooldown <= 0:
+            axis_x = self.joystick.get_axis(0)  # 左右
+            axis_y = self.joystick.get_axis(1)  # 上下
+            
+            # デッドゾーン設定
+            if abs(axis_x) > 0.5:
+                if axis_x > 0 and self.last_axis_x <= 0.5:  # 右
+                    if self.selection_mode == "player":
+                        self.selected_player = (self.selected_player % 3) + 1
+                    else:  # difficulty mode
+                        difficulties = ["イージー", "ノーマル", "ハード"]
+                        current_index = difficulties.index(self.difficulty)
+                        self.difficulty = difficulties[(current_index + 1) % 3]
+                    if self.select_sound:
+                        self.select_sound.play()
+                    self.axis_cooldown = 15  # クールダウン設定
+                elif axis_x < 0 and self.last_axis_x >= -0.5:  # 左
+                    if self.selection_mode == "player":
+                        self.selected_player = ((self.selected_player - 2) % 3) + 1
+                    else:  # difficulty mode
+                        difficulties = ["イージー", "ノーマル", "ハード"]
+                        current_index = difficulties.index(self.difficulty)
+                        self.difficulty = difficulties[(current_index - 1) % 3]
+                    if self.select_sound:
+                        self.select_sound.play()
+                    self.axis_cooldown = 15  # クールダウン設定
+            
+            if abs(axis_y) > 0.5:
+                if axis_y > 0 and self.last_axis_y <= 0.5:  # 下
+                    self.selection_mode = "difficulty"
+                    if self.select_sound:
+                        self.select_sound.play()
+                    self.axis_cooldown = 15  # クールダウン設定
+                elif axis_y < 0 and self.last_axis_y >= -0.5:  # 上
+                    self.selection_mode = "player"
+                    if self.select_sound:
+                        self.select_sound.play()
+                    self.axis_cooldown = 15  # クールダウン設定
+            
+            self.last_axis_x = axis_x
+            self.last_axis_y = axis_y
+        
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                print("終了要求 - ゲーム終了")
                 return False
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
+                    print("ESCキー - ゲーム終了")
                     return False
                 elif self.state == "player_select":
                     if event.key == pygame.K_RIGHT:
@@ -628,6 +1002,64 @@ class Game:
                         self.state = "player_select"
                         # BGMを停止
                         pygame.mixer.music.stop()
+            elif event.type == pygame.JOYBUTTONDOWN:
+                if self.state == "player_select":
+                    if event.button == 0:  # Aボタン（決定）
+                        self.start_game()
+                    elif event.button == 1:  # Bボタン（戻る/選択モード切替）
+                        if self.selection_mode == "player":
+                            self.selection_mode = "difficulty"
+                        else:
+                            self.selection_mode = "player"
+                        if self.select_sound:
+                            self.select_sound.play()
+                elif self.state == "playing":
+                    if event.button == 0:  # Aボタン（弾発射）
+                        self.player.shoot()
+                    elif event.button == 1:  # Bボタン（ボス即座出現、グレネード投擲）
+                        # Bボタンでボスを即座出現
+                        if not self.boss:
+                            self.boss = Boss(GAME_WIDTH // 2 - 40, 50)
+                        else:
+                            self.throw_grenades()
+                    elif event.button == 2:  # Xボタン（グレネード投擲）
+                        self.throw_grenades()
+                    elif event.button == 7:  # スタートボタン（プレイヤーセレクトに戻る）
+                        self.state = "player_select"
+                        pygame.mixer.music.stop()
+                elif self.state == "game_over":
+                    if event.button == 0:  # Aボタン（リスタート）
+                        self.state = "player_select"
+                        pygame.mixer.music.stop()
+            elif event.type == pygame.JOYHATMOTION:
+                if self.state == "player_select":
+                    hat = event.value
+                    if hat[0] == 1:  # 右
+                        if self.selection_mode == "player":
+                            self.selected_player = (self.selected_player % 3) + 1
+                        else:  # difficulty mode
+                            difficulties = ["イージー", "ノーマル", "ハード"]
+                            current_index = difficulties.index(self.difficulty)
+                            self.difficulty = difficulties[(current_index + 1) % 3]
+                        if self.select_sound:
+                            self.select_sound.play()
+                    elif hat[0] == -1:  # 左
+                        if self.selection_mode == "player":
+                            self.selected_player = ((self.selected_player - 2) % 3) + 1
+                        else:  # difficulty mode
+                            difficulties = ["イージー", "ノーマル", "ハード"]
+                            current_index = difficulties.index(self.difficulty)
+                            self.difficulty = difficulties[(current_index - 1) % 3]
+                        if self.select_sound:
+                            self.select_sound.play()
+                    elif hat[1] == -1:  # 下
+                        self.selection_mode = "difficulty"
+                        if self.select_sound:
+                            self.select_sound.play()
+                    elif hat[1] == 1:  # 上
+                        self.selection_mode = "player"
+                        if self.select_sound:
+                            self.select_sound.play()
         return True
     
     def start_game(self):
@@ -637,8 +1069,11 @@ class Game:
         self.boss = None
         self.defeated_enemy_count = 0
         self.grenade_count = 2
+        self.boss_defeated_count = 0
         self.explosions = []
         self.powerups = []
+        self.apples = []
+        self.apple_timer = 0
         self.independent_enemy_bullets = []
         self.grenades = []
         
@@ -687,20 +1122,27 @@ class Game:
                 return
                 
             keys = pygame.key.get_pressed()
-            self.player.update(keys)
+            self.player.update(keys, self.joystick)
             
             # ボス戦中でなければ通常敵を出現させる
             if not self.boss:
-                # 15体倒したらボス出現
-                if self.defeated_enemy_count >= 15:
-                    self.boss = Boss(GAME_WIDTH // 2 - 40, 50)
+                # 最初のボスは15体、その後は30体倒したらボス出現
+                boss_threshold = 15 if self.boss_defeated_count == 0 else 30
+                if self.defeated_enemy_count >= boss_threshold:
+                    if self.boss_defeated_count == 1:  # 2体目は双子ボス
+                        self.boss = TwinBoss()
+                    else:  # 1体目は通常ボス
+                        self.boss = Boss(GAME_WIDTH // 2 - 40, 50)
                 else:
                     self.enemy_spawn_timer += 1
                     if self.enemy_spawn_timer >= 120:
                         self.enemy_spawn_timer = 0
                         self.enemy_count += 1
                         
-                        if self.enemy_count % 3 == 0:
+                        # ボスを倒したことがあるかつ50%の確率で強化敵を出現
+                        if self.boss_defeated_count > 0 and random.random() < 0.5:
+                            enemy = Enemy(random.randint(0, GAME_WIDTH - 25), -15, 3)  # 強化敵
+                        elif self.enemy_count % 3 == 0:
                             enemy = Enemy(random.randint(0, GAME_WIDTH - 40), -40, 2)
                         else:
                             enemy = Enemy(random.randint(0, GAME_WIDTH - 25), -25, 1)
@@ -732,8 +1174,23 @@ class Game:
                 
                 # ボスが死んだら削除
                 if self.boss.is_dead():
-                    self.score += 2000  # ボス撃破ボーナス
+                    self.score += 5000  # ボス撃破ボーナス
                     self.grenade_count += 2  # 手榴弾を2回追加
+                    self.boss_defeated_count += 1  # ボス撃破数増加
+                    # ボスの弾を独立弾として残す
+                    if isinstance(self.boss, TwinBoss):
+                        # TwinBossの場合は両方のMagatamaBossの弾を保存
+                        for bullet in self.boss.boss1.bullets:
+                            independent_bullet = EnemyBullet(bullet.x, bullet.y, bullet.dx, bullet.dy)
+                            self.independent_enemy_bullets.append(independent_bullet)
+                        for bullet in self.boss.boss2.bullets:
+                            independent_bullet = EnemyBullet(bullet.x, bullet.y, bullet.dx, bullet.dy)
+                            self.independent_enemy_bullets.append(independent_bullet)
+                    else:
+                        # 通常のBossの場合
+                        for bullet in self.boss.bullets:
+                            independent_bullet = EnemyBullet(bullet.x, bullet.y, bullet.dx, bullet.dy)
+                            self.independent_enemy_bullets.append(independent_bullet)
                     self.boss = None
                     # 次のボス出現のためのカウンターリセット
                     self.defeated_enemy_count = 0
@@ -748,6 +1205,19 @@ class Game:
                 powerup.update()
                 if powerup.y > SCREEN_HEIGHT:
                     self.powerups.remove(powerup)
+            
+            # りんごの管理
+            self.apple_timer += 1
+            if self.apple_timer >= 3000:  # 50秒 (60fps * 50)
+                self.apple_timer = 0
+                apple = Apple(random.randint(0, GAME_WIDTH - 25), -25)
+                self.apples.append(apple)
+            
+            # りんごの更新
+            for apple in self.apples[:]:
+                apple.update()
+                if apple.y > SCREEN_HEIGHT:
+                    self.apples.remove(apple)
             
             # 独立した敵弾の更新
             for bullet in self.independent_enemy_bullets[:]:
@@ -837,6 +1307,8 @@ class Game:
                         # 敵タイプに応じてスコア設定
                         if enemy.enemy_type == 2:  # 赤い大型敵
                             self.score += 500
+                        elif enemy.enemy_type == 3:  # 強化敵
+                            self.score += 300
                         else:  # 普通の敵
                             self.score += 100
                         # 倒した敵の総数をカウント
@@ -854,33 +1326,75 @@ class Game:
         # ボスとの当たり判定
         if self.boss and not self.boss.is_dying:
             for bullet in self.player.bullets[:]:
-                if (bullet.x - bullet.width//2 < self.boss.x + self.boss.width and
-                    bullet.x + bullet.width//2 > self.boss.x and
-                    bullet.y < self.boss.y + self.boss.height and
-                    bullet.y + bullet.height > self.boss.y):
-                    self.player.bullets.remove(bullet)
-                    self.boss.take_damage()
-                    # ダメージエフェクト
-                    explosion = Explosion(bullet.x, bullet.y, 0.5)
-                    self.explosions.append(explosion)
-                    break
+                if isinstance(self.boss, TwinBoss):
+                    # 双子ボスの場合 - 実際に当たったかチェック
+                    hit = False
+                    for magatama_boss in [self.boss.boss1, self.boss.boss2]:
+                        if not magatama_boss.is_dead():
+                            if (bullet.x - bullet.width//2 < magatama_boss.x + magatama_boss.width and
+                                bullet.x + bullet.width//2 > magatama_boss.x and
+                                bullet.y < magatama_boss.y + magatama_boss.height and
+                                bullet.y + bullet.height > magatama_boss.y):
+                                magatama_boss.take_damage()
+                                self.player.bullets.remove(bullet)
+                                explosion = Explosion(bullet.x, bullet.y, 0.5)
+                                self.explosions.append(explosion)
+                                hit = True
+                                break
+                    if hit:
+                        break
+                else:
+                    # 通常ボスの場合
+                    if (bullet.x - bullet.width//2 < self.boss.x + self.boss.width and
+                        bullet.x + bullet.width//2 > self.boss.x and
+                        bullet.y < self.boss.y + self.boss.height and
+                        bullet.y + bullet.height > self.boss.y):
+                        self.player.bullets.remove(bullet)
+                        self.boss.take_damage()
+                        # ダメージエフェクト
+                        explosion = Explosion(bullet.x, bullet.y, 0.5)
+                        self.explosions.append(explosion)
+                        break
             
             # ボスの特殊弾との当たり判定
             for special_bullet in self.player.special_bullets[:]:
-                if (special_bullet.x - special_bullet.width//2 < self.boss.x + self.boss.width and
-                    special_bullet.x + special_bullet.width//2 > self.boss.x and
-                    special_bullet.y < self.boss.y + self.boss.height and
-                    special_bullet.y + special_bullet.height > self.boss.y):
-                    self.player.special_bullets.remove(special_bullet)
-                    # 特殊弾は3ダメージ
-                    for _ in range(3):
-                        self.boss.take_damage()
-                    # 大きなダメージエフェクト
-                    explosion = Explosion(special_bullet.x, special_bullet.y, 1.0, 'special')
-                    self.explosions.append(explosion)
-                    if self.explosion_sound:
-                        self.explosion_sound.play()
-                    break
+                if isinstance(self.boss, TwinBoss):
+                    # 双子ボスの場合 - 実際に当たったかチェック
+                    hit = False
+                    for magatama_boss in [self.boss.boss1, self.boss.boss2]:
+                        if not magatama_boss.is_dead():
+                            if (special_bullet.x - special_bullet.width//2 < magatama_boss.x + magatama_boss.width and
+                                special_bullet.x + special_bullet.width//2 > magatama_boss.x and
+                                special_bullet.y < magatama_boss.y + magatama_boss.height and
+                                special_bullet.y + special_bullet.height > magatama_boss.y):
+                                # 特殊弾は3ダメージ
+                                for _ in range(3):
+                                    magatama_boss.take_damage()
+                                self.player.special_bullets.remove(special_bullet)
+                                explosion = Explosion(special_bullet.x, special_bullet.y, 1.0, 'special')
+                                self.explosions.append(explosion)
+                                if self.explosion_sound:
+                                    self.explosion_sound.play()
+                                hit = True
+                                break
+                    if hit:
+                        break
+                else:
+                    # 通常ボスの場合
+                    if (special_bullet.x - special_bullet.width//2 < self.boss.x + self.boss.width and
+                        special_bullet.x + special_bullet.width//2 > self.boss.x and
+                        special_bullet.y < self.boss.y + self.boss.height and
+                        special_bullet.y + special_bullet.height > self.boss.y):
+                        self.player.special_bullets.remove(special_bullet)
+                        # 特殊弾は3ダメージ
+                        for _ in range(3):
+                            self.boss.take_damage()
+                        # 大きなダメージエフェクト
+                        explosion = Explosion(special_bullet.x, special_bullet.y, 1.0, 'special')
+                        self.explosions.append(explosion)
+                        if self.explosion_sound:
+                            self.explosion_sound.play()
+                        break
                     
         # プレイヤー2の特殊弾と敵の当たり判定
         for special_bullet in self.player.special_bullets[:]:
@@ -908,6 +1422,8 @@ class Game:
                                 # 敵タイプに応じてスコア設定
                                 if other_enemy.enemy_type == 2:  # 赤い大型敵
                                     self.score += 500
+                                elif other_enemy.enemy_type == 3:  # 強化敵
+                                    self.score += 300
                                 else:  # 普通の敵
                                     self.score += 100
                                 # 50%の確率でパワーアップアイテムをドロップ
@@ -940,6 +1456,8 @@ class Game:
                             # 敵タイプに応じてスコア設定
                             if enemy.enemy_type == 2:  # 赤い大型敵
                                 self.score += 500
+                            elif enemy.enemy_type == 3:  # 強化敵
+                                self.score += 300
                             else:  # 普通の敵
                                 self.score += 100
                             # 50%の確率でパワーアップアイテムをドロップ
@@ -967,20 +1485,40 @@ class Game:
         
         # ボスの弾との当たり判定
         if self.boss:
-            for bullet in self.boss.bullets[:]:
-                if (bullet.x - bullet.width//2 < self.player.x + self.player.width and
-                    bullet.x + bullet.width//2 > self.player.x and
-                    bullet.y - bullet.height//2 < self.player.y + self.player.height and
-                    bullet.y + bullet.height//2 > self.player.y):
-                    self.boss.bullets.remove(bullet)
-                    # プレイヤーがダメージを受けられる場合のみライフ減少
-                    if self.player.take_damage():
-                        self.lives -= 1
-                        if self.powerdown_sound:
-                            self.powerdown_sound.play()
-                        if self.lives <= 0:
-                            self.state = "game_over"
-                    break
+            if isinstance(self.boss, TwinBoss):
+                # 双子ボスの弾との当たり判定
+                for magatama_boss in [self.boss.boss1, self.boss.boss2]:
+                    if not magatama_boss.is_dead():
+                        for bullet in magatama_boss.bullets[:]:
+                            if (bullet.x - bullet.width//2 < self.player.x + self.player.width and
+                                bullet.x + bullet.width//2 > self.player.x and
+                                bullet.y - bullet.height//2 < self.player.y + self.player.height and
+                                bullet.y + bullet.height//2 > self.player.y):
+                                magatama_boss.bullets.remove(bullet)
+                                # プレイヤーがダメージを受けられる場合のみライフ減少
+                                if self.player.take_damage():
+                                    self.lives -= 1
+                                    if self.powerdown_sound:
+                                        self.powerdown_sound.play()
+                                    if self.lives <= 0:
+                                        self.state = "game_over"
+                                break
+            else:
+                # 通常ボスの弾との当たり判定
+                for bullet in self.boss.bullets[:]:
+                    if (bullet.x - bullet.width//2 < self.player.x + self.player.width and
+                        bullet.x + bullet.width//2 > self.player.x and
+                        bullet.y - bullet.height//2 < self.player.y + self.player.height and
+                        bullet.y + bullet.height//2 > self.player.y):
+                        self.boss.bullets.remove(bullet)
+                        # プレイヤーがダメージを受けられる場合のみライフ減少
+                        if self.player.take_damage():
+                            self.lives -= 1
+                            if self.powerdown_sound:
+                                self.powerdown_sound.play()
+                            if self.lives <= 0:
+                                self.state = "game_over"
+                        break
         
         # 独立した敵弾との当たり判定
         for bullet in self.independent_enemy_bullets[:]:
@@ -1014,6 +1552,22 @@ class Game:
                         self.state = "game_over"
                 break
         
+        # 強化敵本体との当たり判定（敵にぶつかってもダメージ）
+        for enemy in self.enemies[:]:
+            if enemy.enemy_type == 3:  # 強化敵のみ
+                if (enemy.x < self.player.x + self.player.width and
+                    enemy.x + enemy.width > self.player.x and
+                    enemy.y < self.player.y + self.player.height and
+                    enemy.y + enemy.height > self.player.y):
+                    # プレイヤーがダメージを受けられる場合のみライフ減少
+                    if self.player.take_damage():
+                        self.lives -= 1
+                        if self.powerdown_sound:
+                            self.powerdown_sound.play()
+                        if self.lives <= 0:
+                            self.state = "game_over"
+                    break
+        
         # パワーアップアイテムとの当たり判定
         for powerup in self.powerups[:]:
             if (powerup.x < self.player.x + self.player.width and
@@ -1030,6 +1584,16 @@ class Game:
                     self.player.max_hp += 1
                     self.player.current_hp += 1
                     self.lives += 1
+        
+        # りんごとの当たり判定
+        for apple in self.apples[:]:
+            if (apple.x < self.player.x + self.player.width and
+                apple.x + apple.width > self.player.x and
+                apple.y < self.player.y + self.player.height and
+                apple.y + apple.height > self.player.y):
+                self.apples.remove(apple)
+                # ライフを3つ増加
+                self.lives += 3
     
     def launch_hard_attack(self):
         # 100個以上の弾を画面外から発射
@@ -1071,6 +1635,11 @@ class Game:
         if self.grenade_count <= 0:
             return
         
+        # ボス戦時は1回のみ制限
+        if self.boss and self.grenade_count > 1:
+            # ボス戦中は1回まで（残り1個まで減らす）
+            return
+        
         # 手榴弾を1つ消費
         self.grenade_count -= 1
         
@@ -1108,7 +1677,7 @@ class Game:
             
             temp_player = Player(self.selected_player)
             temp_player.x = SCREEN_WIDTH // 2 - 15
-            temp_player.y = 290
+            temp_player.y = 340
             temp_player.draw(self.screen)
             
             # 難易度選択
@@ -1144,6 +1713,9 @@ class Game:
             
             for powerup in self.powerups:
                 powerup.draw(self.screen)
+            
+            for apple in self.apples:
+                apple.draw(self.screen)
             
             # 独立した敵弾の描画
             for bullet in self.independent_enemy_bullets:
@@ -1207,15 +1779,44 @@ class Game:
     
     def run(self):
         running = True
-        while running:
-            running = self.handle_events()
-            self.update()
-            self.draw()
-            self.clock.tick(60)
-        
-        pygame.quit()
-        sys.exit()
+        try:
+            while running:
+                try:
+                    running = self.handle_events()
+                    if not running:
+                        break
+                    self.update()
+                    self.draw()
+                    self.clock.tick(60)
+                except KeyboardInterrupt:
+                    print("キーボード割り込み - ゲーム終了")
+                    running = False
+                    break
+                except Exception as e:
+                    print(f"ゲーム実行エラー: {e}")
+                    running = False
+                    break
+        except Exception as e:
+            print(f"致命的エラー: {e}")
+        finally:
+            try:
+                pygame.mixer.music.stop()
+                pygame.quit()
+            except:
+                pass
+            sys.exit()
 
 if __name__ == "__main__":
-    game = Game()
-    game.run()
+    try:
+        game = Game()
+        game.run()
+    except KeyboardInterrupt:
+        print("Ctrl+C - プログラム終了")
+    except Exception as e:
+        print(f"予期しないエラー: {e}")
+    finally:
+        try:
+            pygame.quit()
+        except:
+            pass
+        print("プログラム終了")
