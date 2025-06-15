@@ -42,7 +42,17 @@ Pygameで作成した縦スクロール弾幕シューティングゲーム
 1. VS Codeでプロジェクトフォルダを開く
 2. **F5キー**を押してゲームを実行
 
-### コマンドラインでの実行
+### Poetryでの実行（推奨）
+Poetryを使用して依存関係を管理し、ゲームを実行してください：
+```bash
+# 依存関係をインストール（初回のみ）
+poetry install
+
+# ゲームを実行
+poetry run python hyper_shooting.py
+```
+
+### コマンドラインでの実行（従来の方法）
 仮想環境を使用して実行してください：
 ```bash
 # 仮想環境を作成（初回のみ）
@@ -64,6 +74,7 @@ python hyper_shooting.py
 ## ファイル構成
 - `hyper_shooting.py`: メインゲームファイル
 - `CLAUDE.md`: このドキュメント
+- `pyproject.toml`: Poetry設定ファイル（依存関係管理）
 - `.vscode/launch.json`: VS Code実行設定（F5キー対応）
 - `.vscode/settings.json`: VS Code設定
-- `venv/`: Python仮想環境
+- `venv/`: Python仮想環境（従来の方法）
