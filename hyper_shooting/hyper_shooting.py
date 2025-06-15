@@ -610,6 +610,7 @@ class TwinBoss:
         self.boss2 = MagatamaBoss(GAME_WIDTH * 0.3, 80, "left")   # 左上
         self.is_dying = False
         self.death_timer = 0
+        self.bullets_saved = False  # 弾の保存フラグ
         
     def update(self, player_x, player_y, difficulty="ノーマル"):
         if not self.is_dying:
@@ -641,6 +642,17 @@ class TwinBoss:
     
     def is_dead(self):
         return self.is_dying and self.death_timer >= 60
+    
+    def save_bullets_to_independent(self, independent_bullets_list):
+        """弾を独立弾リストに保存"""
+        if not self.bullets_saved:
+            for bullet in self.boss1.bullets:
+                independent_bullet = EnemyBullet(bullet.x, bullet.y, bullet.dx, bullet.dy)
+                independent_bullets_list.append(independent_bullet)
+            for bullet in self.boss2.bullets:
+                independent_bullet = EnemyBullet(bullet.x, bullet.y, bullet.dx, bullet.dy)
+                independent_bullets_list.append(independent_bullet)
+            self.bullets_saved = True
     
     def get_current_explosion_pos(self):
         """死亡演出用の爆発位置"""
@@ -802,6 +814,13 @@ class MagatamaBoss:
         # 弾の描画
         for bullet in self.bullets:
             bullet.draw(screen)
+
+def copy_bullet_preserving_type(bullet):
+    """弾の種類を保持してコピーする"""
+    if isinstance(bullet, RotatingBullet):
+        return RotatingBullet(bullet.x, bullet.y, bullet.dx, bullet.dy, bullet.rotation_angle)
+    else:
+        return EnemyBullet(bullet.x, bullet.y, bullet.dx, bullet.dy)
 
 class Game:
     def __init__(self):
@@ -1154,7 +1173,7 @@ class Game:
                 if enemy.y > SCREEN_HEIGHT:
                     # 敵が画面から出る時、弾を独立したリストに移動
                     for bullet in enemy.bullets:
-                        independent_bullet = EnemyBullet(bullet.x, bullet.y, bullet.dx, bullet.dy)
+                        independent_bullet = copy_bullet_preserving_type(bullet)
                         self.independent_enemy_bullets.append(independent_bullet)
                     self.enemies.remove(enemy)
             
@@ -1162,6 +1181,10 @@ class Game:
             if self.boss:
                 self.boss.update(self.player.x + self.player.width // 2, 
                                self.player.y + self.player.height // 2, self.difficulty)
+                
+                # TwinBossが死にかけたときに弾を保存
+                if isinstance(self.boss, TwinBoss) and self.boss.is_dying:
+                    self.boss.save_bullets_to_independent(self.independent_enemy_bullets)
                 
                 # ボスの爆発演出
                 explosion_data = self.boss.get_current_explosion_pos()
@@ -1178,16 +1201,8 @@ class Game:
                     self.grenade_count += 2  # 手榴弾を2回追加
                     self.boss_defeated_count += 1  # ボス撃破数増加
                     # ボスの弾を独立弾として残す
-                    if isinstance(self.boss, TwinBoss):
-                        # TwinBossの場合は両方のMagatamaBossの弾を保存
-                        for bullet in self.boss.boss1.bullets:
-                            independent_bullet = EnemyBullet(bullet.x, bullet.y, bullet.dx, bullet.dy)
-                            self.independent_enemy_bullets.append(independent_bullet)
-                        for bullet in self.boss.boss2.bullets:
-                            independent_bullet = EnemyBullet(bullet.x, bullet.y, bullet.dx, bullet.dy)
-                            self.independent_enemy_bullets.append(independent_bullet)
-                    else:
-                        # 通常のBossの場合
+                    if not isinstance(self.boss, TwinBoss):
+                        # 通常のBossの場合（TwinBossは既に保存済み）
                         for bullet in self.boss.bullets:
                             independent_bullet = EnemyBullet(bullet.x, bullet.y, bullet.dx, bullet.dy)
                             self.independent_enemy_bullets.append(independent_bullet)
@@ -1244,7 +1259,7 @@ class Game:
                     for enemy in self.enemies[:]:
                         # 敵の弾を独立弾として保存
                         for bullet in enemy.bullets:
-                            independent_bullet = EnemyBullet(bullet.x, bullet.y, bullet.dx, bullet.dy)
+                            independent_bullet = copy_bullet_preserving_type(bullet)
                             self.independent_enemy_bullets.append(independent_bullet)
                         self.enemies.remove(enemy)
                         self.score += 100
@@ -1301,7 +1316,7 @@ class Game:
                         # 敵の弾を別のリストに移動（残存させる）
                         for bullet in enemy.bullets:
                             # 敵弾を独立した弾として追加
-                            independent_bullet = EnemyBullet(bullet.x, bullet.y, bullet.dx, bullet.dy)
+                            independent_bullet = copy_bullet_preserving_type(bullet)
                             self.independent_enemy_bullets.append(independent_bullet)
                         self.enemies.remove(enemy)
                         # 敵タイプに応じてスコア設定
@@ -1415,7 +1430,7 @@ class Game:
                         if distance < 80:  # 爆発範囲
                             # 敵の弾を独立弾として保存
                             for bullet in other_enemy.bullets:
-                                independent_bullet = EnemyBullet(bullet.x, bullet.y, bullet.dx, bullet.dy)
+                                independent_bullet = copy_bullet_preserving_type(bullet)
                                 self.independent_enemy_bullets.append(independent_bullet)
                             if other_enemy in self.enemies:
                                 self.enemies.remove(other_enemy)
@@ -1449,7 +1464,7 @@ class Game:
                         self.explosions.append(explosion)
                         # 敵の弾を別のリストに移動（残存させる）
                         for bullet in enemy.bullets:
-                            independent_bullet = EnemyBullet(bullet.x, bullet.y, bullet.dx, bullet.dy)
+                            independent_bullet = copy_bullet_preserving_type(bullet)
                             self.independent_enemy_bullets.append(independent_bullet)
                         if enemy in self.enemies:
                             self.enemies.remove(enemy)
@@ -1580,10 +1595,10 @@ class Game:
                     # 速度を50%アップ
                     self.player.speed = int(self.player.base_speed * 1.5)
                 elif powerup.powerup_type == 'hp':
-                    # HPを1増加（最大HPも増加）
+                    # HPを1増加（最大HPも増加、ライフは最大10まで）
                     self.player.max_hp += 1
                     self.player.current_hp += 1
-                    self.lives += 1
+                    self.lives = min(self.lives + 1, 10)
         
         # りんごとの当たり判定
         for apple in self.apples[:]:
@@ -1592,8 +1607,8 @@ class Game:
                 apple.y < self.player.y + self.player.height and
                 apple.y + apple.height > self.player.y):
                 self.apples.remove(apple)
-                # ライフを3つ増加
-                self.lives += 3
+                # ライフを3つ増加（最大10まで）
+                self.lives = min(self.lives + 3, 10)
     
     def launch_hard_attack(self):
         # 100個以上の弾を画面外から発射
@@ -1758,13 +1773,20 @@ class Game:
             lives_text = self.font.render("Lives:", True, WHITE)
             self.screen.blit(lives_text, (GAME_WIDTH + 10, 130))
             
-            for i in range(self.lives):
+            # ライフを2行に分けて表示（5個以上の場合）
+            for i in range(min(self.lives, 5)):
                 heart_text = self.font.render("♥", True, RED)
                 self.screen.blit(heart_text, (GAME_WIDTH + 30 + i * 25, 165))
             
-            # 手榴弾の残り回数を表示
+            if self.lives > 5:
+                for i in range(self.lives - 5):
+                    heart_text = self.font.render("♥", True, RED)
+                    self.screen.blit(heart_text, (GAME_WIDTH + 30 + i * 25, 195))
+            
+            # 手榴弾の残り回数を表示（ライフ表示の下に配置）
+            grenade_y = 225 if self.lives > 5 else 200
             grenade_text = self.font.render(f"Grenades: {self.grenade_count}", True, WHITE)
-            self.screen.blit(grenade_text, (GAME_WIDTH + 10, 200))
+            self.screen.blit(grenade_text, (GAME_WIDTH + 10, grenade_y))
                 
         elif self.state == "game_over":
             game_over_text = self.large_font.render("GAME OVER", True, RED)
