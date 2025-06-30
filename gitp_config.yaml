@@ -1,9 +1,21 @@
-user:
+juser:
   name: kako-jun
   email: 3541096+kako-jun@users.noreply.github.com
 comments:
   default: update.
 repos:
+  - ---:
+    enabled: true
+    name: curion
+    group: 2025
+    branch: main
+    remote: git@github.com:kako-jun/curion.git
+  - ---:
+    enabled: true
+    name: esuna
+    group: 2025
+    branch: main
+    remote: git@github.com:kako-jun/esuna.git
   - ---:
     enabled: true
     name: sync-stone
